@@ -46,9 +46,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;ba
 .meal-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:8px;display:flex;align-items:center;gap:14px;transition:all .2s;cursor:pointer}
 .meal-card.checked{border-color:#14532d;background:var(--done-bg)}
 .meal-card.skipped{border-color:#4a1d1d;background:var(--skip-bg)}
+.meal-card.modified{border-color:#7c2d12;background:#fff7ed}
+body:not(.light) .meal-card.modified{background:#1f1308}
 .meal-check{width:36px;height:36px;border-radius:10px;border:2px solid #2a2a2a;background:transparent;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px;transition:all .2s;cursor:pointer}
 .meal-check.on{background:var(--accent);border-color:var(--accent)}
 .meal-check.skip{background:#ef4444;border-color:#ef4444;color:#fff}
+.meal-check.mod{background:#f97316;border-color:#f97316;color:#fff}
 .meal-body{flex:1;min-width:0}
 .meal-time{font-size:10px;color:var(--muted);font-weight:700;margin-bottom:3px}
 .meal-name{font-size:13px;font-weight:700;margin-bottom:4px;line-height:1.3}
@@ -61,8 +64,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;ba
 .meal-action{border:1px solid var(--border);background:var(--surface);color:var(--muted);border-radius:8px;padding:7px 9px;font-size:11px;font-weight:800;cursor:pointer}
 .meal-action.done.on{background:var(--accent);border-color:var(--accent);color:#000}
 .meal-action.skip.on{background:#ef4444;border-color:#ef4444;color:#fff}
+.meal-action.mod.on{background:#f97316;border-color:#f97316;color:#fff}
 .meal-note{width:100%;margin-top:8px;padding:9px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px}
 .meal-note:focus{outline:none;border-color:var(--accent)}
+.custom-macros{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.custom-macro{width:100%;padding:9px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px}
+.custom-macro:focus{outline:none;border-color:var(--accent)}
 /* WEIGHT PAGE */
 .weight-input-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px;margin-bottom:14px}
 .weight-input-card h3{font-size:14px;font-weight:800;margin-bottom:14px}
@@ -387,9 +394,9 @@ async function saveCloud(){
 }
 function mealEntry(entry){
   if(entry&&typeof entry==='object'){
-    return {status:entry.status||'pending',note:entry.note||''};
+    return {status:entry.status||'pending',note:entry.note||'',kcal:Number(entry.kcal)||0,prot:Number(entry.prot)||0};
   }
-  return {status:entry?'done':'pending',note:''};
+  return {status:entry?'done':'pending',note:'',kcal:0,prot:0};
 }
 function hasData(obj){
   return obj&&typeof obj==='object'&&Object.keys(obj).length>0;
@@ -483,12 +490,23 @@ function render(){
 // ── TODAY ────────────────────────────────────────────
 function renderToday(){
   const checked=todayMeals();
-  const doneKcal=MEALS.filter(m=>mealEntry(checked[m.id]).status==='done').reduce((a,m)=>a+m.kcal,0);
-  const doneProt=MEALS.filter(m=>mealEntry(checked[m.id]).status==='done').reduce((a,m)=>a+m.prot,0);
+  const doneKcal=MEALS.reduce((a,m)=>{
+    const entry=mealEntry(checked[m.id]);
+    if(entry.status==='done')return a+m.kcal;
+    if(entry.status==='modified')return a+entry.kcal;
+    return a;
+  },0);
+  const doneProt=MEALS.reduce((a,m)=>{
+    const entry=mealEntry(checked[m.id]);
+    if(entry.status==='done')return a+m.prot;
+    if(entry.status==='modified')return a+entry.prot;
+    return a;
+  },0);
   const pctK=Math.round(doneKcal/TOTAL_KCAL*100);
   const pctP=Math.round(doneProt/TOTAL_PROT*100);
   const mealsDone=MEALS.filter(m=>mealEntry(checked[m.id]).status==='done').length;
   const mealsSkipped=MEALS.filter(m=>mealEntry(checked[m.id]).status==='skipped').length;
+  const mealsModified=MEALS.filter(m=>mealEntry(checked[m.id]).status==='modified').length;
   // weight progress
   const w=weights();
   const lastWeight=Object.entries(w).sort((a,b)=>a[0]>b[0]?1:-1).filter(([,v])=>v).pop()?.[1]||WEIGHT_START;
@@ -505,8 +523,9 @@ function renderToday(){
     const entry=mealEntry(checked[m.id]);
     const on=entry.status==='done';
     const skipped=entry.status==='skipped';
-    return `<div class="meal-card${on?' checked':''}${skipped?' skipped':''}">
-    <div class="meal-check${on?' on':''}${skipped?' skip':''}">${on?'✓':skipped?'×':''}</div>
+    const modified=entry.status==='modified';
+    return `<div class="meal-card${on?' checked':''}${skipped?' skipped':''}${modified?' modified':''}">
+    <div class="meal-check${on?' on':''}${skipped?' skip':''}${modified?' mod':''}">${on?'✓':skipped?'×':modified?'~':''}</div>
     <div class="meal-body">
       <div class="meal-time">${m.time}</div>
       <div class="meal-name">${m.emoji} ${m.name}</div>
@@ -517,9 +536,14 @@ function renderToday(){
       </div>
       <div class="meal-actions">
         <button class="meal-action done${on?' on':''}" onclick="setMealStatus('${m.id}','${on?'pending':'done'}')">Mangé</button>
+        <button class="meal-action mod${modified?' on':''}" onclick="setMealStatus('${m.id}','${modified?'pending':'modified'}')">Modifié</button>
         <button class="meal-action skip${skipped?' on':''}" onclick="setMealStatus('${m.id}','${skipped?'pending':'skipped'}')">Skippé</button>
       </div>
-      <input class="meal-note" value="${escapeAttr(entry.note)}" placeholder="Ce que j'ai mangé / ajustement" onchange="setMealNote('${m.id}',this.value)" onclick="event.stopPropagation()">
+      <input class="meal-note" value="${escapeAttr(entry.note)}" placeholder="Ex: burger à la place du lunch" onchange="setMealNote('${m.id}',this.value)" onclick="event.stopPropagation()">
+      <div class="custom-macros">
+        <input class="custom-macro" type="number" min="0" step="10" value="${entry.kcal||''}" placeholder="kcal réelles" onchange="setMealMacro('${m.id}','kcal',this.value)" onclick="event.stopPropagation()">
+        <input class="custom-macro" type="number" min="0" step="1" value="${entry.prot||''}" placeholder="prot g" onchange="setMealMacro('${m.id}','prot',this.value)" onclick="event.stopPropagation()">
+      </div>
     </div>
     </div>`;
   }).join('');
@@ -550,7 +574,7 @@ function renderToday(){
       <div class="mp"><div class="mf prot-fill" style="width:${pctP}%"></div></div>
     </div>
   </div>
-  <div class="sec-lbl">${mealsDone}/6 mangés · ${mealsSkipped} skippé(s) · ${today()}</div>
+  <div class="sec-lbl">${mealsDone}/6 mangés · ${mealsModified} modifié(s) · ${mealsSkipped} skippé(s) · ${today()}</div>
   ${mealsHTML}`;
 }
 
@@ -580,8 +604,22 @@ function setMealNote(id,note){
   const d=todayMeals();
   const entry=mealEntry(d[id]);
   entry.note=note.trim();
+  if((entry.note||entry.kcal||entry.prot)&&entry.status==='pending')entry.status='modified';
+  if(!entry.note&&!entry.kcal&&!entry.prot&&entry.status==='modified')entry.status='pending';
   d[id]=entry;
   saveMeals(d);
+  render();
+}
+
+function setMealMacro(id,field,value){
+  const d=todayMeals();
+  const entry=mealEntry(d[id]);
+  entry[field]=Math.max(0,Number(value)||0);
+  if((entry.note||entry.kcal||entry.prot)&&entry.status==='pending')entry.status='modified';
+  if(!entry.note&&!entry.kcal&&!entry.prot&&entry.status==='modified')entry.status='pending';
+  d[id]=entry;
+  saveMeals(d);
+  render();
 }
 
 // ── WEIGHT ───────────────────────────────────────────
@@ -871,7 +909,7 @@ function renderHistory(){
   const allMeals=cloudReady?(cloudState.meals||{}):collectLocalMeals();
   const allTraining=training();
   const dates=Array.from(new Set([...Object.keys(allMeals),...Object.keys(allTraining)])).sort().reverse();
-  let totalKcal=0,totalProt=0,doneMeals=0,skippedMeals=0,notesCount=0,trainingDays=0,doneExercises=0;
+  let totalKcal=0,totalProt=0,doneMeals=0,skippedMeals=0,modifiedMeals=0,notesCount=0,trainingDays=0,doneExercises=0;
   const daysHTML=dates.map(date=>{
     const dayMeals=allMeals[date]||{};
     const mealLines=MEALS.map(meal=>{
@@ -882,10 +920,19 @@ function renderHistory(){
         totalProt+=meal.prot;
         doneMeals++;
       }
+      if(entry.status==='modified'){
+        totalKcal+=entry.kcal;
+        totalProt+=entry.prot;
+      }
       if(entry.status==='skipped')skippedMeals++;
+      if(entry.status==='modified')modifiedMeals++;
       if(entry.note)notesCount++;
-      const status=entry.status==='done'?'Mangé':entry.status==='skipped'?'Skippé':'Note';
-      const kcal=entry.status==='done'?` · ${meal.kcal} kcal · ${meal.prot}g prot`:'';
+      const status=entry.status==='done'?'Mangé':entry.status==='skipped'?'Skippé':entry.status==='modified'?'Modifié':'Note';
+      const kcal=entry.status==='done'
+        ? ` · ${meal.kcal} kcal · ${meal.prot}g prot`
+        : entry.status==='modified'&&entry.kcal
+          ? ` · ${entry.kcal} kcal${entry.prot?` · ${entry.prot}g prot`:''}`
+          : '';
       const note=entry.note?`<span class="history-note">${escapeText(entry.note)}</span>`:'';
       return `<div class="history-line">${meal.time} · ${meal.name} · ${status}${kcal}${note}</div>`;
     }).join('');
@@ -919,6 +966,7 @@ function renderHistory(){
       <div class="history-stat"><strong>${totalKcal}</strong><span>kcal mangées</span></div>
       <div class="history-stat"><strong>${totalProt}g</strong><span>protéines</span></div>
       <div class="history-stat"><strong>${doneMeals}</strong><span>repas mangés</span></div>
+      <div class="history-stat"><strong>${modifiedMeals}</strong><span>repas modifiés</span></div>
       <div class="history-stat"><strong>${skippedMeals}</strong><span>repas skippés</span></div>
       <div class="history-stat"><strong>${dates.length}</strong><span>jours trackés</span></div>
       <div class="history-stat"><strong>${notesCount}</strong><span>notes</span></div>
