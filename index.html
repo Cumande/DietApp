@@ -99,6 +99,24 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;ba
 .exercise-text.done-text{text-decoration:line-through;color:var(--muted)}
 .session-comment{width:100%;min-height:110px;resize:vertical;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);padding:12px;font-size:13px;line-height:1.5}
 .session-comment:focus{outline:none;border-color:var(--accent)}
+.week-grid{display:grid;grid-template-columns:1fr;gap:8px}
+.week-day{border:1px solid var(--border);background:var(--surface2);border-radius:10px;padding:10px}
+.week-day.today{border-color:var(--accent);background:var(--done-bg)}
+.week-day-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:4px}
+.week-day-name{font-size:12px;font-weight:800;color:var(--text)}
+.week-day-progress{font-size:10px;font-weight:800;color:var(--accent)}
+.week-day-type{font-size:11px;color:var(--muted);line-height:1.35}
+/* HISTORY */
+.history-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px}
+.history-card h3{font-size:15px;font-weight:800;margin-bottom:4px}
+.history-summary{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.history-stat{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px}
+.history-stat strong{display:block;font-size:18px;color:var(--accent);margin-bottom:2px}
+.history-stat span{font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase}
+.history-date{font-size:13px;font-weight:800;margin-bottom:8px;color:var(--text)}
+.history-line{font-size:12px;color:var(--soft);line-height:1.45;padding:5px 0;border-bottom:1px solid var(--border)}
+.history-line:last-child{border-bottom:none}
+.history-note{display:block;color:var(--muted);font-size:11px;margin-top:2px}
 </style>
 </head>
 <body>
@@ -113,8 +131,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;ba
   </div>
   <div class="tabs">
     <button class="tab active" id="tab0" onclick="switchTab(0)">📋 Aujourd'hui</button>
-    <button class="tab" id="tab1" onclick="switchTab(1)">⚖️ Poids</button>
-    <button class="tab" id="tab2" onclick="switchTab(2)">🏋️ Training</button>
+    <button class="tab" id="tab1" onclick="switchTab(1)">🏋️ Training</button>
+    <button class="tab" id="tab2" onclick="switchTab(2)">⚖️ Poids</button>
+    <button class="tab" id="tab3" onclick="switchTab(3)">📊 Historique</button>
   </div>
 </div>
 <div class="main" id="main"></div>
@@ -262,7 +281,7 @@ function applyTheme(theme){
   const el=document.getElementById('themeToggle');
   if(el)el.textContent=theme==='light'?'☀️':'🌙';
 }
-function currentTheme(){return localStorage.getItem(`${STORAGE_PREFIX}_theme`)||'dark'}
+function currentTheme(){return localStorage.getItem(`${STORAGE_PREFIX}_theme`)||'light'}
 function toggleTheme(){
   const next=currentTheme()==='dark'?'light':'dark';
   localStorage.setItem(`${STORAGE_PREFIX}_theme`,next);
@@ -394,7 +413,7 @@ function saveTraining(t){
 let activeTab=0;
 function switchTab(i){
   activeTab=i;
-  [0,1,2].forEach(j=>{
+  [0,1,2,3].forEach(j=>{
     document.getElementById(`tab${j}`).classList.toggle('active',j===i);
   });
   render();
@@ -405,8 +424,9 @@ function switchTab(i){
 // ═══════════════════════════════════════════════════════
 function render(){
   if(activeTab===0)renderToday();
-  else if(activeTab===1)renderWeight();
-  else renderTraining();
+  else if(activeTab===1)renderTraining();
+  else if(activeTab===2)renderWeight();
+  else renderHistory();
 }
 
 // ── TODAY ────────────────────────────────────────────
@@ -480,15 +500,7 @@ function renderToday(){
     </div>
   </div>
   <div class="sec-lbl">${mealsDone}/6 mangés · ${mealsSkipped} skippé(s) · ${today()}</div>
-  ${mealsHTML}
-  <div class="rules">
-    <h4>⚠️ Règles</h4>
-    <div class="rule">✅ Objectif moyen : ~0,8 kg/semaine jusqu'au 22 octobre</div>
-    <div class="rule">✅ Si +0 kg sur 10 jours → augmenter portions de 10%</div>
-    <div class="rule">✅ Gym 3x/sem non-négociable — sans entraînement, le surplus = gras</div>
-    <div class="rule">⚠️ Si > 1 kg/sem sur 3 semaines → retirer 1 gainer</div>
-    <div class="rule">💡 Peser le lundi matin à jeun, après les toilettes</div>
-  </div>`;
+  ${mealsHTML}`;
 }
 
 function escapeAttr(value){
@@ -572,7 +584,8 @@ function renderWeight(){
       <input class="weight-input" id="weightIn" type="number" step="0.1" min="70" max="130" placeholder="ex: 91.2" value="${w[todayStr]||''}">
       <button class="weight-save-btn" onclick="doSaveWeight()">Sauvegarder</button>
     </div>
-    <div style="font-size:11px;color:#444;margin-top:8px">Objectif 2 mois : 90kg → 97kg, soit environ +0,8kg/semaine</div>
+    <div style="font-size:11px;color:var(--muted);margin-top:8px">Peser le lundi matin à jeun, après les toilettes.</div>
+    <div style="font-size:11px;color:var(--muted);margin-top:4px">Objectif 2 mois : 90kg → 97kg, soit environ +0,8kg/semaine.</div>
   </div>
   <div class="chart-card">
     <h4>Courbe de poids vers ${WEIGHT_GOAL}kg</h4>
@@ -600,48 +613,53 @@ function doSaveWeight(){
 function buildWeightChart(pts,w){
   if(pts.length<1)return`<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px">Aucun poids enregistré</div>`;
   const allDates=Array.from(new Set([...WEEKS.map(wk=>wk.date),...Object.keys(w).filter(d=>w[d])])).sort();
-  const minW=88,maxW=98;
-  const svgW=Math.max(320,allDates.length*32);
-  const svgH=120;
-  const pad={l:32,r:16,t:10,b:24};
+  const values=Object.values(w).filter(Boolean);
+  const minW=Math.floor(Math.min(88,WEIGHT_START,...values))-1;
+  const maxW=Math.ceil(Math.max(98,WEIGHT_GOAL,...values))+1;
+  const svgW=Math.max(420,allDates.length*46);
+  const svgH=220;
+  const pad={l:44,r:24,t:24,b:40};
   const cw=svgW-pad.l-pad.r;
   const ch=svgH-pad.t-pad.b;
-  function px(i){return pad.l+i*(cw/(allDates.length-1))}
+  function px(i){return allDates.length===1?pad.l+cw/2:pad.l+i*(cw/(allDates.length-1))}
   function py(v){return pad.t+ch-(v-minW)/(maxW-minW)*ch}
   // target line
   const tStart=py(WEIGHT_START);
   const tEnd=py(WEIGHT_GOAL);
-  const targetLine=`<line x1="${pad.l}" y1="${tStart}" x2="${pad.l+cw}" y2="${tEnd}" stroke="#333" stroke-width="1" stroke-dasharray="4,4"/>`;
+  const targetLine=`<line x1="${pad.l}" y1="${tStart}" x2="${pad.l+cw}" y2="${tEnd}" stroke="#f97316" stroke-width="2" stroke-dasharray="6,6" opacity=".65"/>`;
   // milestone lines
   const mLines=MILESTONES.map(m=>{
     const mi=allDates.findIndex(d=>d>=m.date);
     if(mi<0)return'';
     const x=px(mi),y=py(m.target);
-    return `<circle cx="${x}" cy="${y}" r="3" fill="var(--orange)" opacity=".7"/>
-    <text x="${x+5}" y="${y-4}" font-size="8" fill="#f97316" opacity=".7">${m.target}kg</text>`;
+    return `<circle cx="${x}" cy="${y}" r="4" fill="#f97316" opacity=".85"/>
+    <text x="${x+7}" y="${y-7}" font-size="10" fill="#f97316" opacity=".9">${m.target}kg</text>`;
   }).join('');
   // actual data line
   let linePath='',dotHTML='';
   const dataPoints=allDates.map((d,i)=>({i,v:w[d]||null})).filter(p=>p.v);
   if(dataPoints.length>1){
-    linePath=`<polyline points="${dataPoints.map(p=>`${px(p.i)},${py(p.v)}`).join(' ')}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`;
+    linePath=`<polyline points="${dataPoints.map(p=>`${px(p.i)},${py(p.v)}`).join(' ')}" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`;
   }
-  dotHTML=dataPoints.map(p=>`<circle cx="${px(p.i)}" cy="${py(p.v)}" r="4" fill="var(--accent)" stroke="#0a0a0a" stroke-width="2"/>
-  <text x="${px(p.i)}" y="${py(p.v)-8}" text-anchor="middle" font-size="8.5" fill="var(--accent)" font-weight="700">${p.v}</text>`).join('');
+  dotHTML=dataPoints.map(p=>`<circle cx="${px(p.i)}" cy="${py(p.v)}" r="5" fill="var(--accent)" stroke="var(--card)" stroke-width="2"/>
+  <text x="${px(p.i)}" y="${py(p.v)-10}" text-anchor="middle" font-size="10" fill="var(--accent)" font-weight="800">${p.v}</text>`).join('');
   // y axis
-  const yLabels=[90,92,94,96,97].map(v=>`<text x="${pad.l-4}" y="${py(v)+3}" text-anchor="end" font-size="8" fill="#333">${v}</text><line x1="${pad.l}" y1="${py(v)}" x2="${pad.l+cw}" y2="${py(v)}" stroke="#1a1a1a" stroke-width="1"/>`).join('');
-  // x labels (every 3 weeks)
-  const xLabels=allDates.filter((_,i)=>i%3===0).map(d=>{const i=allDates.indexOf(d);return`<text x="${px(i)}" y="${svgH-4}" text-anchor="middle" font-size="8" fill="#333">${d.slice(5)}</text>`}).join('');
+  const yStep=Math.max(1,Math.ceil((maxW-minW)/5));
+  const yValues=[];
+  for(let v=minW;v<=maxW;v+=yStep)yValues.push(v);
+  if(!yValues.includes(WEIGHT_GOAL))yValues.push(WEIGHT_GOAL);
+  const yLabels=yValues.sort((a,b)=>a-b).map(v=>`<text x="${pad.l-8}" y="${py(v)+4}" text-anchor="end" font-size="10" fill="var(--muted)">${v}</text><line x1="${pad.l}" y1="${py(v)}" x2="${pad.l+cw}" y2="${py(v)}" stroke="var(--border)" stroke-width="1"/>`).join('');
+  const xLabels=allDates.filter((_,i)=>i%2===0||i===allDates.length-1).map(d=>{const i=allDates.indexOf(d);return`<text x="${px(i)}" y="${svgH-12}" text-anchor="middle" font-size="10" fill="var(--muted)">${d.slice(5)}</text>`}).join('');
   return`<div class="chart-wrap">
   <svg viewBox="0 0 ${svgW} ${svgH}" width="${svgW}" height="${svgH}" xmlns="http://www.w3.org/2000/svg" style="min-width:${svgW}px">
     ${yLabels}${xLabels}${targetLine}${mLines}${linePath}${dotHTML}
-    <line x1="${pad.l}" y1="${pad.t}" x2="${pad.l}" y2="${pad.t+ch}" stroke="#1a1a1a" stroke-width="1"/>
-    <line x1="${pad.l}" y1="${pad.t+ch}" x2="${pad.l+cw}" y2="${pad.t+ch}" stroke="#1a1a1a" stroke-width="1"/>
-    <text x="${pad.l+cw}" y="${tEnd-4}" text-anchor="end" font-size="8" fill="#333">→ ${WEIGHT_GOAL}kg objectif</text>
+    <line x1="${pad.l}" y1="${pad.t}" x2="${pad.l}" y2="${pad.t+ch}" stroke="var(--border)" stroke-width="1"/>
+    <line x1="${pad.l}" y1="${pad.t+ch}" x2="${pad.l+cw}" y2="${pad.t+ch}" stroke="var(--border)" stroke-width="1"/>
+    <text x="${pad.l+cw}" y="${Math.max(12,tEnd-8)}" text-anchor="end" font-size="10" fill="#f97316" font-weight="800">${WEIGHT_GOAL}kg objectif</text>
   </svg>
-  <div style="font-size:10px;color:#333;margin-top:6px;display:flex;gap:16px">
+  <div style="font-size:11px;color:var(--muted);margin-top:8px;display:flex;gap:16px;flex-wrap:wrap">
     <span style="color:var(--accent)">● Poids réel</span>
-    <span style="color:#555">- - Trajectoire cible</span>
+    <span style="color:var(--orange)">- - Trajectoire cible</span>
     <span style="color:var(--orange)">● Milestones</span>
   </div>
   </div>`;
@@ -655,6 +673,19 @@ function renderTraining(){
   const all=training();
   const state=all[date]||{done:{},comment:''};
   const doneCount=plan.items.filter((_,i)=>state.done&&state.done[i]).length;
+  const weekHTML=[1,2,3,4,5,6,0].map(dayNum=>{
+    const p=TRAINING_PLAN[dayNum];
+    const isToday=dayNum===day;
+    const doneForToday=isToday?doneCount:null;
+    const progress=isToday?`${doneForToday}/${p.items.length}`:`${p.items.length} blocs`;
+    return `<div class="week-day${isToday?' today':''}">
+      <div class="week-day-top">
+        <div class="week-day-name">${p.name}</div>
+        <div class="week-day-progress">${progress}</div>
+      </div>
+      <div class="week-day-type">${p.type}</div>
+    </div>`;
+  }).join('');
   const exerciseHTML=plan.items.map((item,i)=>{
     const on=!!(state.done&&state.done[i]);
     return `<div class="exercise-row" onclick="toggleExercise(${i})">
@@ -663,6 +694,11 @@ function renderTraining(){
     </div>`;
   }).join('');
   document.getElementById('main').innerHTML=`
+  <div class="training-day">
+    <h3>📆 Plan de la semaine</h3>
+    <div class="training-meta">Vue rapide de la structure hebdo.</div>
+    <div class="week-grid">${weekHTML}</div>
+  </div>
   <div class="training-day">
     <h3>🏋️ ${plan.name}</h3>
     <div class="training-meta">${plan.type} · ${doneCount}/${plan.items.length} exercices · ${date}</div>
@@ -697,6 +733,61 @@ function setTrainingComment(comment){
   state.comment=comment;
   all[date]=state;
   saveTraining(all);
+}
+
+// ── HISTORY ──────────────────────────────────────────
+function renderHistory(){
+  const allMeals=cloudReady?(cloudState.meals||{}):collectLocalMeals();
+  const dates=Object.keys(allMeals).sort().reverse();
+  let totalKcal=0,totalProt=0,doneMeals=0,skippedMeals=0,notesCount=0;
+  const daysHTML=dates.map(date=>{
+    const dayMeals=allMeals[date]||{};
+    const lines=MEALS.map(meal=>{
+      const entry=mealEntry(dayMeals[meal.id]);
+      if(entry.status==='pending'&&!entry.note)return'';
+      if(entry.status==='done'){
+        totalKcal+=meal.kcal;
+        totalProt+=meal.prot;
+        doneMeals++;
+      }
+      if(entry.status==='skipped')skippedMeals++;
+      if(entry.note)notesCount++;
+      const status=entry.status==='done'?'Mangé':entry.status==='skipped'?'Skippé':'Note';
+      const kcal=entry.status==='done'?` · ${meal.kcal} kcal · ${meal.prot}g prot`:'';
+      const note=entry.note?`<span class="history-note">${escapeText(entry.note)}</span>`:'';
+      return `<div class="history-line">${meal.time} · ${meal.name} · ${status}${kcal}${note}</div>`;
+    }).join('');
+    if(!lines)return'';
+    const label=new Date(`${date}T12:00:00`).toLocaleDateString('fr-FR',{weekday:'long',day:'2-digit',month:'short',year:'numeric'});
+    return `<div class="history-card">
+      <div class="history-date">${label}</div>
+      ${lines}
+    </div>`;
+  }).join('');
+  document.getElementById('main').innerHTML=`
+  <div class="history-card">
+    <h3>📊 Historique complet</h3>
+    <div class="training-meta">Tous les repas enregistrés, depuis le début du tracking synchronisé.</div>
+    <div class="history-summary">
+      <div class="history-stat"><strong>${totalKcal}</strong><span>kcal mangées</span></div>
+      <div class="history-stat"><strong>${totalProt}g</strong><span>protéines</span></div>
+      <div class="history-stat"><strong>${doneMeals}</strong><span>repas mangés</span></div>
+      <div class="history-stat"><strong>${skippedMeals}</strong><span>repas skippés</span></div>
+      <div class="history-stat"><strong>${dates.length}</strong><span>jours trackés</span></div>
+      <div class="history-stat"><strong>${notesCount}</strong><span>notes</span></div>
+    </div>
+  </div>
+  ${daysHTML||'<div class="history-card"><div class="training-meta">Aucun repas enregistré pour le moment.</div></div>'}`;
+}
+
+function collectLocalMeals(){
+  const out={};
+  Object.keys(localStorage).forEach(key=>{
+    const prefix=`${STORAGE_PREFIX}_meals_`;
+    if(!key.startsWith(prefix))return;
+    out[key.slice(prefix.length)]=ls(key)||{};
+  });
+  return out;
 }
 
 // INIT
