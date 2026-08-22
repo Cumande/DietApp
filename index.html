@@ -110,9 +110,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;ba
 .week-day-type{font-size:11px;color:var(--muted);line-height:1.35}
 .week-exercises{margin-top:10px;padding-top:8px;border-top:1px solid var(--border);display:grid;gap:7px}
 .week-exercise{display:flex;gap:8px;align-items:center;font-size:11px;color:var(--soft);line-height:1.35}
-.exercise-video{width:82px;min-height:48px;border-radius:10px;background:#111827;color:#fff;border:1px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;flex-shrink:0;text-decoration:none;font-size:18px;font-weight:900}
-.week-exercise .exercise-video{width:74px;min-height:42px}
-.exercise-video span{font-size:9px;font-weight:800;letter-spacing:.2px}
+.exercise-video{width:96px;height:58px;border-radius:10px;background:#111827;color:#fff;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;text-decoration:none;font-size:18px;font-weight:900;position:relative;overflow:hidden;cursor:pointer}
+.week-exercise .exercise-video{width:84px;height:50px}
+.exercise-video img{width:100%;height:100%;object-fit:cover;display:block}
+.exercise-video::after{content:'▶';position:absolute;inset:auto auto 6px 7px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px}
+.exercise-video.no-video{background:var(--surface);color:var(--muted);font-size:10px;line-height:1.2;text-align:center;padding:6px}
+.exercise-video.no-video::after{display:none}
 .video-modal{position:fixed;inset:0;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;padding:18px;z-index:100}
 .video-panel{width:min(820px,100%);background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:0 20px 80px rgba(0,0,0,.35)}
 .video-panel-top{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border)}
@@ -282,7 +285,33 @@ const YOUTUBE_VIDEOS = {
   incline:'Zw6qCAFsV0w',
   rdl:'CQp5I9KgdXI',
   deadlift:'CQp5I9KgdXI',
-  squat:'CQp5I9KgdXI'
+  squat:'CQp5I9KgdXI',
+  barbellRow:'KqNQ4rocK_E',
+  shoulderPress:'GFblCmuEE18',
+  lateralRaise:'XPPfnSEATJA',
+  crunch:'_M2Etme-tfE',
+  plank:'DjEN3SKl0Eg',
+  sidePlank:'44ND4bOB-T0',
+  lateralCrunch:'Iw_8DHorDQk',
+  running:'LnNse_AwPyE',
+  abs:'flCgEGVCtQ8',
+  mobility:'_IoYLhrTBqY',
+  latPulldown:'Ad_WOMtfyc4',
+  pullover:'t_lYFd8pl1M',
+  skullCrusher:'VP9Qp72zZ_c',
+  ezCurl:'H0dtbu_Bi8c',
+  shrugs:'FOGWC04nYtI',
+  alternatingCurl:'8d2we4UqOSs',
+  hipWarmup:'EFZigzEhYcU',
+  hangingLegRaise:'kTJLjZ3FFCg',
+  pullUp:'IpxAG2z91Ys',
+  dips:'iEsDnKNejt0',
+  closeGripUprightRow:'q-83sBnQQTQ',
+  wideGripUprightRow:'Xpu0C50pD-U',
+  seatedCableRow:'xjlz8lRXOOI',
+  ropeTriceps:'vPeQu_L-1n0',
+  pushUp:'WDIpL0pjun0',
+  cableCrunch:'l_2_6JI78_Q'
 };
 
 // ═══════════════════════════════════════════════════════
@@ -740,11 +769,41 @@ function renderTraining(){
 }
 
 function exerciseVideo(item){
-  return `<button class="exercise-video" data-exercise="${escapeAttr(item)}" onclick="openExerciseVideo(event,this.dataset.exercise)" aria-label="Voir la vidéo dans l'app">▶<span>Vidéo</span></button>`;
+  const id=exerciseVideoId(item);
+  if(!id)return `<button class="exercise-video no-video" onclick="event.stopPropagation()" aria-label="Pas de vidéo">À préciser</button>`;
+  return `<button class="exercise-video" data-exercise="${escapeAttr(item)}" onclick="openExerciseVideo(event,this.dataset.exercise)" aria-label="Voir la vidéo dans l'app"><img src="https://img.youtube.com/vi/${id}/mqdefault.jpg" alt=""></button>`;
 }
 
 function exerciseVideoId(item){
   const s=item.toLowerCase();
+  if(s.includes('piste melun'))return null;
+  if(s.trim().startsWith('poulie'))return null;
+  if(s.includes('crunch à la poulie'))return YOUTUBE_VIDEOS.cableCrunch;
+  if(s.includes('rowing barre'))return YOUTUBE_VIDEOS.barbellRow;
+  if(s.includes('développé épaules'))return YOUTUBE_VIDEOS.shoulderPress;
+  if(s.includes('élévations latérales'))return YOUTUBE_VIDEOS.lateralRaise;
+  if(s.includes('lateral crunch'))return YOUTUBE_VIDEOS.lateralCrunch;
+  if(s.includes('lateral planks'))return YOUTUBE_VIDEOS.sidePlank;
+  if(s.includes('plank'))return YOUTUBE_VIDEOS.plank;
+  if(s.includes('crunch'))return YOUTUBE_VIDEOS.crunch;
+  if(s.includes('cardio')||s.includes('5k'))return YOUTUBE_VIDEOS.running;
+  if(s.trim()==='abdos')return YOUTUBE_VIDEOS.abs;
+  if(s.includes('étirements')||s.includes('stretching')||s.includes('repos actif')||s.includes('mobilité légère'))return YOUTUBE_VIDEOS.mobility;
+  if(s.includes('tirage vertical'))return YOUTUBE_VIDEOS.latPulldown;
+  if(s.includes('pull-over'))return YOUTUBE_VIDEOS.pullover;
+  if(s.includes('skull'))return YOUTUBE_VIDEOS.skullCrusher;
+  if(s.includes('curl barre ez'))return YOUTUBE_VIDEOS.ezCurl;
+  if(s.includes('dumbbell shrugs'))return YOUTUBE_VIDEOS.shrugs;
+  if(s.includes('curl alterné'))return YOUTUBE_VIDEOS.alternatingCurl;
+  if(s.includes('échauffement jambes'))return YOUTUBE_VIDEOS.hipWarmup;
+  if(s.includes('hanging leg raises')||s.includes('leg raises/knee raises'))return YOUTUBE_VIDEOS.hangingLegRaise;
+  if(s.includes('pull ups')||s.includes('tractions'))return YOUTUBE_VIDEOS.pullUp;
+  if(s.includes('dips'))return YOUTUBE_VIDEOS.dips;
+  if(s.includes('upright row prise serrée'))return YOUTUBE_VIDEOS.closeGripUprightRow;
+  if(s.includes('upright row prise large'))return YOUTUBE_VIDEOS.wideGripUprightRow;
+  if(s.includes('tirage horizontal'))return YOUTUBE_VIDEOS.seatedCableRow;
+  if(s.includes('triceps corde'))return YOUTUBE_VIDEOS.ropeTriceps;
+  if(s.includes('pompes'))return YOUTUBE_VIDEOS.pushUp;
   if(s.includes('bench')&&s.includes('serrée'))return YOUTUBE_VIDEOS.bench;
   if(s.includes('bench'))return YOUTUBE_VIDEOS.bench;
   if(s.includes('développé incliné'))return YOUTUBE_VIDEOS.incline;
