@@ -91,7 +91,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;ba
 .training-day{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px}
 .training-day h3{font-size:15px;font-weight:800;margin-bottom:4px}
 .training-meta{font-size:11px;color:var(--muted);margin-bottom:10px}
-.exercise-row{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--border)}
+.exercise-row{display:flex;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--border)}
 .exercise-row:last-child{border-bottom:none}
 .exercise-check{width:28px;height:28px;border-radius:8px;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;font-weight:800}
 .exercise-check.on{background:var(--accent);border-color:var(--accent);color:#000}
@@ -109,8 +109,37 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;ba
 .week-day-progress{font-size:10px;font-weight:800;color:var(--accent)}
 .week-day-type{font-size:11px;color:var(--muted);line-height:1.35}
 .week-exercises{margin-top:10px;padding-top:8px;border-top:1px solid var(--border);display:grid;gap:7px}
-.week-exercise{display:flex;gap:8px;align-items:flex-start;font-size:11px;color:var(--soft);line-height:1.35}
-.exercise-illus{width:28px;height:28px;border-radius:8px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px}
+.week-exercise{display:flex;gap:8px;align-items:center;font-size:11px;color:var(--soft);line-height:1.35}
+.exercise-demo{width:74px;height:48px;border-radius:10px;background:linear-gradient(180deg,var(--surface2),var(--surface));border:1px solid var(--border);position:relative;overflow:hidden;flex-shrink:0}
+.week-exercise .exercise-demo{width:64px;height:42px}
+.demo-head,.demo-body,.demo-arm,.demo-leg,.demo-bar,.demo-weight,.demo-floor{position:absolute;background:var(--accent)}
+.demo-head{width:9px;height:9px;border-radius:50%;left:32px;top:8px}
+.demo-body{width:5px;height:20px;border-radius:4px;left:34px;top:18px}
+.demo-arm{height:4px;width:30px;border-radius:4px;left:22px;top:23px;transform-origin:center}
+.demo-leg{height:4px;width:26px;border-radius:4px;left:24px;top:37px;transform-origin:center}
+.demo-bar{height:3px;width:46px;border-radius:4px;left:14px;top:18px;background:var(--orange)}
+.demo-weight{width:6px;height:14px;border-radius:2px;top:13px;background:var(--orange)}
+.demo-weight.l{left:10px}.demo-weight.r{right:10px}
+.demo-floor{height:2px;width:58px;left:8px;bottom:7px;background:var(--border)}
+.demo-bench .demo-bar{animation:benchBar 1.2s ease-in-out infinite}.demo-bench .demo-arm{animation:benchArm 1.2s ease-in-out infinite}
+.demo-squat .demo-body,.demo-squat .demo-head,.demo-squat .demo-arm{animation:squatDrop 1.25s ease-in-out infinite}.demo-squat .demo-leg{animation:squatLeg 1.25s ease-in-out infinite}
+.demo-run .demo-body,.demo-run .demo-head{animation:runBounce .65s ease-in-out infinite}.demo-run .demo-arm{animation:runArm .65s ease-in-out infinite}.demo-run .demo-leg{animation:runLeg .65s ease-in-out infinite}
+.demo-core .demo-body{animation:coreCurl 1.1s ease-in-out infinite}.demo-core .demo-head{animation:coreHead 1.1s ease-in-out infinite}
+.demo-pull .demo-body,.demo-pull .demo-head{animation:pullUp 1.2s ease-in-out infinite}.demo-pull .demo-bar{top:8px}
+.demo-curl .demo-arm{animation:curlArm 1.1s ease-in-out infinite}
+.demo-shoulder .demo-arm{animation:shoulderRaise 1.2s ease-in-out infinite}
+@keyframes benchBar{0%,100%{transform:translateY(-6px)}50%{transform:translateY(9px)}}
+@keyframes benchArm{0%,100%{transform:rotate(-12deg)}50%{transform:rotate(12deg)}}
+@keyframes squatDrop{0%,100%{transform:translateY(0)}50%{transform:translateY(8px)}}
+@keyframes squatLeg{0%,100%{transform:rotate(0)}50%{transform:rotate(-18deg)}}
+@keyframes runBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+@keyframes runArm{0%,100%{transform:rotate(-25deg)}50%{transform:rotate(25deg)}}
+@keyframes runLeg{0%,100%{transform:rotate(24deg)}50%{transform:rotate(-24deg)}}
+@keyframes coreCurl{0%,100%{transform:rotate(65deg) translate(3px,-4px)}50%{transform:rotate(25deg) translate(0,3px)}}
+@keyframes coreHead{0%,100%{transform:translate(11px,11px)}50%{transform:translate(2px,3px)}}
+@keyframes pullUp{0%,100%{transform:translateY(16px)}50%{transform:translateY(3px)}}
+@keyframes curlArm{0%,100%{transform:rotate(38deg)}50%{transform:rotate(-42deg)}}
+@keyframes shoulderRaise{0%,100%{transform:rotate(0)}50%{transform:rotate(-36deg)}}
 /* HISTORY */
 .history-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px}
 .history-card h3{font-size:15px;font-weight:800;margin-bottom:4px}
@@ -682,7 +711,7 @@ function renderTraining(){
     const doneForToday=isToday?doneCount:null;
     const progress=isToday?`${doneForToday}/${p.items.length}`:`${p.items.length} blocs`;
     const details=p.items.map(item=>`<div class="week-exercise">
-      <div class="exercise-illus">${exerciseIcon(item)}</div>
+      ${exerciseDemo(item)}
       <div>${item}</div>
     </div>`).join('');
     return `<details class="week-day${isToday?' today':''}" ${isToday?'open':''}>
@@ -700,7 +729,7 @@ function renderTraining(){
     const on=!!(state.done&&state.done[i]);
     return `<div class="exercise-row" onclick="toggleExercise(${i})">
       <div class="exercise-check${on?' on':''}">${on?'✓':''}</div>
-      <div class="exercise-illus">${exerciseIcon(item)}</div>
+      ${exerciseDemo(item)}
       <div class="exercise-text${on?' done-text':''}">${item}</div>
     </div>`;
   }).join('');
@@ -722,18 +751,25 @@ function renderTraining(){
   </div>`;
 }
 
-function exerciseIcon(item){
+function exerciseDemo(item){
   const s=item.toLowerCase();
-  if(s.includes('bench')||s.includes('développé incliné')||s.includes('dips')||s.includes('pompes'))return'🏋️';
-  if(s.includes('squat')||s.includes('deadlift')||s.includes('leg ')||s.includes('mollets')||s.includes('steps'))return'🦵';
-  if(s.includes('cardio')||s.includes('5k')||s.includes('piste'))return'🏃';
-  if(s.includes('crunch')||s.includes('plank')||s.includes('raises')||s.includes('abdos'))return'◎';
-  if(s.includes('curl')||s.includes('skull')||s.includes('triceps'))return'💪';
-  if(s.includes('row')||s.includes('tirage')||s.includes('pull')||s.includes('shrugs'))return'↔';
-  if(s.includes('latérales')||s.includes('épaules')||s.includes('upright'))return'△';
-  if(s.includes('stretch')||s.includes('mobilité')||s.includes('repos'))return'☁';
-  if(s.includes('poulie'))return'⇅';
-  return'•';
+  let type='bench';
+  if(s.includes('squat')||s.includes('deadlift')||s.includes('leg ')||s.includes('mollets')||s.includes('steps'))type='squat';
+  else if(s.includes('cardio')||s.includes('5k')||s.includes('piste'))type='run';
+  else if(s.includes('crunch')||s.includes('plank')||s.includes('raises')||s.includes('abdos'))type='core';
+  else if(s.includes('pull ups')||s.includes('tractions')||s.includes('tirage')||s.includes('row')||s.includes('shrugs'))type='pull';
+  else if(s.includes('curl')||s.includes('skull')||s.includes('triceps'))type='curl';
+  else if(s.includes('latérales')||s.includes('épaules')||s.includes('upright'))type='shoulder';
+  return `<div class="exercise-demo demo-${type}" aria-label="Démo animée du mouvement">
+    <div class="demo-floor"></div>
+    <div class="demo-bar"></div>
+    <div class="demo-weight l"></div>
+    <div class="demo-weight r"></div>
+    <div class="demo-head"></div>
+    <div class="demo-body"></div>
+    <div class="demo-arm"></div>
+    <div class="demo-leg"></div>
+  </div>`;
 }
 
 function escapeText(value){
@@ -763,11 +799,12 @@ function setTrainingComment(comment){
 // ── HISTORY ──────────────────────────────────────────
 function renderHistory(){
   const allMeals=cloudReady?(cloudState.meals||{}):collectLocalMeals();
-  const dates=Object.keys(allMeals).sort().reverse();
-  let totalKcal=0,totalProt=0,doneMeals=0,skippedMeals=0,notesCount=0;
+  const allTraining=training();
+  const dates=Array.from(new Set([...Object.keys(allMeals),...Object.keys(allTraining)])).sort().reverse();
+  let totalKcal=0,totalProt=0,doneMeals=0,skippedMeals=0,notesCount=0,trainingDays=0,doneExercises=0;
   const daysHTML=dates.map(date=>{
     const dayMeals=allMeals[date]||{};
-    const lines=MEALS.map(meal=>{
+    const mealLines=MEALS.map(meal=>{
       const entry=mealEntry(dayMeals[meal.id]);
       if(entry.status==='pending'&&!entry.note)return'';
       if(entry.status==='done'){
@@ -782,11 +819,26 @@ function renderHistory(){
       const note=entry.note?`<span class="history-note">${escapeText(entry.note)}</span>`:'';
       return `<div class="history-line">${meal.time} · ${meal.name} · ${status}${kcal}${note}</div>`;
     }).join('');
-    if(!lines)return'';
+    const session=allTraining[date];
+    let trainingLines='';
+    if(session){
+      const dayNum=new Date(`${date}T12:00:00`).getDay();
+      const plan=TRAINING_PLAN[dayNum]||TRAINING_PLAN[0];
+      const checked=Object.entries(session.done||{}).filter(([,v])=>v).map(([i])=>Number(i));
+      if(checked.length||session.comment){
+        trainingDays++;
+        doneExercises+=checked.length;
+        const checkedLines=checked.map(i=>`<div class="history-line">Training · ${plan.items[i]||`Exercice ${i+1}`} · Fait</div>`).join('');
+        const comment=session.comment?`<div class="history-line">Commentaire séance<span class="history-note">${escapeText(session.comment)}</span></div>`:'';
+        trainingLines=`<div class="history-line" style="font-weight:800;color:var(--text)">🏋️ ${plan.name} · ${checked.length}/${plan.items.length} exercices</div>${checkedLines}${comment}`;
+      }
+    }
+    if(!mealLines&&!trainingLines)return'';
     const label=new Date(`${date}T12:00:00`).toLocaleDateString('fr-FR',{weekday:'long',day:'2-digit',month:'short',year:'numeric'});
     return `<div class="history-card">
       <div class="history-date">${label}</div>
-      ${lines}
+      ${mealLines}
+      ${trainingLines}
     </div>`;
   }).join('');
   document.getElementById('main').innerHTML=`
@@ -800,9 +852,11 @@ function renderHistory(){
       <div class="history-stat"><strong>${skippedMeals}</strong><span>repas skippés</span></div>
       <div class="history-stat"><strong>${dates.length}</strong><span>jours trackés</span></div>
       <div class="history-stat"><strong>${notesCount}</strong><span>notes</span></div>
+      <div class="history-stat"><strong>${trainingDays}</strong><span>séances loggées</span></div>
+      <div class="history-stat"><strong>${doneExercises}</strong><span>exercices cochés</span></div>
     </div>
   </div>
-  ${daysHTML||'<div class="history-card"><div class="training-meta">Aucun repas enregistré pour le moment.</div></div>'}`;
+  ${daysHTML||'<div class="history-card"><div class="training-meta">Aucun historique enregistré pour le moment.</div></div>'}`;
 }
 
 function collectLocalMeals(){
