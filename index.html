@@ -411,10 +411,15 @@ function mergeLocalIntoCloud(){
       changed=true;
     }
   });
-  const localMeals=ls(`${STORAGE_PREFIX}_meals_${today()}`)||{};
-  if(hasData(localMeals)&&!hasData(cloudState.meals[today()])){
-    cloudState.meals[today()]=localMeals;
-    changed=true;
+  const localMeals=collectLocalMeals();
+  if(hasData(localMeals)){
+    cloudState.meals=cloudState.meals||{};
+    Object.entries(localMeals).forEach(([date,val])=>{
+      if(hasData(val)&&!hasData(cloudState.meals[date])){
+        cloudState.meals[date]=val;
+        changed=true;
+      }
+    });
   }
   const localWeights=ls(`${STORAGE_PREFIX}_weights`)||{};
   if(hasData(localWeights)){
@@ -905,33 +910,94 @@ function setTrainingComment(comment){
 }
 
 // ── HISTORY ──────────────────────────────────────────
+function buildCaloriesChart(points){
+  if(!points.length)return`<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px">Aucune calorie enregistrée pour le moment</div>`;
+  const sorted=[...points].sort((a,b)=>a.date>b.date?1:-1);
+  const maxKcal=Math.max(TOTAL_KCAL, ...sorted.map(p=>p.kcal), 1000);
+  const svgW=Math.max(560,sorted.length*64);
+  const svgH=250;
+  const pad={l:50,r:24,t:26,b:48};
+  const cw=svgW-pad.l-pad.r;
+  const ch=svgH-pad.t-pad.b;
+  const barW=Math.max(18,Math.min(34,cw/sorted.length*.48));
+  function px(i){return sorted.length===1?pad.l+cw/2:pad.l+i*(cw/(sorted.length-1))}
+  function py(v){return pad.t+ch-(v/maxKcal)*ch}
+  const yValues=[0,Math.round(maxKcal*.25),Math.round(maxKcal*.5),Math.round(maxKcal*.75),Math.round(maxKcal)];
+  const yLabels=yValues.map(v=>`<text x="${pad.l-8}" y="${py(v)+4}" text-anchor="end" font-size="10" fill="var(--muted)">${v}</text><line x1="${pad.l}" y1="${py(v)}" x2="${pad.l+cw}" y2="${py(v)}" stroke="var(--border)" stroke-width="1"/>`).join('');
+  const bars=sorted.map((p,i)=>{
+    const x=px(i)-barW/2;
+    const y=py(p.kcal);
+    const h=pad.t+ch-y;
+    const ok=p.kcal>=TOTAL_KCAL;
+    return `<rect x="${x}" y="${y}" width="${barW}" height="${h}" rx="6" fill="${ok?'var(--accent)':'var(--orange)'}" opacity=".72"/>
+    <circle cx="${px(i)}" cy="${y}" r="4" fill="${ok?'var(--accent)':'var(--orange)'}"/>
+    <text x="${px(i)}" y="${Math.max(12,y-8)}" text-anchor="middle" font-size="10" fill="${ok?'var(--accent)':'var(--orange)'}" font-weight="800">${p.kcal}</text>`;
+  }).join('');
+  const line=sorted.length>1
+    ? `<polyline points="${sorted.map((p,i)=>`${px(i)},${py(p.kcal)}`).join(' ')}" fill="none" stroke="var(--text)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity=".45"/>`
+    : '';
+  const targetY=py(TOTAL_KCAL);
+  const targetLine=`<line x1="${pad.l}" y1="${targetY}" x2="${pad.l+cw}" y2="${targetY}" stroke="var(--blue)" stroke-width="2" stroke-dasharray="6,6" opacity=".75"/>
+  <text x="${pad.l+cw}" y="${Math.max(12,targetY-8)}" text-anchor="end" font-size="10" fill="var(--blue)" font-weight="800">${TOTAL_KCAL} kcal objectif</text>`;
+  const xLabels=sorted.map((p,i)=>`<text x="${px(i)}" y="${svgH-18}" text-anchor="middle" font-size="11" fill="var(--muted)">${p.date.slice(5)}</text>`).join('');
+  return`<div class="chart-wrap">
+  <svg viewBox="0 0 ${svgW} ${svgH}" width="${svgW}" height="${svgH}" xmlns="http://www.w3.org/2000/svg" style="min-width:${svgW}px">
+    ${yLabels}${targetLine}${bars}${line}${xLabels}
+    <line x1="${pad.l}" y1="${pad.t}" x2="${pad.l}" y2="${pad.t+ch}" stroke="var(--border)" stroke-width="1"/>
+    <line x1="${pad.l}" y1="${pad.t+ch}" x2="${pad.l+cw}" y2="${pad.t+ch}" stroke="var(--border)" stroke-width="1"/>
+  </svg>
+  <div style="font-size:11px;color:var(--muted);margin-top:8px;display:flex;gap:16px;flex-wrap:wrap">
+    <span style="color:var(--accent)">● Objectif atteint</span>
+    <span style="color:var(--orange)">● Sous objectif</span>
+    <span style="color:var(--blue)">- - Objectif journalier</span>
+  </div>
+  </div>`;
+}
+
 function renderHistory(){
   const allMeals=cloudReady?(cloudState.meals||{}):collectLocalMeals();
   const allTraining=training();
   const dates=Array.from(new Set([...Object.keys(allMeals),...Object.keys(allTraining)])).sort().reverse();
-  let totalKcal=0,totalProt=0,doneMeals=0,skippedMeals=0,modifiedMeals=0,notesCount=0,trainingDays=0,doneExercises=0;
+  let totalKcal=0,totalProt=0,doneMeals=0,skippedMeals=0,modifiedMeals=0,notesCount=0,trainingDays=0,doneExercises=0,trackedDays=0;
+  const calorieChartData=[];
   const daysHTML=dates.map(date=>{
     const dayMeals=allMeals[date]||{};
+    let dayKcal=0,dayProt=0,dayDone=0,daySkipped=0,dayModified=0;
     const mealLines=MEALS.map(meal=>{
       const entry=mealEntry(dayMeals[meal.id]);
-      if(entry.status==='pending'&&!entry.note)return'';
+      const hasCustomMacros=entry.kcal>0||entry.prot>0;
+      const hasMealLog=entry.status!=='pending'||entry.note||hasCustomMacros;
+      if(!hasMealLog)return'';
       if(entry.status==='done'){
         totalKcal+=meal.kcal;
         totalProt+=meal.prot;
+        dayKcal+=meal.kcal;
+        dayProt+=meal.prot;
         doneMeals++;
+        dayDone++;
       }
       if(entry.status==='modified'){
         totalKcal+=entry.kcal;
         totalProt+=entry.prot;
+        dayKcal+=entry.kcal;
+        dayProt+=entry.prot;
       }
-      if(entry.status==='skipped')skippedMeals++;
-      if(entry.status==='modified')modifiedMeals++;
+      if(entry.status==='skipped'){
+        skippedMeals++;
+        daySkipped++;
+      }
+      if(entry.status==='modified'){
+        modifiedMeals++;
+        dayModified++;
+      }
       if(entry.note)notesCount++;
       const status=entry.status==='done'?'Mangé':entry.status==='skipped'?'Skippé':entry.status==='modified'?'Modifié':'Note';
       const kcal=entry.status==='done'
         ? ` · ${meal.kcal} kcal · ${meal.prot}g prot`
-        : entry.status==='modified'&&entry.kcal
-          ? ` · ${entry.kcal} kcal${entry.prot?` · ${entry.prot}g prot`:''}`
+        : entry.status==='modified'
+          ? hasCustomMacros
+            ? ` · ${entry.kcal} kcal${entry.prot?` · ${entry.prot}g prot`:''}`
+            : ' · kcal non renseignées'
           : '';
       const note=entry.note?`<span class="history-note">${escapeText(entry.note)}</span>`:'';
       return `<div class="history-line">${meal.time} · ${meal.name} · ${status}${kcal}${note}</div>`;
@@ -951,9 +1017,15 @@ function renderHistory(){
       }
     }
     if(!mealLines&&!trainingLines)return'';
+    trackedDays++;
+    if(mealLines)calorieChartData.push({date,kcal:dayKcal,prot:dayProt});
     const label=new Date(`${date}T12:00:00`).toLocaleDateString('fr-FR',{weekday:'long',day:'2-digit',month:'short',year:'numeric'});
+    const nutritionSummary=mealLines
+      ? `<div class="history-line" style="font-weight:800;color:var(--text)">Nutrition · ${dayKcal} kcal · ${dayProt}g prot · ${dayDone} mangé(s) · ${dayModified} modifié(s) · ${daySkipped} skippé(s)</div>`
+      : '';
     return `<div class="history-card">
       <div class="history-date">${label}</div>
+      ${nutritionSummary}
       ${mealLines}
       ${trainingLines}
     </div>`;
@@ -968,11 +1040,16 @@ function renderHistory(){
       <div class="history-stat"><strong>${doneMeals}</strong><span>repas mangés</span></div>
       <div class="history-stat"><strong>${modifiedMeals}</strong><span>repas modifiés</span></div>
       <div class="history-stat"><strong>${skippedMeals}</strong><span>repas skippés</span></div>
-      <div class="history-stat"><strong>${dates.length}</strong><span>jours trackés</span></div>
+      <div class="history-stat"><strong>${trackedDays}</strong><span>jours trackés</span></div>
       <div class="history-stat"><strong>${notesCount}</strong><span>notes</span></div>
       <div class="history-stat"><strong>${trainingDays}</strong><span>séances loggées</span></div>
       <div class="history-stat"><strong>${doneExercises}</strong><span>exercices cochés</span></div>
     </div>
+  </div>
+  <div class="history-card">
+    <h3>📈 Calories dans le temps</h3>
+    <div class="training-meta">Evolution des calories mangées par jour, avec la ligne objectif du plan.</div>
+    ${buildCaloriesChart(calorieChartData)}
   </div>
   ${daysHTML||'<div class="history-card"><div class="training-meta">Aucun historique enregistré pour le moment.</div></div>'}`;
 }
