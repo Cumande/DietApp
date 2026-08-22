@@ -217,7 +217,7 @@ const TRAINING_PLAN = {
     'Rowing barre large : 8x10 à 50kg',
     'Développé épaules haltères : 4x10 à 24kg par main',
     'Élévations latérales : 4x12 à 16kg',
-    'Poulie : 5x10 à 40kg',
+    'Poulie abdos : 5x10 à 40kg',
     'Crunch : 25x7 à 20kg',
     'Plank : 1m20',
     'Lateral planks',
@@ -226,8 +226,7 @@ const TRAINING_PLAN = {
   2:{name:'Mardi',type:'Cardio + abdos + mobilité',items:[
     'CARDIO : 5K',
     'Abdos',
-    'Étirements mobilité',
-    'Piste Melun : 18h30'
+    'Étirements mobilité'
   ]},
   3:{name:'Mercredi',type:'Upper + bras + abdos',items:[
     'Bench press prise serrée : échauffement 50kg',
@@ -243,7 +242,7 @@ const TRAINING_PLAN = {
     'Élévations latérales drop set : 4x12 à 16kg, puis 10kg, puis 6kg',
     'Dumbbell shrugs : 4x10 à 30-35kg par main',
     'Curl alterné : 3x10 à 14kg par main',
-    'Poulie : 5x10 à 40kg',
+    'Poulie abdos : 5x10 à 40kg',
     'Crunch : 25x7 à 20kg',
     'Plank : 1m20'
   ]},
@@ -256,7 +255,7 @@ const TRAINING_PLAN = {
     'Steps with dumbbell : 3x12 à 15kg',
     'Mollets debout : 6x12 à 50kg',
     'Hanging leg raises : 3x12',
-    'Poulie : 5x10 à 40kg',
+    'Poulie abdos : 5x10 à 40kg',
     'Crunch : 25x7 à 20kg',
     'Plank : 1m20',
     'Lateral planks',
@@ -283,9 +282,9 @@ const TRAINING_PLAN = {
 const YOUTUBE_VIDEOS = {
   bench:'Zw6qCAFsV0w',
   incline:'Zw6qCAFsV0w',
-  rdl:'CQp5I9KgdXI',
-  deadlift:'CQp5I9KgdXI',
-  squat:'CQp5I9KgdXI',
+  rdl:'g5u75sgpn04',
+  deadlift:'g5u75sgpn04',
+  squat:'dW3zj79xfrc',
   barbellRow:'KqNQ4rocK_E',
   shoulderPress:'GFblCmuEE18',
   lateralRaise:'XPPfnSEATJA',
@@ -299,8 +298,8 @@ const YOUTUBE_VIDEOS = {
   latPulldown:'Ad_WOMtfyc4',
   pullover:'t_lYFd8pl1M',
   skullCrusher:'VP9Qp72zZ_c',
-  ezCurl:'H0dtbu_Bi8c',
-  shrugs:'FOGWC04nYtI',
+  ezCurl:'JhDDKwag2vE',
+  shrugs:'rFsSeClGnNA',
   alternatingCurl:'8d2we4UqOSs',
   hipWarmup:'EFZigzEhYcU',
   hangingLegRaise:'kTJLjZ3FFCg',
@@ -309,9 +308,12 @@ const YOUTUBE_VIDEOS = {
   closeGripUprightRow:'q-83sBnQQTQ',
   wideGripUprightRow:'Xpu0C50pD-U',
   seatedCableRow:'xjlz8lRXOOI',
-  ropeTriceps:'vPeQu_L-1n0',
+  ropeTriceps:'u36jNfqh8_U',
   pushUp:'WDIpL0pjun0',
-  cableCrunch:'l_2_6JI78_Q'
+  cableCrunch:'dkGwcfo9zto',
+  legPress:'EotSw18oR9w',
+  legCurl:'xdbEG3xGLI8',
+  calfRaise:'wdOkFomQNp8'
 };
 
 // ═══════════════════════════════════════════════════════
@@ -777,7 +779,10 @@ function exerciseVideo(item){
 function exerciseVideoId(item){
   const s=item.toLowerCase();
   if(s.includes('piste melun'))return null;
-  if(s.trim().startsWith('poulie'))return null;
+  if(s.includes('poulie abdos'))return YOUTUBE_VIDEOS.cableCrunch;
+  if(s.includes('leg press'))return YOUTUBE_VIDEOS.legPress;
+  if(s.includes('leg curl'))return YOUTUBE_VIDEOS.legCurl;
+  if(s.includes('mollets'))return YOUTUBE_VIDEOS.calfRaise;
   if(s.includes('crunch à la poulie'))return YOUTUBE_VIDEOS.cableCrunch;
   if(s.includes('rowing barre'))return YOUTUBE_VIDEOS.barbellRow;
   if(s.includes('développé épaules'))return YOUTUBE_VIDEOS.shoulderPress;
@@ -808,7 +813,7 @@ function exerciseVideoId(item){
   if(s.includes('bench'))return YOUTUBE_VIDEOS.bench;
   if(s.includes('développé incliné'))return YOUTUBE_VIDEOS.incline;
   if(s.includes('romanian')||s.includes('deadlift'))return YOUTUBE_VIDEOS.rdl;
-  if(s.includes('squat')||s.includes('leg press')||s.includes('leg curl')||s.includes('mollets')||s.includes('steps'))return YOUTUBE_VIDEOS.squat;
+  if(s.includes('squat')||s.includes('steps'))return YOUTUBE_VIDEOS.squat;
   return null;
 }
 
