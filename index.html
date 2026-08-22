@@ -5,14 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>🍽️ Nutrition — Charly</title>
 <style>
-:root{--bg:#0a0a0a;--card:#141414;--accent:#22c55e;--accent2:#4ade80;--orange:#f97316;--blue:#3b82f6;--text:#f0f0f0;--muted:#666;--border:#1e1e1e}
+:root{--bg:#0a0a0a;--card:#141414;--surface:#1c1c1c;--surface2:#101010;--accent:#22c55e;--accent2:#4ade80;--orange:#f97316;--blue:#3b82f6;--red:#ef4444;--text:#f0f0f0;--muted:#666;--soft:#555;--border:#1e1e1e;--header:rgba(10,10,10,.96);--done-bg:#0a1a0a;--skip-bg:#190b0b}
+body.light{--bg:#f6f7f4;--card:#fff;--surface:#f0f2ed;--surface2:#fafbf8;--text:#111827;--muted:#6b7280;--soft:#4b5563;--border:#dfe3d8;--header:rgba(246,247,244,.96);--done-bg:#eaf8ee;--skip-bg:#fff0f0}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
 /* HEADER */
-.header{background:rgba(10,10,10,.96);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:14px 16px;position:sticky;top:0;z-index:50}
+.header{background:var(--header);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:14px 16px;position:sticky;top:0;z-index:50}
 .header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
 .header h1{font-size:18px;font-weight:800}
 .goal-badge{background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff;padding:5px 11px;border-radius:20px;font-size:11px;font-weight:700}
+.icon-badge{border:1px solid var(--border);background:var(--surface);color:var(--text);padding:5px 9px;border-radius:20px;font-size:12px;font-weight:800;cursor:pointer}
 .tabs{display:flex;gap:6px}
 .tab{flex:1;padding:8px;border-radius:12px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-size:12px;font-weight:700;transition:all .18s;text-align:center}
 .tab.active{background:var(--accent);border-color:var(--accent);color:#000}
@@ -40,24 +42,32 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;ba
 .kcal-fill{background:linear-gradient(90deg,var(--orange),#fbbf24)}
 .prot-fill{background:linear-gradient(90deg,var(--blue),#60a5fa)}
 /* MEAL CARDS */
-.sec-lbl{font-size:9px;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;color:#333;margin:16px 0 8px}
+.sec-lbl{font-size:9px;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;color:var(--muted);margin:16px 0 8px}
 .meal-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:8px;display:flex;align-items:center;gap:14px;transition:all .2s;cursor:pointer}
-.meal-card.checked{border-color:#14532d;background:#0a1a0a}
+.meal-card.checked{border-color:#14532d;background:var(--done-bg)}
+.meal-card.skipped{border-color:#4a1d1d;background:var(--skip-bg)}
 .meal-check{width:36px;height:36px;border-radius:10px;border:2px solid #2a2a2a;background:transparent;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px;transition:all .2s;cursor:pointer}
 .meal-check.on{background:var(--accent);border-color:var(--accent)}
+.meal-check.skip{background:#ef4444;border-color:#ef4444;color:#fff}
 .meal-body{flex:1;min-width:0}
 .meal-time{font-size:10px;color:var(--muted);font-weight:700;margin-bottom:3px}
 .meal-name{font-size:13px;font-weight:700;margin-bottom:4px;line-height:1.3}
-.meal-desc{font-size:11px;color:#555;line-height:1.4}
+.meal-desc{font-size:11px;color:var(--soft);line-height:1.4}
 .meal-macros{display:flex;gap:8px;margin-top:6px}
 .meal-chip{padding:2px 7px;border-radius:6px;font-size:10px;font-weight:700}
 .mc-kcal{background:#2a1500;color:#fb923c}
 .mc-prot{background:#0a1525;color:#60a5fa}
+.meal-actions{display:flex;gap:8px;margin-top:10px}
+.meal-action{border:1px solid var(--border);background:var(--surface);color:var(--muted);border-radius:8px;padding:7px 9px;font-size:11px;font-weight:800;cursor:pointer}
+.meal-action.done.on{background:var(--accent);border-color:var(--accent);color:#000}
+.meal-action.skip.on{background:#ef4444;border-color:#ef4444;color:#fff}
+.meal-note{width:100%;margin-top:8px;padding:9px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px}
+.meal-note:focus{outline:none;border-color:var(--accent)}
 /* WEIGHT PAGE */
 .weight-input-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px;margin-bottom:14px}
 .weight-input-card h3{font-size:14px;font-weight:800;margin-bottom:14px}
 .weight-input-row{display:flex;gap:10px;align-items:center}
-.weight-input{flex:1;padding:12px 16px;background:#1c1c1c;border:1px solid #2a2a2a;border-radius:10px;color:var(--text);font-size:20px;font-weight:800;text-align:center}
+.weight-input{flex:1;padding:12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:20px;font-weight:800;text-align:center}
 .weight-input:focus{outline:none;border-color:var(--accent)}
 .weight-save-btn{padding:12px 20px;border-radius:10px;border:none;background:var(--accent);color:#000;font-size:13px;font-weight:800;cursor:pointer}
 /* WEIGHT CHART */
@@ -72,21 +82,23 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;ba
 .weight-table tr.past td{color:#555}
 .delta-pos{color:var(--accent)}
 .delta-neg{color:#ef4444}
-/* MEAL PREP PAGE */
-.prep-section{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px}
-.prep-section h3{font-size:13px;font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:8px}
-.prep-item{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid #111;cursor:pointer}
-.prep-item:last-child{border:none}
-.prep-check{width:28px;height:28px;border-radius:7px;border:2px solid #2a2a2a;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;transition:all .18s}
-.prep-check.on{background:var(--accent);border-color:var(--accent)}
-.prep-text{font-size:13px;color:#aaa;flex:1;line-height:1.4}
-.prep-text.done-text{text-decoration:line-through;color:#444}
-.prep-progress{background:#0a1a0a;border:1px solid #1a3a1a;border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:12px;color:#4ade80;display:flex;justify-content:space-between;align-items:center}
 /* RULES */
 .rules{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-top:8px}
 .rules h4{font-size:9px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#333;margin-bottom:10px}
 .rule{font-size:12px;padding:5px 0;border-bottom:1px solid #111;color:#777}
 .rule:last-child{border:none}
+/* TRAINING */
+.training-day{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px}
+.training-day h3{font-size:15px;font-weight:800;margin-bottom:4px}
+.training-meta{font-size:11px;color:var(--muted);margin-bottom:10px}
+.exercise-row{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--border)}
+.exercise-row:last-child{border-bottom:none}
+.exercise-check{width:28px;height:28px;border-radius:8px;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;font-weight:800}
+.exercise-check.on{background:var(--accent);border-color:var(--accent);color:#000}
+.exercise-text{font-size:12px;color:var(--text);line-height:1.45}
+.exercise-text.done-text{text-decoration:line-through;color:var(--muted)}
+.session-comment{width:100%;min-height:110px;resize:vertical;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);padding:12px;font-size:13px;line-height:1.5}
+.session-comment:focus{outline:none;border-color:var(--accent)}
 </style>
 </head>
 <body>
@@ -94,14 +106,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;ba
   <div class="header-top">
     <h1>🍽️ Nutrition</h1>
     <div style="display:flex;gap:8px;align-items:center">
+      <button class="icon-badge" id="themeToggle" onclick="toggleTheme()">🌙</button>
       <span class="goal-badge" id="cloudStatus" onclick="setPin()">📱 Local</span>
-      <span class="goal-badge">🎯 97kg · 5 déc.</span>
+      <span class="goal-badge">🎯 97kg · 22 oct.</span>
     </div>
   </div>
   <div class="tabs">
     <button class="tab active" id="tab0" onclick="switchTab(0)">📋 Aujourd'hui</button>
     <button class="tab" id="tab1" onclick="switchTab(1)">⚖️ Poids</button>
-    <button class="tab" id="tab2" onclick="switchTab(2)">🥘 Meal Prep</button>
+    <button class="tab" id="tab2" onclick="switchTab(2)">🏋️ Training</button>
   </div>
 </div>
 <div class="main" id="main"></div>
@@ -124,7 +137,7 @@ const TOTAL_PROT = MEALS.reduce((a,m)=>a+m.prot,0); // 245
 const STORAGE_PREFIX = 'nut_90_97';
 const WEIGHT_START = 90;
 const WEIGHT_GOAL  = 97;
-const GOAL_DATE    = '2026-12-05';
+const GOAL_DATE    = '2026-10-22';
 const START_DATE   = '2026-08-22';
 
 const WEEKS = [
@@ -137,38 +150,101 @@ const WEEKS = [
   {week:'W7',date:'2026-10-03'},
   {week:'W8',date:'2026-10-10'},
   {week:'W9',date:'2026-10-17'},
-  {week:'W10',date:'2026-10-24'},
-  {week:'W11',date:'2026-10-31'},
-  {week:'W12',date:'2026-11-07'},
-  {week:'W13',date:'2026-11-14'},
-  {week:'W14',date:'2026-11-21'},
-  {week:'W15',date:'2026-11-28'},
-  {week:'W16',date:'2026-12-05'}
+  {week:'Objectif',date:'2026-10-22'}
 ];
 
 const MILESTONES = [
-  {month:'Septembre',target:92,date:'2026-09-26'},
-  {month:'Octobre',target:94.5,date:'2026-10-31'},
-  {month:'Novembre',target:96,date:'2026-11-28'},
-  {month:'Décembre',target:97,date:'2026-12-05'}
+  {month:'7 septembre',target:92,date:'2026-09-07'},
+  {month:'24 septembre',target:94,date:'2026-09-24'},
+  {month:'10 octobre',target:96,date:'2026-10-10'},
+  {month:'22 octobre',target:97,date:'2026-10-22'}
 ];
 
-const PREP_SUNDAY = [
-  'Riz ou pâtes cuits en grande quantité (portions de 250g)',
-  'Poulet ou bœuf maigre cuits (portions de 250g)',
-  'Légumes lavés, coupés et prêts à réchauffer',
-  'Œufs cuits ou prêts pour le breakfast',
-  'Pain complet, fruits, yaourts et lait entier en stock',
-  'Tout portionné en boîtes hermétiques',
-  'Boîtes au frigo (conservation max 4–5 jours)'
-];
-const PREP_WEDNESDAY = [
-  'Vérifier ce qui reste en stock',
-  'Refaire riz ou pâtes pour 3 jours si stock bas',
-  'Refaire poulet ou bœuf maigre pour 3 jours si stock bas',
-  'Recharger gainers, beurre de cacahuète, yaourts et fruits',
-  'Portionner dans des boîtes'
-];
+const INITIAL_WEIGHTS = {
+  '2025-07-27':90.25,
+  '2026-07-05':88.6,
+  '2026-07-14':90,
+  '2026-07-25':92.1,
+  '2026-08-21':96,
+  '2026-08-22':90,
+  '2026-09-08':92.3,
+  '2026-09-15':90.75
+};
+
+const TRAINING_PLAN = {
+  1:{name:'Lundi',type:'Push + dos + abdos',items:[
+    'Bench press prise large : échauffement 50kg',
+    'Bench press prise large : 3x4 à 100kg, 2/3min rest, tenter 110kg si accompagné',
+    'Bench press prise large : 2x4 à 90kg, 2/3min rest',
+    'Bench press prise large : 3x6 à 80kg',
+    'Bench press prise large : 3x8 à 70kg',
+    'Bench press prise large : 3x12 à 60kg',
+    'Développé incliné barre : 3x8 à 80kg',
+    'Rowing barre large : 8x10 à 50kg',
+    'Développé épaules haltères : 4x10 à 24kg par main',
+    'Élévations latérales : 4x12 à 16kg',
+    'Poulie : 5x10 à 40kg',
+    'Crunch : 25x7 à 20kg',
+    'Plank : 1m20',
+    'Lateral planks',
+    'Lateral crunch : 20x4'
+  ]},
+  2:{name:'Mardi',type:'Cardio + abdos + mobilité',items:[
+    'CARDIO : 5K',
+    'Abdos',
+    'Étirements mobilité',
+    'Piste Melun : 18h30'
+  ]},
+  3:{name:'Mercredi',type:'Upper + bras + abdos',items:[
+    'Bench press prise serrée : échauffement 50kg',
+    'Bench press prise serrée : x4 à 100kg, 2/3min rest',
+    'Bench press prise serrée : 2x4 à 90kg, 2/3min rest',
+    'Bench press prise serrée : 3x6 à 80kg, 2/3min rest',
+    'Bench press prise serrée : 3x8 à 70kg, 2/3min rest',
+    'Bench press prise serrée : 3x12 à 60kg, 2/3min rest',
+    'Tirage vertical large : 4x8-10 à 80kg',
+    'Pull-over haltère : 3x12 à 22kg',
+    'Skull crushers haltères : 6x6 à 14kg par main',
+    'Curl barre EZ : 6x10 à 20-25kg',
+    'Élévations latérales drop set : 4x12 à 16kg, puis 10kg, puis 6kg',
+    'Dumbbell shrugs : 4x10 à 30-35kg par main',
+    'Curl alterné : 3x10 à 14kg par main',
+    'Poulie : 5x10 à 40kg',
+    'Crunch : 25x7 à 20kg',
+    'Plank : 1m20'
+  ]},
+  4:{name:'Jeudi',type:'Leg day + core',items:[
+    'Échauffement jambes et hanches avant leg day',
+    'Back squat : 5x5 à 70kg',
+    'Romanian deadlift : 6x6 à 70kg, focus technique',
+    'Leg press : 6x10 à 200kg, ajuster la machine',
+    'Leg curl : 5x12 à 60kg',
+    'Steps with dumbbell : 3x12 à 15kg',
+    'Mollets debout : 6x12 à 50kg',
+    'Hanging leg raises : 3x12',
+    'Poulie : 5x10 à 40kg',
+    'Crunch : 25x7 à 20kg',
+    'Plank : 1m20',
+    'Lateral planks',
+    'Stretching'
+  ]},
+  5:{name:'Vendredi',type:'Pull + circuit + bench',items:[
+    'Pull ups : 6x5',
+    'Dips : 50 reps',
+    'Upright row prise serrée : 3x10 à 30kg, ajouter du poids si possible',
+    'Upright row prise large : 3x10 à 30kg, ajouter du poids si possible',
+    'Tirage horizontal neutre : 60kg x3',
+    'Triceps corde : 3x12 à 20-25kg',
+    'Parcours x5 : 10 tractions',
+    'Parcours x5 : 30 pompes',
+    'Parcours x5 : 10 leg raises/knee raises',
+    'Parcours x5 : 10 dips',
+    'Bench press : 80kg x6 x4',
+    'Crunch à la poulie : 4x12'
+  ]},
+  0:{name:'Dimanche',type:'Repos / récupération',items:['Repos actif ou mobilité légère']},
+  6:{name:'Samedi',type:'Repos / récupération',items:['Repos actif ou mobilité légère']}
+};
 
 // ═══════════════════════════════════════════════════════
 // STORAGE
@@ -179,7 +255,19 @@ function today(){return new Date().toISOString().slice(0,10)}
 const CLOUD_ENDPOINT = '/api/nutrition-data';
 let cloudReady = false;
 let cloudStatus = 'local';
-let cloudState = {meals:{},weights:null,prep:{}};
+let cloudState = {meals:{},weights:null,training:{}};
+
+function applyTheme(theme){
+  document.body.classList.toggle('light',theme==='light');
+  const el=document.getElementById('themeToggle');
+  if(el)el.textContent=theme==='light'?'☀️':'🌙';
+}
+function currentTheme(){return localStorage.getItem(`${STORAGE_PREFIX}_theme`)||'dark'}
+function toggleTheme(){
+  const next=currentTheme()==='dark'?'light':'dark';
+  localStorage.setItem(`${STORAGE_PREFIX}_theme`,next);
+  applyTheme(next);
+}
 
 function setCloudStatus(status){
   cloudStatus=status;
@@ -200,8 +288,9 @@ async function loadCloud(){
     if(!res.ok)throw new Error('cloud unavailable');
     cloudState=await res.json();
     cloudState.meals=cloudState.meals||{};
-    cloudState.prep=cloudState.prep||{};
+    cloudState.training=cloudState.training||{};
     cloudReady=true;
+    mergeLocalIntoCloud();
     setCloudStatus('synced');
   }catch(e){
     setCloudStatus('local');
@@ -226,6 +315,52 @@ async function saveCloud(){
     setCloudStatus('local');
   }
 }
+function mealEntry(entry){
+  if(entry&&typeof entry==='object'){
+    return {status:entry.status||'pending',note:entry.note||''};
+  }
+  return {status:entry?'done':'pending',note:''};
+}
+function hasData(obj){
+  return obj&&typeof obj==='object'&&Object.keys(obj).length>0;
+}
+function mergeLocalIntoCloud(){
+  if(!cloudReady)return;
+  let changed=false;
+  cloudState.weights=cloudState.weights||{};
+  Object.entries(INITIAL_WEIGHTS).forEach(([date,val])=>{
+    if(!cloudState.weights[date]){
+      cloudState.weights[date]=val;
+      changed=true;
+    }
+  });
+  const localMeals=ls(`${STORAGE_PREFIX}_meals_${today()}`)||{};
+  if(hasData(localMeals)&&!hasData(cloudState.meals[today()])){
+    cloudState.meals[today()]=localMeals;
+    changed=true;
+  }
+  const localWeights=ls(`${STORAGE_PREFIX}_weights`)||{};
+  if(hasData(localWeights)){
+    cloudState.weights=cloudState.weights||{};
+    Object.entries(localWeights).forEach(([date,val])=>{
+      if(!cloudState.weights[date]){
+        cloudState.weights[date]=val;
+        changed=true;
+      }
+    });
+  }
+  const localTraining=ls(`${STORAGE_PREFIX}_training`)||{};
+  if(hasData(localTraining)){
+    cloudState.training=cloudState.training||{};
+    Object.entries(localTraining).forEach(([date,val])=>{
+      if(!cloudState.training[date]){
+        cloudState.training[date]=val;
+        changed=true;
+      }
+    });
+  }
+  if(changed)saveCloud();
+}
 function todayMeals(){
   return cloudReady?(cloudState.meals[today()]||{}):(ls(`${STORAGE_PREFIX}_meals_${today()}`)||{});
 }
@@ -235,7 +370,9 @@ function saveMeals(d){
 }
 function weights(){
   const w=cloudReady?(cloudState.weights||{}):(ls(`${STORAGE_PREFIX}_weights`)||{});
-  if(!w[START_DATE])w[START_DATE]=WEIGHT_START;
+  Object.entries(INITIAL_WEIGHTS).forEach(([date,val])=>{
+    if(!w[date])w[date]=val;
+  });
   return w;
 }
 function saveWeight(date,val){
@@ -244,14 +381,13 @@ function saveWeight(date,val){
   ss(`${STORAGE_PREFIX}_weights`,w);
   if(cloudReady){cloudState.weights=w;saveCloud();}
 }
-function prepState(key){
-  return cloudReady?(cloudState.prep[key]||{}):(ls(`${STORAGE_PREFIX}_prep_${key}`)||{});
+function training(){
+  return cloudReady?(cloudState.training||{}):(ls(`${STORAGE_PREFIX}_training`)||{});
 }
-function savePrepState(key,s){
-  ss(`${STORAGE_PREFIX}_prep_${key}`,s);
-  if(cloudReady){cloudState.prep[key]=s;saveCloud();}
+function saveTraining(t){
+  ss(`${STORAGE_PREFIX}_training`,t);
+  if(cloudReady){cloudState.training=t;saveCloud();}
 }
-
 // ═══════════════════════════════════════════════════════
 // NAV
 // ═══════════════════════════════════════════════════════
@@ -270,17 +406,18 @@ function switchTab(i){
 function render(){
   if(activeTab===0)renderToday();
   else if(activeTab===1)renderWeight();
-  else renderPrep();
+  else renderTraining();
 }
 
 // ── TODAY ────────────────────────────────────────────
 function renderToday(){
   const checked=todayMeals();
-  const doneKcal=MEALS.filter(m=>checked[m.id]).reduce((a,m)=>a+m.kcal,0);
-  const doneProt=MEALS.filter(m=>checked[m.id]).reduce((a,m)=>a+m.prot,0);
+  const doneKcal=MEALS.filter(m=>mealEntry(checked[m.id]).status==='done').reduce((a,m)=>a+m.kcal,0);
+  const doneProt=MEALS.filter(m=>mealEntry(checked[m.id]).status==='done').reduce((a,m)=>a+m.prot,0);
   const pctK=Math.round(doneKcal/TOTAL_KCAL*100);
   const pctP=Math.round(doneProt/TOTAL_PROT*100);
-  const mealsDone=Object.values(checked).filter(Boolean).length;
+  const mealsDone=MEALS.filter(m=>mealEntry(checked[m.id]).status==='done').length;
+  const mealsSkipped=MEALS.filter(m=>mealEntry(checked[m.id]).status==='skipped').length;
   // weight progress
   const w=weights();
   const lastWeight=Object.entries(w).sort((a,b)=>a[0]>b[0]?1:-1).filter(([,v])=>v).pop()?.[1]||WEIGHT_START;
@@ -294,9 +431,11 @@ function renderToday(){
   const circ=2*Math.PI*34;
   const offset=circ*(1-pctWeight/100);
   const mealsHTML=MEALS.map(m=>{
-    const on=!!checked[m.id];
-    return `<div class="meal-card${on?' checked':''}" onclick="toggleMeal('${m.id}')">
-    <div class="meal-check${on?' on':''}">${on?'✓':''}</div>
+    const entry=mealEntry(checked[m.id]);
+    const on=entry.status==='done';
+    const skipped=entry.status==='skipped';
+    return `<div class="meal-card${on?' checked':''}${skipped?' skipped':''}">
+    <div class="meal-check${on?' on':''}${skipped?' skip':''}">${on?'✓':skipped?'×':''}</div>
     <div class="meal-body">
       <div class="meal-time">${m.time}</div>
       <div class="meal-name">${m.emoji} ${m.name}</div>
@@ -305,6 +444,11 @@ function renderToday(){
         <span class="meal-chip mc-kcal">${m.kcal} kcal</span>
         <span class="meal-chip mc-prot">${m.prot}g prot</span>
       </div>
+      <div class="meal-actions">
+        <button class="meal-action done${on?' on':''}" onclick="setMealStatus('${m.id}','${on?'pending':'done'}')">Mangé</button>
+        <button class="meal-action skip${skipped?' on':''}" onclick="setMealStatus('${m.id}','${skipped?'pending':'skipped'}')">Skippé</button>
+      </div>
+      <input class="meal-note" value="${escapeAttr(entry.note)}" placeholder="Ce que j'ai mangé / ajustement" onchange="setMealNote('${m.id}',this.value)" onclick="event.stopPropagation()">
     </div>
     </div>`;
   }).join('');
@@ -335,52 +479,75 @@ function renderToday(){
       <div class="mp"><div class="mf prot-fill" style="width:${pctP}%"></div></div>
     </div>
   </div>
-  <div class="sec-lbl">${mealsDone}/6 repas · ${today()}</div>
+  <div class="sec-lbl">${mealsDone}/6 mangés · ${mealsSkipped} skippé(s) · ${today()}</div>
   ${mealsHTML}
   <div class="rules">
     <h4>⚠️ Règles</h4>
-    <div class="rule">✅ Si +0 kg sur 2 semaines → augmenter portions de 10%</div>
+    <div class="rule">✅ Objectif moyen : ~0,8 kg/semaine jusqu'au 22 octobre</div>
+    <div class="rule">✅ Si +0 kg sur 10 jours → augmenter portions de 10%</div>
     <div class="rule">✅ Gym 3x/sem non-négociable — sans entraînement, le surplus = gras</div>
     <div class="rule">⚠️ Si > 1 kg/sem sur 3 semaines → retirer 1 gainer</div>
     <div class="rule">💡 Peser le lundi matin à jeun, après les toilettes</div>
   </div>`;
 }
 
+function escapeAttr(value){
+  return String(value||'').replaceAll('&','&amp;').replaceAll('"','&quot;').replaceAll('<','&lt;').replaceAll('>','&gt;');
+}
+
 function toggleMeal(id){
   const d=todayMeals();
-  d[id]=!d[id];
+  const entry=mealEntry(d[id]);
+  entry.status=entry.status==='done'?'pending':'done';
+  d[id]=entry;
   saveMeals(d);
   render();
+}
+
+function setMealStatus(id,status){
+  const d=todayMeals();
+  const entry=mealEntry(d[id]);
+  entry.status=status;
+  d[id]=entry;
+  saveMeals(d);
+  render();
+}
+
+function setMealNote(id,note){
+  const d=todayMeals();
+  const entry=mealEntry(d[id]);
+  entry.note=note.trim();
+  d[id]=entry;
+  saveMeals(d);
 }
 
 // ── WEIGHT ───────────────────────────────────────────
 function renderWeight(){
   const w=weights();
   const todayStr=today();
-  // find current week row
-  const currentWeek=WEEKS.find(wk=>wk.date===todayStr)||
-    WEEKS.slice().reverse().find(wk=>wk.date<=todayStr);
-  const tableRows=WEEKS.map((wk,i)=>{
-    const val=w[wk.date]||wk.preset||null;
-    const prev=i>0?(w[WEEKS[i-1].date]||WEEKS[i-1].preset||null):null;
+  const weightRows=Object.entries(w)
+    .filter(([,val])=>val)
+    .sort((a,b)=>a[0]>b[0]?1:-1);
+  const tableRows=weightRows.map(([date,val],i)=>{
+    const week=WEEKS.find(wk=>wk.date===date)?.week||'Log';
+    const prev=i>0?weightRows[i-1][1]:null;
     const delta=val&&prev?val-prev:null;
-    const isCurrent=wk.date===todayStr;
-    const isPast=wk.date<todayStr&&!val;
-    let cls=isCurrent?'current':isPast?'past':'';
+    const isCurrent=date===todayStr;
+    let cls=isCurrent?'current':'';
     let deltaHTML='';
     if(delta!==null){
       const sign=delta>0?'+':'';
       deltaHTML=`<span class="${delta>=0?'delta-pos':'delta-neg'}">${sign}${delta.toFixed(1)}</span>`;
     }
     return `<tr class="${cls}">
-      <td>${wk.week}</td>
-      <td>${wk.date.slice(5)}</td>
+      <td>${week}</td>
+      <td>${date.slice(5)}</td>
       <td>${val?`<b>${val} kg</b>`:'—'}</td>
       <td>${deltaHTML||'—'}</td>
     </tr>`;
   }).join('');
   // chart
-  const chartData=WEEKS.map(wk=>({date:wk.date,val:w[wk.date]||wk.preset||null})).filter(p=>p.val);
+  const chartData=Object.entries(w).filter(([,val])=>val).map(([date,val])=>({date,val}));
   const chartHTML=buildWeightChart(chartData,w);
   // milestone statuses
   const lastW=Object.entries(w).sort((a,b)=>a[0]>b[0]?1:-1).filter(([d,v])=>v).pop()?.[1]||WEIGHT_START;
@@ -405,14 +572,14 @@ function renderWeight(){
       <input class="weight-input" id="weightIn" type="number" step="0.1" min="70" max="130" placeholder="ex: 91.2" value="${w[todayStr]||''}">
       <button class="weight-save-btn" onclick="doSaveWeight()">Sauvegarder</button>
     </div>
-    <div style="font-size:11px;color:#444;margin-top:8px">Lundi matin à jeun, après les toilettes</div>
+    <div style="font-size:11px;color:#444;margin-top:8px">Objectif 2 mois : 90kg → 97kg, soit environ +0,8kg/semaine</div>
   </div>
   <div class="chart-card">
     <h4>Courbe de poids vers ${WEIGHT_GOAL}kg</h4>
     ${chartHTML}
   </div>
   <div class="chart-card">
-    <h4>Milestones</h4>
+    <h4>Jalons 2 mois</h4>
     ${mHTML}
   </div>
   <div class="chart-card" style="padding:0 16px 4px">
@@ -432,8 +599,8 @@ function doSaveWeight(){
 
 function buildWeightChart(pts,w){
   if(pts.length<1)return`<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px">Aucun poids enregistré</div>`;
-  const allDates=WEEKS.map(wk=>wk.date);
-  const minW=89,maxW=98;
+  const allDates=Array.from(new Set([...WEEKS.map(wk=>wk.date),...Object.keys(w).filter(d=>w[d])])).sort();
+  const minW=88,maxW=98;
   const svgW=Math.max(320,allDates.length*32);
   const svgH=120;
   const pad={l:32,r:16,t:10,b:24};
@@ -480,88 +647,60 @@ function buildWeightChart(pts,w){
   </div>`;
 }
 
-// ── MEAL PREP ────────────────────────────────────────
-function renderPrep(){
-  const day=new Date().getDay();// 0=sun,3=wed,0=sun
-  const isSunday=day===0;
-  const isWednesday=day===3;
-  const todayKey=today();
-  const sunKey=`sun_${getWeekKey()}`;
-  const wedKey=`wed_${getWeekKey()}`;
-  const sunState=prepState(sunKey);
-  const wedState=prepState(wedKey);
-  const sunDone=PREP_SUNDAY.filter((_,i)=>sunState[i]).length;
-  const wedDone=PREP_WEDNESDAY.filter((_,i)=>wedState[i]).length;
-  const sunHTML=PREP_SUNDAY.map((item,i)=>{
-    const on=!!sunState[i];
-    return`<div class="prep-item" onclick="togglePrep('${sunKey}',${i})">
-    <div class="prep-check${on?' on':''}">${on?'✓':''}</div>
-    <div class="prep-text${on?' done-text':''}">${item}</div>
-    </div>`;
-  }).join('');
-  const wedHTML=PREP_WEDNESDAY.map((item,i)=>{
-    const on=!!wedState[i];
-    return`<div class="prep-item" onclick="togglePrep('${wedKey}',${i})">
-    <div class="prep-check${on?' on':''}">${on?'✓':''}</div>
-    <div class="prep-text${on?' done-text':''}">${item}</div>
+// ── TRAINING ─────────────────────────────────────────
+function renderTraining(){
+  const day=new Date().getDay();
+  const plan=TRAINING_PLAN[day]||TRAINING_PLAN[0];
+  const date=today();
+  const all=training();
+  const state=all[date]||{done:{},comment:''};
+  const doneCount=plan.items.filter((_,i)=>state.done&&state.done[i]).length;
+  const exerciseHTML=plan.items.map((item,i)=>{
+    const on=!!(state.done&&state.done[i]);
+    return `<div class="exercise-row" onclick="toggleExercise(${i})">
+      <div class="exercise-check${on?' on':''}">${on?'✓':''}</div>
+      <div class="exercise-text${on?' done-text':''}">${item}</div>
     </div>`;
   }).join('');
   document.getElementById('main').innerHTML=`
-  <div class="sec-lbl">Repères du nouveau plan</div>
-  <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px">
-    <div style="font-size:12px;font-weight:800;margin-bottom:10px">🥣 Breakfast — Base 1 300 kcal</div>
-    <div style="font-size:12px;color:#666;line-height:1.8">Yaourt grec/fromage blanc 300g · Flocons 100g · Beurre de cac 40g · Banane · Lait entier 300ml · 4 œufs</div>
-    <div style="margin-top:8px;display:flex;gap:8px">
-      <span class="meal-chip mc-kcal">~1 300 kcal</span>
-      <span class="meal-chip mc-prot">~65g prot</span>
-    </div>
+  <div class="training-day">
+    <h3>🏋️ ${plan.name}</h3>
+    <div class="training-meta">${plan.type} · ${doneCount}/${plan.items.length} exercices · ${date}</div>
+    ${exerciseHTML}
   </div>
-  <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px">
-    <div style="font-size:12px;font-weight:800;margin-bottom:10px">🍚 Lunch & Dinner — Portions fixes</div>
-    <div style="font-size:12px;color:#666;line-height:1.8">250g riz/pâtes cuits · 250g poulet ou bœuf maigre · Légumes · 1 càs huile olive</div>
-    <div style="margin-top:8px;display:flex;gap:8px">
-      <span class="meal-chip mc-kcal">~1 150 kcal</span>
-      <span class="meal-chip mc-prot">~50g prot</span>
-    </div>
-  </div>
-  <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:18px">
-    <div style="font-size:12px;font-weight:800;margin-bottom:10px">🍞 Snack + Gainers</div>
-    <div style="font-size:12px;color:#666;line-height:1.8">Snack 15:30 à ~900 kcal · Hard Mass Harder 130g à 10:00 et 21:00</div>
-    <div style="margin-top:8px;display:flex;gap:8px">
-      <span class="meal-chip mc-kcal">~1 900 kcal</span>
-      <span class="meal-chip mc-prot">~80g prot</span>
-    </div>
-  </div>
-  <div class="sec-lbl">Meal prep checklist</div>
-  <div class="prep-section">
-    <h3>🟢 Dimanche soir — Prep complète (1h)
-      <span style="margin-left:auto;font-size:11px;color:${sunDone===PREP_SUNDAY.length?'var(--accent)':'var(--muted)'};font-weight:600">${sunDone}/${PREP_SUNDAY.length}</span>
-    </h3>
-    ${sunHTML}
-  </div>
-  <div class="prep-section">
-    <h3>🔵 Mercredi soir — Top-up (45 min)
-      <span style="margin-left:auto;font-size:11px;color:${wedDone===PREP_WEDNESDAY.length?'var(--accent)':'var(--muted)'};font-weight:600">${wedDone}/${PREP_WEDNESDAY.length}</span>
-    </h3>
-    ${wedHTML}
+  <div class="training-day">
+    <h3>📝 Commentaire séance</h3>
+    <div class="training-meta">Note les charges réelles, sensations, douleur, énergie, reps ratées ou progression à tenter.</div>
+    <textarea class="session-comment" placeholder="Ex: Bench 100kg OK sur 2 séries, dernière série dure. Épaule droite sensible. Prochaine fois rester à 100 avant 110." onchange="setTrainingComment(this.value)">${escapeText(state.comment||'')}</textarea>
   </div>`;
 }
 
-function togglePrep(key,idx){
-  const s=prepState(key);
-  s[idx]=!s[idx];
-  savePrepState(key,s);
+function escapeText(value){
+  return String(value||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
+}
+
+function toggleExercise(idx){
+  const all=training();
+  const date=today();
+  const state=all[date]||{done:{},comment:''};
+  state.done=state.done||{};
+  state.done[idx]=!state.done[idx];
+  all[date]=state;
+  saveTraining(all);
   render();
 }
 
-function getWeekKey(){
-  const d=new Date();
-  const startOfYear=new Date(d.getFullYear(),0,1);
-  const week=Math.ceil(((d-startOfYear)/86400000+startOfYear.getDay()+1)/7);
-  return`${d.getFullYear()}_w${week}`;
+function setTrainingComment(comment){
+  const all=training();
+  const date=today();
+  const state=all[date]||{done:{},comment:''};
+  state.comment=comment;
+  all[date]=state;
+  saveTraining(all);
 }
 
 // INIT
+applyTheme(currentTheme());
 loadCloud().then(render);
 render();
 </script>

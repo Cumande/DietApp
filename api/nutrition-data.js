@@ -8,9 +8,16 @@ const STATE_ID = "diet_90_97";
 const DEFAULT_STATE = {
   meals: {},
   weights: {
-    "2026-08-22": 90
+    "2025-07-27": 90.25,
+    "2026-07-05": 88.6,
+    "2026-07-14": 90,
+    "2026-07-25": 92.1,
+    "2026-08-21": 96,
+    "2026-08-22": 90,
+    "2026-09-08": 92.3,
+    "2026-09-15": 90.75
   },
-  prep: {}
+  training: {}
 };
 
 function isAuthorized(req) {
@@ -23,7 +30,7 @@ function normalizeState(value) {
   return {
     meals: value && typeof value.meals === "object" ? value.meals : {},
     weights: value && typeof value.weights === "object" ? value.weights : DEFAULT_STATE.weights,
-    prep: value && typeof value.prep === "object" ? value.prep : {}
+    training: value && typeof value.training === "object" ? value.training : {}
   };
 }
 
