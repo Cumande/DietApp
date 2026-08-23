@@ -18,12 +18,6 @@ const DEFAULT_STATE = {
   training: {}
 };
 
-function isAuthorized(req) {
-  const expectedPin = process.env.APP_PIN;
-  if (!expectedPin) return true;
-  return req.headers["x-app-pin"] === expectedPin;
-}
-
 function normalizeState(value) {
   return {
     meals: value && typeof value.meals === "object" ? value.meals : {},
@@ -54,10 +48,6 @@ async function supabaseRequest(path, options = {}) {
 
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
-
-  if (!isAuthorized(req)) {
-    return res.status(401).json({ error: "Unauthorized" });
-  }
 
   try {
     if (req.method === "GET") {

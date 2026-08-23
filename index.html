@@ -149,7 +149,7 @@ body:not(.light) .meal-card.modified{background:#1f1308}
     <h1>Cee's Diet & Gym plan</h1>
     <div style="display:flex;gap:8px;align-items:center">
       <button class="icon-badge" id="themeToggle" onclick="toggleTheme()">🌙</button>
-      <span class="goal-badge" id="cloudStatus" onclick="setPin()">📱 Local</span>
+      <span class="goal-badge" id="cloudStatus">📱 Local</span>
       <span class="goal-badge">🎯 97kg · 22 oct.</span>
     </div>
   </div>
@@ -351,17 +351,9 @@ function setCloudStatus(status){
   const el=document.getElementById('cloudStatus');
   if(el)el.textContent=status==='synced'?'☁️ Sync':status==='saving'?'☁️ Sauvegarde...':'📱 Local';
 }
-async function setPin(){
-  const current=localStorage.getItem(`${STORAGE_PREFIX}_pin`)||'';
-  const pin=prompt('PIN de synchronisation Supabase',current);
-  if(pin===null)return;
-  localStorage.setItem(`${STORAGE_PREFIX}_pin`,pin.trim());
-  await loadCloud();
-  render();
-}
 async function loadCloud(){
   try{
-    const res=await fetch(CLOUD_ENDPOINT,{headers:authHeaders()});
+    const res=await fetch(CLOUD_ENDPOINT);
     if(!res.ok)throw new Error('cloud unavailable');
     cloudState=await res.json();
     cloudState.meals=cloudState.meals||{};
@@ -373,17 +365,13 @@ async function loadCloud(){
     setCloudStatus('local');
   }
 }
-function authHeaders(){
-  const pin=localStorage.getItem(`${STORAGE_PREFIX}_pin`)||'';
-  return pin?{'x-app-pin':pin}:{};
-}
 async function saveCloud(){
   if(!cloudReady)return;
   setCloudStatus('saving');
   try{
     const res=await fetch(CLOUD_ENDPOINT,{
       method:'POST',
-      headers:{'content-type':'application/json',...authHeaders()},
+      headers:{'content-type':'application/json'},
       body:JSON.stringify(cloudState)
     });
     if(!res.ok)throw new Error('save failed');
