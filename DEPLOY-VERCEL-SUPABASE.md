@@ -15,7 +15,6 @@ Ajoute :
 ```txt
 SUPABASE_URL=https://vkuxvwmnddlshvomyyvb.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=ta_cle_service_role_supabase
-APP_PIN=un_code_secret_de_ton_choix
 ```
 
 La clé `SUPABASE_SERVICE_ROLE_KEY` se trouve dans Supabase :
@@ -39,4 +38,6 @@ Install Command: laisser vide
 
 Après avoir poussé ces fichiers sur GitHub, lance un nouveau déploiement Vercel.
 
-Dans l'app, clique sur le badge `Local` en haut, entre ton `APP_PIN`, puis la sauvegarde passera en `Sync`.
+La synchronisation est automatique, sans PIN. Le badge `Sync` confirme la connexion et permet aussi de forcer une synchronisation en cliquant dessus.
+
+Si le badge affiche `Réessayer`, clique dessus pour voir le détail de l'erreur au survol. Vérifie surtout que `SUPABASE_SERVICE_ROLE_KEY` est bien définie pour l'environnement `Production`, puis redéploie le projet.

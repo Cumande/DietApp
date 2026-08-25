@@ -14,6 +14,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;ba
 .header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
 .header h1{font-size:18px;font-weight:800;line-height:1.15}
 .goal-badge{background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff;padding:5px 11px;border-radius:20px;font-size:11px;font-weight:700}
+.sync-badge{border:0;cursor:pointer;font:inherit;font-size:11px;font-weight:700;white-space:nowrap}
+.sync-badge:disabled{cursor:wait;opacity:.8}
 .icon-badge{border:1px solid var(--border);background:var(--surface);color:var(--text);padding:5px 9px;border-radius:20px;font-size:12px;font-weight:800;cursor:pointer}
 .tabs{display:flex;gap:6px}
 .tab{flex:1;padding:8px;border-radius:12px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-size:12px;font-weight:700;transition:all .18s;text-align:center}
@@ -149,7 +151,7 @@ body:not(.light) .meal-card.modified{background:#1f1308}
     <h1>Cee's Diet & Gym plan</h1>
     <div style="display:flex;gap:8px;align-items:center">
       <button class="icon-badge" id="themeToggle" onclick="toggleTheme()">🌙</button>
-      <span class="goal-badge" id="cloudStatus">📱 Local</span>
+      <button class="goal-badge sync-badge" id="cloudStatus" type="button" onclick="syncNow()" title="Synchroniser maintenant">☁️ Sync</button>
       <span class="goal-badge">🎯 97kg · 22 oct.</span>
     </div>
   </div>
@@ -332,7 +334,11 @@ function today(){return new Date().toISOString().slice(0,10)}
 const CLOUD_ENDPOINT = '/api/nutrition-data';
 let cloudReady = false;
 let cloudStatus = 'local';
+let cloudError = '';
 let cloudState = {meals:{},weights:null,training:{}};
+let cloudSaveQueue = Promise.resolve();
+let pendingCloudSaves = 0;
+let cloudSyncPromise = null;
 
 function applyTheme(theme){
   document.body.classList.toggle('light',theme==='light');
@@ -346,39 +352,68 @@ function toggleTheme(){
   applyTheme(next);
 }
 
-function setCloudStatus(status){
+function setCloudStatus(status,message=''){
   cloudStatus=status;
+  cloudError=message;
   const el=document.getElementById('cloudStatus');
-  if(el)el.textContent=status==='synced'?'☁️ Sync':status==='saving'?'☁️ Sauvegarde...':'📱 Local';
-}
-async function loadCloud(){
-  try{
-    const res=await fetch(CLOUD_ENDPOINT);
-    if(!res.ok)throw new Error('cloud unavailable');
-    cloudState=await res.json();
-    cloudState.meals=cloudState.meals||{};
-    cloudState.training=cloudState.training||{};
-    cloudReady=true;
-    mergeLocalIntoCloud();
-    setCloudStatus('synced');
-  }catch(e){
-    setCloudStatus('local');
+  if(el){
+    el.textContent=status==='synced'?'☁️ Sync':status==='saving'?'☁️ Sauvegarde...':status==='syncing'?'☁️ Sync...':'⚠️ Réessayer';
+    el.title=message||'Synchroniser maintenant';
+    el.disabled=status==='saving'||status==='syncing';
   }
 }
-async function saveCloud(){
-  if(!cloudReady)return;
-  setCloudStatus('saving');
+async function responseError(res){
   try{
+    const body=await res.json();
+    return body.error||`API ${res.status}`;
+  }catch{
+    return `API ${res.status}`;
+  }
+}
+async function syncNow({mergeLocal=false,quiet=false}={}){
+  if(cloudSyncPromise)return cloudSyncPromise;
+  cloudSyncPromise=(async()=>{
+    try{
+      if(!quiet)setCloudStatus('syncing');
+      await cloudSaveQueue;
+      const res=await fetch(CLOUD_ENDPOINT,{cache:'no-store'});
+      if(!res.ok)throw new Error(await responseError(res));
+      cloudState=await res.json();
+      cloudState.meals=cloudState.meals||{};
+      cloudState.weights=cloudState.weights||{};
+      cloudState.training=cloudState.training||{};
+      cloudReady=true;
+      if(mergeLocal)mergeLocalIntoCloud();
+      if(!pendingCloudSaves)setCloudStatus('synced');
+      render();
+    }catch(e){
+      console.warn('Supabase sync unavailable:',e);
+      setCloudStatus('local',e.message||'Synchronisation indisponible');
+    }finally{
+      cloudSyncPromise=null;
+    }
+  })();
+  return cloudSyncPromise;
+}
+function saveCloud(mutation){
+  if(!cloudReady)return;
+  pendingCloudSaves++;
+  setCloudStatus('saving');
+  cloudSaveQueue=cloudSaveQueue.catch(()=>{}).then(async()=>{
     const res=await fetch(CLOUD_ENDPOINT,{
       method:'POST',
       headers:{'content-type':'application/json'},
-      body:JSON.stringify(cloudState)
+      body:JSON.stringify({mutation})
     });
-    if(!res.ok)throw new Error('save failed');
-    setCloudStatus('synced');
-  }catch(e){
-    setCloudStatus('local');
-  }
+    if(!res.ok)throw new Error(await responseError(res));
+  }).catch(e=>{
+    console.warn('Supabase save failed:',e);
+    setCloudStatus('local',e.message||'Local');
+  }).finally(()=>{
+    pendingCloudSaves--;
+    if(!pendingCloudSaves&&!cloudError)setCloudStatus('synced');
+  });
+  return cloudSaveQueue;
 }
 function mealEntry(entry){
   if(entry&&typeof entry==='object'){
@@ -391,12 +426,12 @@ function hasData(obj){
 }
 function mergeLocalIntoCloud(){
   if(!cloudReady)return;
-  let changed=false;
+  const mutations=[];
   cloudState.weights=cloudState.weights||{};
   Object.entries(INITIAL_WEIGHTS).forEach(([date,val])=>{
     if(!cloudState.weights[date]){
       cloudState.weights[date]=val;
-      changed=true;
+      mutations.push({scope:'weights',key:date,value:val});
     }
   });
   const localMeals=collectLocalMeals();
@@ -405,7 +440,7 @@ function mergeLocalIntoCloud(){
     Object.entries(localMeals).forEach(([date,val])=>{
       if(hasData(val)&&!hasData(cloudState.meals[date])){
         cloudState.meals[date]=val;
-        changed=true;
+        mutations.push({scope:'meals',key:date,value:val});
       }
     });
   }
@@ -415,7 +450,7 @@ function mergeLocalIntoCloud(){
     Object.entries(localWeights).forEach(([date,val])=>{
       if(!cloudState.weights[date]){
         cloudState.weights[date]=val;
-        changed=true;
+        mutations.push({scope:'weights',key:date,value:val});
       }
     });
   }
@@ -425,18 +460,18 @@ function mergeLocalIntoCloud(){
     Object.entries(localTraining).forEach(([date,val])=>{
       if(!cloudState.training[date]){
         cloudState.training[date]=val;
-        changed=true;
+        mutations.push({scope:'training',key:date,value:val});
       }
     });
   }
-  if(changed)saveCloud();
+  mutations.forEach(saveCloud);
 }
 function todayMeals(){
   return cloudReady?(cloudState.meals[today()]||{}):(ls(`${STORAGE_PREFIX}_meals_${today()}`)||{});
 }
 function saveMeals(d){
   ss(`${STORAGE_PREFIX}_meals_${today()}`,d);
-  if(cloudReady){cloudState.meals[today()]=d;saveCloud();}
+  if(cloudReady){cloudState.meals[today()]=d;saveCloud({scope:'meals',key:today(),value:d});}
 }
 function weights(){
   const w=cloudReady?(cloudState.weights||{}):(ls(`${STORAGE_PREFIX}_weights`)||{});
@@ -449,14 +484,14 @@ function saveWeight(date,val){
   const w=weights();
   w[date]=val;
   ss(`${STORAGE_PREFIX}_weights`,w);
-  if(cloudReady){cloudState.weights=w;saveCloud();}
+  if(cloudReady){cloudState.weights=w;saveCloud({scope:'weights',key:date,value:val});}
 }
 function training(){
   return cloudReady?(cloudState.training||{}):(ls(`${STORAGE_PREFIX}_training`)||{});
 }
 function saveTraining(t){
   ss(`${STORAGE_PREFIX}_training`,t);
-  if(cloudReady){cloudState.training=t;saveCloud();}
+  if(cloudReady){cloudState.training=t;saveCloud({scope:'training',key:today(),value:t[today()]});}
 }
 // ═══════════════════════════════════════════════════════
 // NAV
@@ -1054,8 +1089,16 @@ function collectLocalMeals(){
 
 // INIT
 applyTheme(currentTheme());
-loadCloud().then(render);
 render();
+syncNow({mergeLocal:true});
+window.addEventListener('online',()=>syncNow());
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible')syncNow({quiet:true});
+});
+setInterval(()=>{
+  const editing=document.activeElement?.matches('input, textarea');
+  if(document.visibilityState==='visible'&&!editing)syncNow({quiet:true});
+},30000);
 </script>
 </body>
 </html>

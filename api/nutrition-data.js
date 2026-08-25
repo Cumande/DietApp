@@ -1,7 +1,5 @@
 const SUPABASE_URL = process.env.SUPABASE_URL || "https://vkuxvwmnddlshvomyyvb.supabase.co";
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ||
-  process.env.SUPABASE_ANON_KEY ||
-  "sb_publishable_vhqfatzZkmmmyLYQskyCXA_aahBmNxc";
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 const TABLE = "nutrition_state";
 const STATE_ID = "diet_90_97";
@@ -24,6 +22,17 @@ function normalizeState(value) {
     weights: value && typeof value.weights === "object" ? value.weights : DEFAULT_STATE.weights,
     training: value && typeof value.training === "object" ? value.training : {}
   };
+}
+
+function applyMutation(state, mutation) {
+  const allowedScopes = new Set(["meals", "weights", "training"]);
+  if (!mutation || !allowedScopes.has(mutation.scope) || typeof mutation.key !== "string") {
+    throw new Error("Invalid sync mutation");
+  }
+
+  const next = normalizeState(state);
+  next[mutation.scope] = { ...next[mutation.scope], [mutation.key]: mutation.value };
+  return next;
 }
 
 async function supabaseRequest(path, options = {}) {
@@ -49,6 +58,12 @@ async function supabaseRequest(path, options = {}) {
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
 
+  if (!SUPABASE_KEY) {
+    return res.status(503).json({
+      error: "SUPABASE_SERVICE_ROLE_KEY manque dans les variables Vercel"
+    });
+  }
+
   try {
     if (req.method === "GET") {
       const rows = await supabaseRequest(`${TABLE}?id=eq.${STATE_ID}&select=data`);
@@ -57,7 +72,14 @@ export default async function handler(req, res) {
 
     if (req.method === "POST") {
       const body = typeof req.body === "string" ? JSON.parse(req.body || "{}") : req.body;
-      const state = normalizeState(body);
+      let state;
+
+      if (body?.mutation) {
+        const rows = await supabaseRequest(`${TABLE}?id=eq.${STATE_ID}&select=data`);
+        state = applyMutation(rows?.[0]?.data || DEFAULT_STATE, body.mutation);
+      } else {
+        state = normalizeState(body);
+      }
 
       await supabaseRequest(`${TABLE}?on_conflict=id`, {
         method: "POST",
