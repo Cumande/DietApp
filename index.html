@@ -153,7 +153,7 @@ body:not(.light) .meal-card.modified{background:#1f1308}
     <h1>Cee's Diet & Gym plan</h1>
     <div style="display:flex;gap:8px;align-items:center">
       <button class="icon-badge" id="themeToggle" onclick="toggleTheme()">🌙</button>
-      <button class="goal-badge sync-badge" id="cloudStatus" type="button" onclick="syncNow()" title="Synchroniser maintenant">☁️ Sync</button>
+      <button class="goal-badge sync-badge" id="cloudStatus" type="button" onclick="syncAndSave()" title="Enregistrer et synchroniser">☁️ Sync</button>
       <span class="goal-badge">🎯 97kg · 22 oct.</span>
     </div>
   </div>
@@ -425,6 +425,13 @@ async function syncNow({mergeLocal=false,quiet=false,skipSaveWait=false}={}){
   })();
   return cloudSyncPromise;
 }
+async function syncAndSave(){
+  if(Object.keys(pendingChanges).length){
+    await saveAllChanges();
+    if(Object.keys(pendingChanges).length)return;
+  }
+  await syncNow();
+}
 async function saveAllChanges(){
   if(saveAllPromise)return saveAllPromise;
   saveAllPromise=(async()=>{
@@ -436,17 +443,36 @@ async function saveAllChanges(){
 
       const changes=Object.entries(pendingChanges);
       for(const [id,mutation] of changes){
-        const snapshot=JSON.stringify(mutation);
         const res=await fetch(CLOUD_ENDPOINT,{
           method:'POST',
           headers:{'content-type':'application/json'},
           body:JSON.stringify({mutation})
         });
         if(!res.ok)throw new Error(await responseError(res));
-        if(JSON.stringify(pendingChanges[id])===snapshot)delete pendingChanges[id];
-        ss(PENDING_CHANGES_KEY,pendingChanges);
       }
+
+      const verifyRes=await fetch(CLOUD_ENDPOINT,{cache:'no-store'});
+      if(!verifyRes.ok)throw new Error(await responseError(verifyRes));
+      const verifiedState=await verifyRes.json();
+      for(const [,mutation] of changes){
+        const savedValue=verifiedState?.[mutation.scope]?.[mutation.key];
+        if(JSON.stringify(savedValue)!==JSON.stringify(mutation.value)){
+          throw new Error('Supabase n\'a pas confirmé toutes les modifications');
+        }
+      }
+
+      for(const [id,mutation] of changes){
+        if(JSON.stringify(pendingChanges[id])===JSON.stringify(mutation))delete pendingChanges[id];
+      }
+      ss(PENDING_CHANGES_KEY,pendingChanges);
+      cloudState={
+        meals:verifiedState.meals||{},
+        weights:verifiedState.weights||{},
+        training:verifiedState.training||{}
+      };
+      applyPendingChanges();
       setCloudStatus('synced');
+      render();
     }catch(e){
       console.warn('Supabase save failed:',e);
       setCloudStatus('local',e.message||'Enregistrement impossible');

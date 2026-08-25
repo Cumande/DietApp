@@ -38,6 +38,6 @@ Install Command: laisser vide
 
 Après avoir poussé ces fichiers sur GitHub, lance un nouveau déploiement Vercel.
 
-Le chargement depuis Supabase est automatique et ne demande aucun PIN. Après avoir fait tes choix, le bouton `Enregistrer` envoie toutes les modifications vers Supabase. Le badge `Sync` confirme la connexion et permet de relire les données des autres appareils.
+Le chargement depuis Supabase est automatique et ne demande aucun PIN. Après avoir fait tes choix, le bouton `Enregistrer` envoie les modifications puis vérifie qu'elles sont bien présentes dans Supabase. Le badge `Sync` fait la même sauvegarde s'il reste des changements en attente, puis relit les données des autres appareils.
 
 Si le badge affiche `Réessayer`, clique dessus pour voir le détail de l'erreur au survol. Vérifie surtout que `SUPABASE_SERVICE_ROLE_KEY` est bien définie pour l'environnement `Production`, puis redéploie le projet.
