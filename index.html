@@ -121,12 +121,17 @@ body:not(.light) .meal-card.modified{background:#1f1308}
 .training-meta{font-size:11px;color:var(--muted);margin-bottom:10px}
 .exercise-row{display:flex;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--border)}
 .exercise-row:last-child{border-bottom:none}
+.exercise-entry{border-bottom:1px solid var(--border);padding-bottom:8px}
+.exercise-entry:last-child{border-bottom:none}
+.exercise-entry .exercise-row{border-bottom:none;padding-bottom:6px}
 .exercise-check{width:28px;height:28px;border-radius:8px;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;font-weight:800}
 .exercise-check.on{background:var(--accent);border-color:var(--accent);color:#000}
 .exercise-text{font-size:12px;color:var(--text);line-height:1.45}
 .exercise-text.done-text{text-decoration:line-through;color:var(--muted)}
 .session-comment{width:100%;min-height:110px;resize:vertical;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);padding:12px;font-size:13px;line-height:1.5}
 .session-comment:focus{outline:none;border-color:var(--accent)}
+.exercise-note{width:calc(100% - 38px);margin-left:38px;padding:8px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:11px}
+.exercise-note:focus{outline:none;border-color:var(--accent)}
 .week-grid{display:grid;grid-template-columns:1fr;gap:8px}
 .week-day{border:1px solid var(--border);background:var(--surface2);border-radius:10px;padding:10px}
 .week-day.today{border-color:var(--accent);background:var(--done-bg)}
@@ -1138,7 +1143,8 @@ function renderTraining(){
   const plan=TRAINING_PLAN[day]||TRAINING_PLAN[0];
   const date=today();
   const all=training();
-  const state=all[date]||{done:{},comment:''};
+  const state=all[date]||{done:{},notes:{},comment:''};
+  state.notes=state.notes||{};
   const doneCount=plan.items.filter((_,i)=>state.done&&state.done[i]).length;
   const weekHTML=[1,2,3,4,5,6,0].map(dayNum=>{
     const p=TRAINING_PLAN[dayNum];
@@ -1162,18 +1168,16 @@ function renderTraining(){
   }).join('');
   const exerciseHTML=plan.items.map((item,i)=>{
     const on=!!(state.done&&state.done[i]);
-    return `<div class="exercise-row" onclick="toggleExercise(${i})">
-      <div class="exercise-check${on?' on':''}">${on?'✓':''}</div>
-      ${exerciseVideo(item)}
-      <div class="exercise-text${on?' done-text':''}">${item}</div>
+    return `<div class="exercise-entry">
+      <div class="exercise-row" onclick="toggleExercise(${i})">
+        <div class="exercise-check${on?' on':''}">${on?'✓':''}</div>
+        ${exerciseVideo(item)}
+        <div class="exercise-text${on?' done-text':''}">${item}</div>
+      </div>
+      <input class="exercise-note" value="${escapeAttr(state.notes[i]||'')}" placeholder="Charge, reps, difficulté, sensation..." onclick="event.stopPropagation()" onchange="setExerciseComment(${i},this.value)">
     </div>`;
   }).join('');
   document.getElementById('main').innerHTML=`
-  <div class="training-day">
-    <h3>📆 Plan de la semaine</h3>
-    <div class="training-meta">Vue rapide de la structure hebdo.</div>
-    <div class="week-grid">${weekHTML}</div>
-  </div>
   <div class="training-day">
     <h3>🏋️ ${plan.name}</h3>
     <div class="training-meta">${plan.type} · ${doneCount}/${plan.items.length} exercices · ${date}</div>
@@ -1183,6 +1187,11 @@ function renderTraining(){
     <h3>📝 Commentaire séance</h3>
     <div class="training-meta">Note les charges réelles, sensations, douleur, énergie, reps ratées ou progression à tenter.</div>
     <textarea class="session-comment" placeholder="Ex: Bench 100kg OK sur 2 séries, dernière série dure. Épaule droite sensible. Prochaine fois rester à 100 avant 110." onchange="setTrainingComment(this.value)">${escapeText(state.comment||'')}</textarea>
+  </div>
+  <div class="training-day">
+    <h3>📆 Plan de la semaine</h3>
+    <div class="training-meta">Vue rapide de la structure hebdo.</div>
+    <div class="week-grid">${weekHTML}</div>
   </div>`;
 }
 
@@ -1265,7 +1274,7 @@ function escapeText(value){
 function toggleExercise(idx){
   const all=training();
   const date=today();
-  const state=all[date]||{done:{},comment:''};
+  const state=all[date]||{done:{},notes:{},comment:''};
   state.done=state.done||{};
   state.done[idx]=!state.done[idx];
   all[date]=state;
@@ -1273,10 +1282,20 @@ function toggleExercise(idx){
   render();
 }
 
+function setExerciseComment(idx,comment){
+  const all=training();
+  const date=today();
+  const state=all[date]||{done:{},notes:{},comment:''};
+  state.notes=state.notes||{};
+  state.notes[idx]=comment.trim();
+  all[date]=state;
+  saveTraining(all);
+}
+
 function setTrainingComment(comment){
   const all=training();
   const date=today();
-  const state=all[date]||{done:{},comment:''};
+  const state=all[date]||{done:{},notes:{},comment:''};
   state.comment=comment;
   all[date]=state;
   saveTraining(all);
@@ -1409,10 +1428,17 @@ function renderHistory(){
       const dayNum=new Date(`${date}T12:00:00`).getDay();
       const plan=TRAINING_PLAN[dayNum]||TRAINING_PLAN[0];
       const checked=Object.entries(session.done||{}).filter(([,v])=>v).map(([i])=>Number(i));
-      if(checked.length||session.comment){
+      const exerciseNotes=Object.entries(session.notes||{}).filter(([,note])=>String(note||'').trim());
+      const loggedExercises=Array.from(new Set([...checked,...exerciseNotes.map(([i])=>Number(i))])).sort((a,b)=>a-b);
+      if(loggedExercises.length||session.comment){
         trainingDays++;
         doneExercises+=checked.length;
-        const checkedLines=checked.map(i=>`<div class="history-line">Training · ${plan.items[i]||`Exercice ${i+1}`} · Fait</div>`).join('');
+        notesCount+=exerciseNotes.length+(session.comment?1:0);
+        const checkedLines=loggedExercises.map(i=>{
+          const done=checked.includes(i);
+          const note=session.notes?.[i]?`<span class="history-note">${escapeText(session.notes[i])}</span>`:'';
+          return `<div class="history-line">Training · ${plan.items[i]||`Exercice ${i+1}`} · ${done?'Fait':'Commenté'}${note}</div>`;
+        }).join('');
         const comment=session.comment?`<div class="history-line">Commentaire séance<span class="history-note">${escapeText(session.comment)}</span></div>`:'';
         trainingLines=`<div class="history-line" style="font-weight:800;color:var(--text)">🏋️ ${plan.name} · ${checked.length}/${plan.items.length} exercices</div>${checkedLines}${comment}`;
       }

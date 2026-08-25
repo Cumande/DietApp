@@ -148,5 +148,16 @@ await thirdDevice.context.saveAllChanges();
 const fourthDevice = createDevice();
 await new Promise(resolve => setImmediate(resolve));
 assert.equal(fourthDevice.context.todayMeals().m1, undefined);
+fourthDevice.context.toggleExercise(0);
+fourthDevice.context.setExerciseComment(0, "5 km terminé, bonnes sensations");
+fourthDevice.context.setTrainingComment("Séance cardio complète");
+await fourthDevice.context.saveAllChanges();
+
+const fifthDevice = createDevice();
+await new Promise(resolve => setImmediate(resolve));
+assert.equal(fifthDevice.context.training()["2026-08-25"].done[0], true);
+assert.equal(fifthDevice.context.training()["2026-08-25"].notes[0], "5 km terminé, bonnes sensations");
+fifthDevice.context.switchTab(3);
+assert.match(fifthDevice.element("main").innerHTML, /5 km terminé, bonnes sensations/);
 
 console.log("Cross-device food calories flow: OK");
