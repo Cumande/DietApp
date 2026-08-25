@@ -26,12 +26,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;ba
 .main{max-width:760px;margin:0 auto;padding:16px 14px 100px}
 /* PROGRESS RING */
 .hero-progress{display:flex;align-items:center;gap:16px;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:14px}
-.ring-wrap{position:relative;width:80px;height:80px;flex-shrink:0}
+.ring-wrap{position:relative;width:96px;height:96px;flex-shrink:0}
 .ring-wrap svg{transform:rotate(-90deg)}
-.ring-bg{fill:none;stroke:#1e1e1e;stroke-width:8}
-.ring-fill{fill:none;stroke:var(--accent);stroke-width:8;stroke-linecap:round;transition:stroke-dashoffset .6s}
-.ring-text{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:var(--accent)}
-.ring-sub{font-size:9px;color:var(--muted);font-weight:600}
+.ring-bg{fill:none;stroke:var(--border);stroke-width:9}
+.ring-fill{fill:none;stroke:var(--accent);stroke-width:9;stroke-linecap:round;transition:stroke-dashoffset .6s}
+.ring-text{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:800;color:var(--accent)}
+.ring-text strong{font-size:20px;line-height:1}
+.ring-sub{font-size:10px;color:var(--muted);font-weight:700;margin-top:4px}
 .hero-info{flex:1}
 .hero-info h2{font-size:15px;font-weight:800;margin-bottom:4px}
 .hero-info p{font-size:12px;color:var(--muted);line-height:1.6}
@@ -161,6 +162,12 @@ body:not(.light) .meal-card.modified{background:#1f1308}
 .history-line{font-size:12px;color:var(--soft);line-height:1.45;padding:5px 0;border-bottom:1px solid var(--border)}
 .history-line:last-child{border-bottom:none}
 .history-note{display:block;color:var(--muted);font-size:11px;margin-top:2px}
+.weekly-average{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:end;margin-top:12px}
+.weekly-average strong{display:block;font-size:28px;color:var(--orange);line-height:1}
+.weekly-average span{font-size:11px;color:var(--muted)}
+.weekly-target{text-align:right;font-size:12px;font-weight:800;color:var(--text)}
+.weekly-bar{height:8px;background:var(--surface);border-radius:4px;overflow:hidden;margin-top:12px}
+.weekly-bar-fill{height:100%;background:var(--orange);border-radius:4px;transition:width .4s}
 </style>
 </head>
 <body>
@@ -863,17 +870,17 @@ function renderToday(){
   const nextM=MILESTONES.find(m=>lastWeight<m.target)||{month:'Objectif',target:WEIGHT_GOAL};
   const daysLeft=Math.round((new Date(GOAL_DATE)-new Date())/(1000*60*60*24));
   // ring stroke
-  const circ=2*Math.PI*34;
+  const circ=2*Math.PI*39;
   const offset=circ*(1-pctWeight/100);
   const mealsHTML=definitions.map(meal=>renderMealCard(meal,checked,today())).join('');
   document.getElementById('main').innerHTML=`
   <div class="hero-progress">
     <div class="ring-wrap">
-      <svg width="80" height="80" viewBox="0 0 80 80">
-        <circle class="ring-bg" cx="40" cy="40" r="34"/>
-        <circle class="ring-fill" cx="40" cy="40" r="34" stroke-dasharray="${circ}" stroke-dashoffset="${offset}"/>
+      <svg width="96" height="96" viewBox="0 0 96 96">
+        <circle class="ring-bg" cx="48" cy="48" r="39"/>
+        <circle class="ring-fill" cx="48" cy="48" r="39" stroke-dasharray="${circ}" stroke-dashoffset="${offset}"/>
       </svg>
-      <div class="ring-text">${lastWeight}<span class="ring-sub">kg</span></div>
+      <div class="ring-text"><strong>${pctWeight}%</strong><span class="ring-sub">${lastWeight} kg</span></div>
     </div>
     <div class="hero-info">
       <h2>${pctWeight}% vers ${WEIGHT_GOAL}kg</h2>
@@ -1320,9 +1327,43 @@ function buildCaloriesChart(points){
   </div>`;
 }
 
+function sevenDayCalorieStats(allMeals){
+  let total=0;
+  let tracked=0;
+  const anchor=new Date(`${today()}T12:00:00`);
+  for(let offset=0;offset<7;offset++){
+    const value=new Date(anchor);
+    value.setDate(anchor.getDate()-offset);
+    const date=value.toISOString().slice(0,10);
+    const day=allMeals[date]||{};
+    let dayKcal=0;
+    let hasCalorieLog=false;
+    mealDefinitions(day).forEach(meal=>{
+      const entry=mealEntry(day[meal.id]);
+      if(entry.status!=='pending'||entry.items.length||entry.kcal>0){
+        hasCalorieLog=true;
+        dayKcal+=mealCalories(entry,meal);
+      }
+    });
+    if(hasCalorieLog){
+      tracked++;
+      total+=dayKcal;
+    }
+  }
+  const average=tracked?Math.round(total/tracked):0;
+  return {average,tracked,total,delta:average-TOTAL_KCAL};
+}
+
 function renderHistory(){
   const allMeals=cloudReady?(cloudState.meals||{}):collectLocalMeals();
   const allTraining=training();
+  const weekly=sevenDayCalorieStats(allMeals);
+  const weeklyPct=weekly.tracked?Math.min(100,Math.round(weekly.average/TOTAL_KCAL*100)):0;
+  const weeklyDeltaText=!weekly.tracked
+    ? 'Aucune journée calorique renseignée'
+    : Math.abs(weekly.delta)<=200
+      ? 'Dans la zone objectif'
+      : `${Math.abs(weekly.delta)} kcal ${weekly.delta<0?'sous':'au-dessus de'} l’objectif`;
   const dates=Array.from(new Set([...Object.keys(allMeals),...Object.keys(allTraining)])).sort().reverse();
   let totalKcal=0,doneMeals=0,skippedMeals=0,modifiedMeals=0,notesCount=0,trainingDays=0,doneExercises=0,trackedDays=0;
   const calorieChartData=[];
@@ -1359,6 +1400,7 @@ function renderHistory(){
         <div class="history-actions">
           <button class="small-command" onclick="toggleHistoryEdit('${date}','${meal.id}')">${historyEditKey===editKey?'Fermer':'Modifier'}</button>
           <button class="small-command" onclick="resumeMeal('${date}','${meal.id}')">Reprendre aujourd’hui</button>
+          <button class="small-command" onclick="deleteHistoryMeal('${date}','${meal.id}')">Supprimer</button>
         </div>${editor}</div>`;
     }).join('');
     const session=allTraining[date];
@@ -1391,6 +1433,15 @@ function renderHistory(){
   }).join('');
   document.getElementById('main').innerHTML=`
   <div class="history-card">
+    <h3>Moyenne calorique sur 7 jours</h3>
+    <div class="training-meta">Comparaison avec l’objectif quotidien de ${TOTAL_KCAL} kcal.</div>
+    <div class="weekly-average">
+      <div><strong>${weekly.average}</strong><span>kcal par jour</span></div>
+      <div class="weekly-target">${weeklyDeltaText}<br><span>${weekly.tracked}/7 jours renseignés</span></div>
+    </div>
+    <div class="weekly-bar"><div class="weekly-bar-fill" style="width:${weeklyPct}%"></div></div>
+  </div>
+  <div class="history-card">
     <h3>📊 Historique complet</h3>
     <div class="training-meta">Tous les repas enregistrés, depuis le début du tracking synchronisé.</div>
     <div class="history-summary">
@@ -1415,6 +1466,15 @@ function renderHistory(){
 function toggleHistoryEdit(date,mealId){
   const key=`${date}:${mealId}`;
   historyEditKey=historyEditKey===key?'':key;
+  renderHistory();
+}
+
+function deleteHistoryMeal(date,mealId){
+  if(!confirm('Supprimer définitivement ce repas de l’historique ?'))return;
+  const day=mealsForDate(date);
+  delete day[mealId];
+  historyEditKey='';
+  saveMealsForDate(date,day);
   renderHistory();
 }
 

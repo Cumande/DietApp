@@ -134,6 +134,19 @@ const thirdDevice = createDevice();
 await new Promise(resolve => setImmediate(resolve));
 assert.equal(thirdDevice.context.itemsCalories(thirdDevice.context.todayMeals().m1), 325);
 assert.equal(Object.values(thirdDevice.context.mealPresets()).filter(Boolean)[0].name, "Breakfast habituel");
+assert.match(thirdDevice.element("main").innerHTML, /<strong>\d+%<\/strong><span class="ring-sub">[\d.]+ kg<\/span>/);
+const weeklyStats = thirdDevice.context.sevenDayCalorieStats(serverState.meals);
+assert.deepEqual({ average: weeklyStats.average, tracked: weeklyStats.tracked }, { average: 325, tracked: 1 });
+thirdDevice.context.switchTab(3);
+assert.match(thirdDevice.element("main").innerHTML, /Moyenne calorique sur 7 jours/);
+assert.match(thirdDevice.element("main").innerHTML, /1\/7 jours renseignés/);
 assert.equal(html.includes("Protéines aujourd'hui"), false);
+
+thirdDevice.context.deleteHistoryMeal("2026-08-25", "m1");
+assert.equal(thirdDevice.context.todayMeals().m1, undefined);
+await thirdDevice.context.saveAllChanges();
+const fourthDevice = createDevice();
+await new Promise(resolve => setImmediate(resolve));
+assert.equal(fourthDevice.context.todayMeals().m1, undefined);
 
 console.log("Cross-device food calories flow: OK");
