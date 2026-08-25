@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "npx vercel dev",
-    "build": "echo \"Static app ready\""
+    "build": "echo \"Static app ready\"",
+    "test": "node tests/sync-flow.test.mjs"
   },
   "dependencies": {}
 }

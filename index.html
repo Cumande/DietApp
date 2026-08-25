@@ -16,6 +16,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;ba
 .goal-badge{background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff;padding:5px 11px;border-radius:20px;font-size:11px;font-weight:700}
 .sync-badge{border:0;cursor:pointer;font:inherit;font-size:11px;font-weight:700;white-space:nowrap}
 .sync-badge:disabled{cursor:wait;opacity:.8}
+.save-changes{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:70;width:min(320px,calc(100% - 28px));padding:13px 18px;border:0;border-radius:8px;background:var(--accent);color:#06130a;font-size:13px;font-weight:800;box-shadow:0 8px 28px rgba(0,0,0,.24);cursor:pointer}
+.save-changes:disabled{cursor:wait;opacity:.75}
 .icon-badge{border:1px solid var(--border);background:var(--surface);color:var(--text);padding:5px 9px;border-radius:20px;font-size:12px;font-weight:800;cursor:pointer}
 .tabs{display:flex;gap:6px}
 .tab{flex:1;padding:8px;border-radius:12px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-size:12px;font-weight:700;transition:all .18s;text-align:center}
@@ -163,6 +165,7 @@ body:not(.light) .meal-card.modified{background:#1f1308}
   </div>
 </div>
 <div class="main" id="main"></div>
+<button class="save-changes" id="saveChanges" type="button" onclick="saveAllChanges()" hidden>💾 Enregistrer</button>
 
 <script>
 // ═══════════════════════════════════════════════════════
@@ -336,9 +339,10 @@ let cloudReady = false;
 let cloudStatus = 'local';
 let cloudError = '';
 let cloudState = {meals:{},weights:null,training:{}};
-let cloudSaveQueue = Promise.resolve();
-let pendingCloudSaves = 0;
 let cloudSyncPromise = null;
+let saveAllPromise = null;
+const PENDING_CHANGES_KEY = `${STORAGE_PREFIX}_pending_sync`;
+let pendingChanges = ls(PENDING_CHANGES_KEY)||{};
 
 function applyTheme(theme){
   document.body.classList.toggle('light',theme==='light');
@@ -362,6 +366,30 @@ function setCloudStatus(status,message=''){
     el.disabled=status==='saving'||status==='syncing';
   }
 }
+function mutationId(mutation){
+  return `${mutation.scope}:${mutation.key}`;
+}
+function updateSaveButton(saving=false){
+  const el=document.getElementById('saveChanges');
+  if(!el)return;
+  const count=Object.keys(pendingChanges).length;
+  el.hidden=!count;
+  el.disabled=saving;
+  el.textContent=saving?'☁️ Enregistrement...':`💾 Enregistrer${count>1?` (${count})`:''}`;
+}
+function applyMutationLocally(mutation){
+  cloudState[mutation.scope]=cloudState[mutation.scope]||{};
+  cloudState[mutation.scope][mutation.key]=mutation.value;
+}
+function stageCloudChange(mutation){
+  pendingChanges[mutationId(mutation)]=mutation;
+  ss(PENDING_CHANGES_KEY,pendingChanges);
+  if(cloudReady)applyMutationLocally(mutation);
+  updateSaveButton();
+}
+function applyPendingChanges(){
+  Object.values(pendingChanges).forEach(applyMutationLocally);
+}
 async function responseError(res){
   try{
     const body=await res.json();
@@ -370,12 +398,12 @@ async function responseError(res){
     return `API ${res.status}`;
   }
 }
-async function syncNow({mergeLocal=false,quiet=false}={}){
+async function syncNow({mergeLocal=false,quiet=false,skipSaveWait=false}={}){
   if(cloudSyncPromise)return cloudSyncPromise;
   cloudSyncPromise=(async()=>{
     try{
       if(!quiet)setCloudStatus('syncing');
-      await cloudSaveQueue;
+      if(saveAllPromise&&!skipSaveWait)await saveAllPromise;
       const res=await fetch(CLOUD_ENDPOINT,{cache:'no-store'});
       if(!res.ok)throw new Error(await responseError(res));
       cloudState=await res.json();
@@ -383,8 +411,10 @@ async function syncNow({mergeLocal=false,quiet=false}={}){
       cloudState.weights=cloudState.weights||{};
       cloudState.training=cloudState.training||{};
       cloudReady=true;
+      applyPendingChanges();
       if(mergeLocal)mergeLocalIntoCloud();
-      if(!pendingCloudSaves)setCloudStatus('synced');
+      setCloudStatus('synced');
+      updateSaveButton();
       render();
     }catch(e){
       console.warn('Supabase sync unavailable:',e);
@@ -395,25 +425,37 @@ async function syncNow({mergeLocal=false,quiet=false}={}){
   })();
   return cloudSyncPromise;
 }
-function saveCloud(mutation){
-  if(!cloudReady)return;
-  pendingCloudSaves++;
-  setCloudStatus('saving');
-  cloudSaveQueue=cloudSaveQueue.catch(()=>{}).then(async()=>{
-    const res=await fetch(CLOUD_ENDPOINT,{
-      method:'POST',
-      headers:{'content-type':'application/json'},
-      body:JSON.stringify({mutation})
-    });
-    if(!res.ok)throw new Error(await responseError(res));
-  }).catch(e=>{
-    console.warn('Supabase save failed:',e);
-    setCloudStatus('local',e.message||'Local');
-  }).finally(()=>{
-    pendingCloudSaves--;
-    if(!pendingCloudSaves&&!cloudError)setCloudStatus('synced');
-  });
-  return cloudSaveQueue;
+async function saveAllChanges(){
+  if(saveAllPromise)return saveAllPromise;
+  saveAllPromise=(async()=>{
+    try{
+      updateSaveButton(true);
+      setCloudStatus('saving');
+      if(!cloudReady)await syncNow({mergeLocal:true,quiet:true,skipSaveWait:true});
+      if(!cloudReady)throw new Error(cloudError||'Synchronisation indisponible');
+
+      const changes=Object.entries(pendingChanges);
+      for(const [id,mutation] of changes){
+        const snapshot=JSON.stringify(mutation);
+        const res=await fetch(CLOUD_ENDPOINT,{
+          method:'POST',
+          headers:{'content-type':'application/json'},
+          body:JSON.stringify({mutation})
+        });
+        if(!res.ok)throw new Error(await responseError(res));
+        if(JSON.stringify(pendingChanges[id])===snapshot)delete pendingChanges[id];
+        ss(PENDING_CHANGES_KEY,pendingChanges);
+      }
+      setCloudStatus('synced');
+    }catch(e){
+      console.warn('Supabase save failed:',e);
+      setCloudStatus('local',e.message||'Enregistrement impossible');
+    }finally{
+      saveAllPromise=null;
+      updateSaveButton();
+    }
+  })();
+  return saveAllPromise;
 }
 function mealEntry(entry){
   if(entry&&typeof entry==='object'){
@@ -464,14 +506,14 @@ function mergeLocalIntoCloud(){
       }
     });
   }
-  mutations.forEach(saveCloud);
+  mutations.forEach(stageCloudChange);
 }
 function todayMeals(){
   return cloudReady?(cloudState.meals[today()]||{}):(ls(`${STORAGE_PREFIX}_meals_${today()}`)||{});
 }
 function saveMeals(d){
   ss(`${STORAGE_PREFIX}_meals_${today()}`,d);
-  if(cloudReady){cloudState.meals[today()]=d;saveCloud({scope:'meals',key:today(),value:d});}
+  stageCloudChange({scope:'meals',key:today(),value:d});
 }
 function weights(){
   const w=cloudReady?(cloudState.weights||{}):(ls(`${STORAGE_PREFIX}_weights`)||{});
@@ -484,14 +526,14 @@ function saveWeight(date,val){
   const w=weights();
   w[date]=val;
   ss(`${STORAGE_PREFIX}_weights`,w);
-  if(cloudReady){cloudState.weights=w;saveCloud({scope:'weights',key:date,value:val});}
+  stageCloudChange({scope:'weights',key:date,value:val});
 }
 function training(){
   return cloudReady?(cloudState.training||{}):(ls(`${STORAGE_PREFIX}_training`)||{});
 }
 function saveTraining(t){
   ss(`${STORAGE_PREFIX}_training`,t);
-  if(cloudReady){cloudState.training=t;saveCloud({scope:'training',key:today(),value:t[today()]});}
+  stageCloudChange({scope:'training',key:today(),value:t[today()]});
 }
 // ═══════════════════════════════════════════════════════
 // NAV
@@ -1089,6 +1131,7 @@ function collectLocalMeals(){
 
 // INIT
 applyTheme(currentTheme());
+updateSaveButton();
 render();
 syncNow({mergeLocal:true});
 window.addEventListener('online',()=>syncNow());
@@ -1097,7 +1140,8 @@ document.addEventListener('visibilitychange',()=>{
 });
 setInterval(()=>{
   const editing=document.activeElement?.matches('input, textarea');
-  if(document.visibilityState==='visible'&&!editing)syncNow({quiet:true});
+  const hasPending=Object.keys(pendingChanges).length>0;
+  if(document.visibilityState==='visible'&&!editing&&!hasPending)syncNow({quiet:true});
 },30000);
 </script>
 </body>
