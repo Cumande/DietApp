@@ -37,14 +37,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;ba
 .hero-info p{font-size:12px;color:var(--muted);line-height:1.6}
 .hero-info .milestone{font-size:12px;color:var(--orange);margin-top:4px;font-weight:600}
 /* MACRO BAR */
-.macro-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.macro-row{display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:14px}
 .macro-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px}
 .macro-card .mv{font-size:22px;font-weight:800}
 .macro-card .ml{font-size:10px;color:var(--muted);margin-top:2px}
 .macro-card .mp{height:4px;background:#1e1e1e;border-radius:2px;margin-top:8px;overflow:hidden}
 .macro-card .mf{height:100%;border-radius:2px;transition:width .4s}
 .kcal-fill{background:linear-gradient(90deg,var(--orange),#fbbf24)}
-.prot-fill{background:linear-gradient(90deg,var(--blue),#60a5fa)}
 /* MEAL CARDS */
 .sec-lbl{font-size:9px;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;color:var(--muted);margin:16px 0 8px}
 .meal-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:8px;display:flex;align-items:center;gap:14px;transition:all .2s;cursor:pointer}
@@ -63,7 +62,6 @@ body:not(.light) .meal-card.modified{background:#1f1308}
 .meal-macros{display:flex;gap:8px;margin-top:6px}
 .meal-chip{padding:2px 7px;border-radius:6px;font-size:10px;font-weight:700}
 .mc-kcal{background:#2a1500;color:#fb923c}
-.mc-prot{background:#0a1525;color:#60a5fa}
 .meal-actions{display:flex;gap:8px;margin-top:10px}
 .meal-action{border:1px solid var(--border);background:var(--surface);color:var(--muted);border-radius:8px;padding:7px 9px;font-size:11px;font-weight:800;cursor:pointer}
 .meal-action.done.on{background:var(--accent);border-color:var(--accent);color:#000}
@@ -74,6 +72,24 @@ body:not(.light) .meal-card.modified{background:#1f1308}
 .custom-macros{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
 .custom-macro{width:100%;padding:9px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px}
 .custom-macro:focus{outline:none;border-color:var(--accent)}
+.meal-composer{margin-top:10px;border-top:1px solid var(--border);padding-top:10px}
+.meal-composer summary{cursor:pointer;font-size:11px;font-weight:800;color:var(--text);list-style:none;display:flex;justify-content:space-between;gap:8px}
+.meal-composer summary::-webkit-details-marker{display:none}
+.food-list{display:grid;gap:7px;margin-top:9px}
+.food-row{display:grid;grid-template-columns:minmax(0,1fr) 72px 58px 30px 30px;gap:6px;align-items:center;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:7px}
+.food-name{font-size:11px;font-weight:700;line-height:1.3;min-width:0}
+.food-qty,.food-select{width:100%;min-width:0;padding:8px;background:var(--surface);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:11px}
+.food-kcal{font-size:10px;font-weight:800;color:var(--orange);text-align:right}
+.food-icon{width:30px;height:30px;border:1px solid var(--border);background:var(--surface);color:var(--muted);border-radius:7px;cursor:pointer;font-size:14px}
+.food-icon.on{color:#eab308}
+.food-add-row{display:grid;grid-template-columns:minmax(0,1fr) 72px 42px;gap:7px;margin-top:9px}
+.preset-row{display:grid;grid-template-columns:minmax(0,1fr) 72px 36px;gap:7px;margin-top:9px}
+.composer-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}
+.small-command{border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:7px;padding:7px 9px;font-size:10px;font-weight:800;cursor:pointer}
+.day-actions{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 14px}
+.meal-actual{margin-top:6px;font-size:11px;font-weight:800;color:var(--orange)}
+.history-actions{display:flex;gap:6px;margin-top:5px}
+@media(max-width:520px){.food-row{grid-template-columns:minmax(0,1fr) 66px 52px 30px 30px}.food-row .food-name{font-size:10px}}
 /* WEIGHT PAGE */
 .weight-input-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px;margin-bottom:14px}
 .weight-input-card h3{font-size:14px;font-weight:800;margin-bottom:14px}
@@ -172,15 +188,32 @@ body:not(.light) .meal-card.modified{background:#1f1308}
 // DATA
 // ═══════════════════════════════════════════════════════
 const MEALS = [
-  {id:'m1',time:'07:30',emoji:'🥣',name:'Breakfast',desc:'Yaourt grec/fromage blanc 300g · Flocons 100g · Beurre de cac 40g · 1 banane · Lait entier 300ml · 4 œufs entiers',kcal:1300,prot:65},
-  {id:'m2',time:'10:00',emoji:'💪',name:'Gainer 1 — Hard Mass Harder',desc:'130g de poudre',kcal:500,prot:20},
-  {id:'m3',time:'12:30',emoji:'🍚',name:'Lunch',desc:'Riz cuit 250g · Poulet 250g ou bœuf maigre · Légumes · 1 càs huile olive',kcal:1150,prot:50},
-  {id:'m4',time:'15:30',emoji:'🍞',name:'Snack',desc:'Yaourt grec 250g · Pain complet 4 tranches · Beurre de cac 60g · 1 pomme',kcal:900,prot:40},
-  {id:'m5',time:'18:30',emoji:'🍝',name:'Dinner',desc:'Pâtes ou riz cuits 250g · Poulet 250g ou bœuf maigre · Légumes · 1 càs huile olive',kcal:1150,prot:50},
-  {id:'m6',time:'21:00',emoji:'💪',name:'Gainer 2 — Hard Mass Harder',desc:'130g de poudre',kcal:500,prot:20}
+  {id:'m1',time:'07:30',emoji:'🥣',name:'Breakfast',desc:'Yaourt grec/fromage blanc 300g · Flocons 100g · Beurre de cac 40g · 1 banane · Lait entier 300ml · 4 œufs entiers',kcal:1300},
+  {id:'m2',time:'10:00',emoji:'💪',name:'Gainer 1 — Hard Mass Harder',desc:'2 dosettes (100g de poudre)',kcal:390},
+  {id:'m3',time:'12:30',emoji:'🍚',name:'Lunch',desc:'Riz cuit 250g · Poulet 250g ou bœuf maigre · Légumes · 1 càs huile olive',kcal:1150},
+  {id:'m4',time:'15:30',emoji:'🍞',name:'Snack',desc:'Yaourt grec 250g · Pain complet 4 tranches · Beurre de cac 60g · 1 pomme',kcal:900},
+  {id:'m5',time:'18:30',emoji:'🍝',name:'Dinner',desc:'Pâtes ou riz cuits 250g · Poulet 250g ou bœuf maigre · Légumes · 1 càs huile olive',kcal:1150},
+  {id:'m6',time:'21:00',emoji:'💪',name:'Gainer 2 — Hard Mass Harder',desc:'2 dosettes (100g de poudre)',kcal:390}
 ];
 const TOTAL_KCAL = MEALS.reduce((a,m)=>a+m.kcal,0); // 5500
-const TOTAL_PROT = MEALS.reduce((a,m)=>a+m.prot,0); // 245
+
+const BASE_FOODS = [
+  {id:'egg',name:'Œuf entier moyen',unit:'unité',base:1,kcal:68,defaultQty:1},
+  {id:'oats',name:'Flocons d’avoine',unit:'g',base:100,kcal:370,defaultQty:100},
+  {id:'greek-yogurt',name:'Yaourt grec',unit:'g',base:100,kcal:111,defaultQty:250},
+  {id:'peanut-butter',name:'Beurre de cacahuète',unit:'g',base:100,kcal:588,defaultQty:40},
+  {id:'banana',name:'Banane',unit:'unité',base:1,kcal:105,defaultQty:1},
+  {id:'apple',name:'Pomme',unit:'unité',base:1,kcal:95,defaultQty:1},
+  {id:'whole-milk',name:'Lait entier',unit:'ml',base:100,kcal:64,defaultQty:300},
+  {id:'wholemeal-bread',name:'Pain complet',unit:'tranche',base:1,kcal:90,defaultQty:1},
+  {id:'cooked-rice',name:'Riz cuit',unit:'g',base:100,kcal:130,defaultQty:250},
+  {id:'cooked-pasta',name:'Pâtes cuites',unit:'g',base:100,kcal:157,defaultQty:250},
+  {id:'chicken',name:'Blanc de poulet cuit',unit:'g',base:100,kcal:165,defaultQty:250},
+  {id:'lean-beef',name:'Bœuf maigre cuit',unit:'g',base:100,kcal:200,defaultQty:250},
+  {id:'vegetables',name:'Légumes',unit:'g',base:100,kcal:35,defaultQty:200},
+  {id:'olive-oil',name:'Huile d’olive',unit:'c. à soupe',base:1,kcal:119,defaultQty:1},
+  {id:'gainer',name:'Hard Mass Harder',unit:'dosette',base:1,kcal:195,defaultQty:2}
+];
 
 const STORAGE_PREFIX = 'nut_90_97';
 const WEIGHT_START = 90;
@@ -338,7 +371,7 @@ const CLOUD_ENDPOINT = '/api/nutrition-data';
 let cloudReady = false;
 let cloudStatus = 'local';
 let cloudError = '';
-let cloudState = {meals:{},weights:null,training:{}};
+let cloudState = {meals:{},weights:null,training:{},foods:{},favorites:{},mealPresets:{}};
 let cloudSyncPromise = null;
 let saveAllPromise = null;
 const PENDING_CHANGES_KEY = `${STORAGE_PREFIX}_pending_sync`;
@@ -410,6 +443,9 @@ async function syncNow({mergeLocal=false,quiet=false,skipSaveWait=false}={}){
       cloudState.meals=cloudState.meals||{};
       cloudState.weights=cloudState.weights||{};
       cloudState.training=cloudState.training||{};
+      cloudState.foods=cloudState.foods||{};
+      cloudState.favorites=cloudState.favorites||{};
+      cloudState.mealPresets=cloudState.mealPresets||{};
       cloudReady=true;
       applyPendingChanges();
       if(mergeLocal)mergeLocalIntoCloud();
@@ -468,7 +504,10 @@ async function saveAllChanges(){
       cloudState={
         meals:verifiedState.meals||{},
         weights:verifiedState.weights||{},
-        training:verifiedState.training||{}
+        training:verifiedState.training||{},
+        foods:verifiedState.foods||{},
+        favorites:verifiedState.favorites||{},
+        mealPresets:verifiedState.mealPresets||{}
       };
       applyPendingChanges();
       setCloudStatus('synced');
@@ -485,9 +524,17 @@ async function saveAllChanges(){
 }
 function mealEntry(entry){
   if(entry&&typeof entry==='object'){
-    return {status:entry.status||'pending',note:entry.note||'',kcal:Number(entry.kcal)||0,prot:Number(entry.prot)||0};
+    return {
+      status:entry.status||'pending',
+      note:entry.note||'',
+      kcal:Number(entry.kcal)||0,
+      items:Array.isArray(entry.items)?entry.items:[],
+      extra:Boolean(entry.extra),
+      name:entry.name||'',
+      time:entry.time||''
+    };
   }
-  return {status:entry?'done':'pending',note:'',kcal:0,prot:0};
+  return {status:entry?'done':'pending',note:'',kcal:0,items:[],extra:false,name:'',time:''};
 }
 function hasData(obj){
   return obj&&typeof obj==='object'&&Object.keys(obj).length>0;
@@ -532,14 +579,227 @@ function mergeLocalIntoCloud(){
       }
     });
   }
+  const localFoods=ls(`${STORAGE_PREFIX}_foods`)||{};
+  Object.entries(localFoods).forEach(([id,val])=>{
+    if(!cloudState.foods[id])mutations.push({scope:'foods',key:id,value:val});
+  });
+  const localFavorites=ls(`${STORAGE_PREFIX}_favorites`)||{};
+  Object.entries(localFavorites).forEach(([id,val])=>{
+    if(cloudState.favorites[id]===undefined)mutations.push({scope:'favorites',key:id,value:val});
+  });
+  const localMealPresets=ls(`${STORAGE_PREFIX}_meal_presets`)||{};
+  Object.entries(localMealPresets).forEach(([id,val])=>{
+    if(!cloudState.mealPresets[id])mutations.push({scope:'mealPresets',key:id,value:val});
+  });
   mutations.forEach(stageCloudChange);
 }
-function todayMeals(){
-  return cloudReady?(cloudState.meals[today()]||{}):(ls(`${STORAGE_PREFIX}_meals_${today()}`)||{});
+function mealsForDate(date){
+  return cloudReady?(cloudState.meals[date]||{}):(ls(`${STORAGE_PREFIX}_meals_${date}`)||{});
 }
-function saveMeals(d){
-  ss(`${STORAGE_PREFIX}_meals_${today()}`,d);
-  stageCloudChange({scope:'meals',key:today(),value:d});
+function todayMeals(){return mealsForDate(today())}
+function saveMealsForDate(date,d){
+  ss(`${STORAGE_PREFIX}_meals_${date}`,d);
+  stageCloudChange({scope:'meals',key:date,value:d});
+}
+function saveMeals(d){saveMealsForDate(today(),d)}
+function customFoods(){return cloudReady?(cloudState.foods||{}):(ls(`${STORAGE_PREFIX}_foods`)||{})}
+function foodFavorites(){return cloudReady?(cloudState.favorites||{}):(ls(`${STORAGE_PREFIX}_favorites`)||{})}
+function mealPresets(){return cloudReady?(cloudState.mealPresets||{}):(ls(`${STORAGE_PREFIX}_meal_presets`)||{})}
+function recentFoodIds(limit=8){
+  const source=cloudReady?(cloudState.meals||{}):collectLocalMeals();
+  const seen=[];
+  Object.keys(source).sort().reverse().forEach(date=>{
+    Object.values(source[date]||{}).reverse().forEach(rawEntry=>{
+      const entry=mealEntry(rawEntry);
+      [...entry.items].reverse().forEach(item=>{
+        if(item.foodId&&!seen.includes(item.foodId))seen.push(item.foodId);
+      });
+    });
+  });
+  return seen.slice(0,limit);
+}
+function allFoods(){
+  const custom=Object.values(customFoods());
+  const favorites=foodFavorites();
+  const recent=recentFoodIds();
+  return [...BASE_FOODS,...custom].sort((a,b)=>{
+    const fav=(favorites[b.id]?1:0)-(favorites[a.id]?1:0);
+    const recentA=recent.includes(a.id)?recent.indexOf(a.id):999;
+    const recentB=recent.includes(b.id)?recent.indexOf(b.id):999;
+    return fav||(recentA-recentB)||a.name.localeCompare(b.name,'fr');
+  });
+}
+function foodById(id){return allFoods().find(food=>food.id===id)}
+function itemCalories(item){return Math.round((Math.max(0,Number(item.qty)||0)/Math.max(1,Number(item.base)||1))*(Number(item.kcal)||0))}
+function itemsCalories(entry){return (entry.items||[]).reduce((sum,item)=>sum+itemCalories(item),0)}
+function mealCalories(entry,plan){
+  if(entry.status==='skipped'||entry.status==='pending')return 0;
+  if(entry.items?.length)return itemsCalories(entry);
+  if(entry.status==='modified')return Number(entry.kcal)||0;
+  return Number(plan?.kcal)||Number(entry.kcal)||0;
+}
+function mealDefinitions(dayMeals){
+  const extras=Object.entries(dayMeals||{}).filter(([,value])=>value&&typeof value==='object'&&value.extra).map(([id,value])=>({
+    id,
+    time:value.time||'--:--',
+    emoji:'➕',
+    name:value.name||'Repas libre',
+    desc:'Repas ajouté librement',
+    kcal:0,
+    extra:true
+  }));
+  return [...MEALS,...extras].sort((a,b)=>a.time.localeCompare(b.time));
+}
+function foodOptions(){
+  const favorites=foodFavorites();
+  const recent=new Set(recentFoodIds());
+  return allFoods().map(food=>`<option value="${food.id}">${favorites[food.id]?'★ ':recent.has(food.id)?'Récent · ':''}${escapeText(food.name)} · ${food.kcal} kcal/${food.base}${food.unit}</option>`).join('');
+}
+function mealPresetOptions(){
+  return Object.values(mealPresets()).filter(Boolean).sort((a,b)=>a.name.localeCompare(b.name,'fr')).map(preset=>`<option value="${preset.id}">${escapeText(preset.name)} · ${itemsCalories(preset)} kcal</option>`).join('');
+}
+function saveMealPreset(mealId,date=today()){
+  const day=mealsForDate(date);
+  const entry=mealEntry(day[mealId]);
+  if(!entry.items.length&&!entry.kcal){alert('Ajoute au moins un aliment avant d’enregistrer ce repas.');return}
+  const meal=mealDefinitions(day).find(value=>value.id===mealId);
+  const name=(prompt('Nom du repas favori',`${meal?.name||'Repas'} habituel`)||'').trim();
+  if(!name)return;
+  const preset={
+    id:`preset-${Date.now()}`,
+    name,
+    items:JSON.parse(JSON.stringify(entry.items)),
+    kcal:entry.kcal,
+    note:entry.note
+  };
+  const presets={...mealPresets(),[preset.id]:preset};
+  ss(`${STORAGE_PREFIX}_meal_presets`,presets);
+  stageCloudChange({scope:'mealPresets',key:preset.id,value:preset});
+  render();
+}
+function applyMealPreset(mealId,date=today()){
+  const select=document.getElementById(`preset-select-${date}-${mealId}`);
+  const preset=mealPresets()[select?.value];
+  if(!preset)return;
+  const day=mealsForDate(date);
+  const entry=mealEntry(day[mealId]);
+  entry.items=JSON.parse(JSON.stringify(preset.items||[])).map(item=>({...item,id:`i${Date.now()}${Math.random().toString(36).slice(2,6)}`}));
+  entry.kcal=Number(preset.kcal)||0;
+  entry.note=preset.note||'';
+  entry.status='modified';
+  day[mealId]=entry;
+  saveMealsForDate(date,day);
+  render();
+}
+function removeMealPreset(mealId,date=today()){
+  const select=document.getElementById(`preset-select-${date}-${mealId}`);
+  const id=select?.value;
+  if(!id||!confirm('Supprimer ce repas favori ?'))return;
+  const presets={...mealPresets(),[id]:null};
+  ss(`${STORAGE_PREFIX}_meal_presets`,presets);
+  stageCloudChange({scope:'mealPresets',key:id,value:null});
+  render();
+}
+function addFoodToMeal(mealId,date=today(),forcedFoodId=''){
+  const select=document.getElementById(`food-select-${date}-${mealId}`);
+  const food=foodById(forcedFoodId||select?.value);
+  if(!food)return;
+  const day=mealsForDate(date);
+  const entry=mealEntry(day[mealId]);
+  entry.items.push({
+    id:`i${Date.now()}${Math.random().toString(36).slice(2,6)}`,
+    foodId:food.id,
+    name:food.name,
+    unit:food.unit,
+    base:food.base,
+    kcal:food.kcal,
+    qty:food.defaultQty
+  });
+  entry.status='modified';
+  day[mealId]=entry;
+  saveMealsForDate(date,day);
+  render();
+}
+function updateFoodQty(mealId,itemId,value,date=today()){
+  const day=mealsForDate(date);
+  const entry=mealEntry(day[mealId]);
+  const item=entry.items.find(value=>value.id===itemId);
+  if(!item)return;
+  item.qty=Math.max(0,Number(value)||0);
+  entry.status='modified';
+  day[mealId]=entry;
+  saveMealsForDate(date,day);
+  render();
+}
+function removeFoodItem(mealId,itemId,date=today()){
+  const day=mealsForDate(date);
+  const entry=mealEntry(day[mealId]);
+  entry.items=entry.items.filter(item=>item.id!==itemId);
+  if(!entry.items.length&&!entry.note&&!entry.kcal)entry.status='pending';
+  day[mealId]=entry;
+  saveMealsForDate(date,day);
+  render();
+}
+function toggleFoodFavorite(foodId){
+  const values={...foodFavorites()};
+  values[foodId]=!values[foodId];
+  ss(`${STORAGE_PREFIX}_favorites`,values);
+  stageCloudChange({scope:'favorites',key:foodId,value:values[foodId]});
+  render();
+}
+function addCustomFood(mealId,date=today()){
+  const name=prompt('Nom de l’aliment');
+  if(!name?.trim())return;
+  let unit=(prompt('Unité : g, ml, unité ou tranche','g')||'g').trim().toLowerCase();
+  if(!['g','ml','unité','tranche'].includes(unit))unit='g';
+  const base=unit==='g'||unit==='ml'?100:1;
+  const kcal=Math.max(0,Number(prompt(`Calories pour ${base} ${unit}`,''))||0);
+  if(!kcal)return;
+  const defaultQty=Math.max(0,Number(prompt(`Portion habituelle en ${unit}`,String(base)))||base);
+  const food={id:`custom-${Date.now()}`,name:name.trim(),unit,base,kcal,defaultQty};
+  const foods={...customFoods(),[food.id]:food};
+  ss(`${STORAGE_PREFIX}_foods`,foods);
+  stageCloudChange({scope:'foods',key:food.id,value:food});
+  addFoodToMeal(mealId,date,food.id);
+}
+function addExtraMeal(){
+  const name=(prompt('Nom du repas libre','Repas libre')||'Repas libre').trim();
+  const now=new Date();
+  const time=now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+  const day=todayMeals();
+  const id=`extra-${Date.now()}`;
+  day[id]={status:'pending',note:'',kcal:0,items:[],extra:true,name,time};
+  saveMeals(day);
+  render();
+}
+function removeExtraMeal(mealId,date=today()){
+  const day=mealsForDate(date);
+  delete day[mealId];
+  saveMealsForDate(date,day);
+  render();
+}
+function previousDate(date){
+  const value=new Date(`${date}T12:00:00`);
+  value.setDate(value.getDate()-1);
+  return value.toISOString().slice(0,10);
+}
+function duplicateYesterday(mealId){
+  const source=mealsForDate(previousDate(today()));
+  const original=source[mealId];
+  if(!original){alert('Aucun repas correspondant enregistré hier.');return}
+  const day=todayMeals();
+  day[mealId]=JSON.parse(JSON.stringify(original));
+  saveMeals(day);
+  render();
+}
+function resumeMeal(date,mealId){
+  const source=mealsForDate(date)[mealId];
+  if(!source)return;
+  const day=todayMeals();
+  const targetId=source.extra?`extra-${Date.now()}`:mealId;
+  day[targetId]=JSON.parse(JSON.stringify(source));
+  saveMeals(day);
+  switchTab(0);
 }
 function weights(){
   const w=cloudReady?(cloudState.weights||{}):(ls(`${STORAGE_PREFIX}_weights`)||{});
@@ -565,6 +825,7 @@ function saveTraining(t){
 // NAV
 // ═══════════════════════════════════════════════════════
 let activeTab=0;
+let historyEditKey='';
 function switchTab(i){
   activeTab=i;
   [0,1,2,3].forEach(j=>{
@@ -586,23 +847,12 @@ function render(){
 // ── TODAY ────────────────────────────────────────────
 function renderToday(){
   const checked=todayMeals();
-  const doneKcal=MEALS.reduce((a,m)=>{
-    const entry=mealEntry(checked[m.id]);
-    if(entry.status==='done')return a+m.kcal;
-    if(entry.status==='modified')return a+entry.kcal;
-    return a;
-  },0);
-  const doneProt=MEALS.reduce((a,m)=>{
-    const entry=mealEntry(checked[m.id]);
-    if(entry.status==='done')return a+m.prot;
-    if(entry.status==='modified')return a+entry.prot;
-    return a;
-  },0);
+  const definitions=mealDefinitions(checked);
+  const doneKcal=definitions.reduce((sum,meal)=>sum+mealCalories(mealEntry(checked[meal.id]),meal),0);
   const pctK=Math.round(doneKcal/TOTAL_KCAL*100);
-  const pctP=Math.round(doneProt/TOTAL_PROT*100);
-  const mealsDone=MEALS.filter(m=>mealEntry(checked[m.id]).status==='done').length;
-  const mealsSkipped=MEALS.filter(m=>mealEntry(checked[m.id]).status==='skipped').length;
-  const mealsModified=MEALS.filter(m=>mealEntry(checked[m.id]).status==='modified').length;
+  const mealsDone=definitions.filter(m=>mealEntry(checked[m.id]).status==='done').length;
+  const mealsSkipped=definitions.filter(m=>mealEntry(checked[m.id]).status==='skipped').length;
+  const mealsModified=definitions.filter(m=>mealEntry(checked[m.id]).status==='modified').length;
   // weight progress
   const w=weights();
   const lastWeight=Object.entries(w).sort((a,b)=>a[0]>b[0]?1:-1).filter(([,v])=>v).pop()?.[1]||WEIGHT_START;
@@ -615,34 +865,7 @@ function renderToday(){
   // ring stroke
   const circ=2*Math.PI*34;
   const offset=circ*(1-pctWeight/100);
-  const mealsHTML=MEALS.map(m=>{
-    const entry=mealEntry(checked[m.id]);
-    const on=entry.status==='done';
-    const skipped=entry.status==='skipped';
-    const modified=entry.status==='modified';
-    return `<div class="meal-card${on?' checked':''}${skipped?' skipped':''}${modified?' modified':''}">
-    <div class="meal-check${on?' on':''}${skipped?' skip':''}${modified?' mod':''}">${on?'✓':skipped?'×':modified?'~':''}</div>
-    <div class="meal-body">
-      <div class="meal-time">${m.time}</div>
-      <div class="meal-name">${m.emoji} ${m.name}</div>
-      <div class="meal-desc">${m.desc}</div>
-      <div class="meal-macros">
-        <span class="meal-chip mc-kcal">${m.kcal} kcal</span>
-        <span class="meal-chip mc-prot">${m.prot}g prot</span>
-      </div>
-      <div class="meal-actions">
-        <button class="meal-action done${on?' on':''}" onclick="setMealStatus('${m.id}','${on?'pending':'done'}')">Mangé</button>
-        <button class="meal-action mod${modified?' on':''}" onclick="setMealStatus('${m.id}','${modified?'pending':'modified'}')">Modifié</button>
-        <button class="meal-action skip${skipped?' on':''}" onclick="setMealStatus('${m.id}','${skipped?'pending':'skipped'}')">Skippé</button>
-      </div>
-      <input class="meal-note" value="${escapeAttr(entry.note)}" placeholder="Ex: burger à la place du lunch" onchange="setMealNote('${m.id}',this.value)" onclick="event.stopPropagation()">
-      <div class="custom-macros">
-        <input class="custom-macro" type="number" min="0" step="10" value="${entry.kcal||''}" placeholder="kcal réelles" onchange="setMealMacro('${m.id}','kcal',this.value)" onclick="event.stopPropagation()">
-        <input class="custom-macro" type="number" min="0" step="1" value="${entry.prot||''}" placeholder="prot g" onchange="setMealMacro('${m.id}','prot',this.value)" onclick="event.stopPropagation()">
-      </div>
-    </div>
-    </div>`;
-  }).join('');
+  const mealsHTML=definitions.map(meal=>renderMealCard(meal,checked,today())).join('');
   document.getElementById('main').innerHTML=`
   <div class="hero-progress">
     <div class="ring-wrap">
@@ -664,57 +887,109 @@ function renderToday(){
       <div class="ml">Calories aujourd'hui</div>
       <div class="mp"><div class="mf kcal-fill" style="width:${pctK}%"></div></div>
     </div>
-    <div class="macro-card">
-      <div class="mv" style="color:var(--blue)">${doneProt}<span style="font-size:12px;color:#555">g / ${TOTAL_PROT}g</span></div>
-      <div class="ml">Protéines aujourd'hui</div>
-      <div class="mp"><div class="mf prot-fill" style="width:${pctP}%"></div></div>
-    </div>
   </div>
-  <div class="sec-lbl">${mealsDone}/6 mangés · ${mealsModified} modifié(s) · ${mealsSkipped} skippé(s) · ${today()}</div>
+  <div class="day-actions">
+    <button class="small-command" onclick="addExtraMeal()">+ Repas libre</button>
+  </div>
+  <div class="sec-lbl">${mealsDone}/${definitions.length} mangés · ${mealsModified} modifié(s) · ${mealsSkipped} skippé(s) · ${today()}</div>
   ${mealsHTML}`;
+}
+
+function renderMealCard(meal,day,date){
+  const entry=mealEntry(day[meal.id]);
+  const on=entry.status==='done';
+  const skipped=entry.status==='skipped';
+  const modified=entry.status==='modified';
+  const actual=mealCalories(entry,meal);
+  const favorites=foodFavorites();
+  const presetOptions=mealPresetOptions();
+  const itemRows=entry.items.map(item=>`<div class="food-row">
+    <div class="food-name">${escapeText(item.name)}<div style="font-size:9px;color:var(--muted)">${item.kcal} kcal / ${item.base} ${escapeText(item.unit)}</div></div>
+    <input class="food-qty" type="number" min="0" step="${item.base===1?'1':'5'}" value="${item.qty}" onchange="updateFoodQty('${meal.id}','${item.id}',this.value,'${date}')">
+    <div class="food-kcal">${itemCalories(item)} kcal</div>
+    <button class="food-icon${favorites[item.foodId]?' on':''}" title="Favori" onclick="toggleFoodFavorite('${item.foodId}')">★</button>
+    <button class="food-icon" title="Supprimer" onclick="removeFoodItem('${meal.id}','${item.id}','${date}')">×</button>
+  </div>`).join('');
+  const manualKcal=entry.items.length?'':`<input class="custom-macro" type="number" min="0" step="10" value="${entry.kcal||''}" placeholder="kcal manuelles si l’aliment n’est pas listé" onchange="setMealKcal('${meal.id}',this.value,'${date}')">`;
+  return `<div class="meal-card${on?' checked':''}${skipped?' skipped':''}${modified?' modified':''}">
+    <div class="meal-check${on?' on':''}${skipped?' skip':''}${modified?' mod':''}">${on?'✓':skipped?'×':modified?'~':''}</div>
+    <div class="meal-body">
+      <div class="meal-time">${meal.time}</div>
+      <div class="meal-name">${meal.emoji} ${escapeText(meal.name)}</div>
+      <div class="meal-desc"><b>Plan conseillé :</b> ${escapeText(meal.desc)}</div>
+      <div class="meal-macros"><span class="meal-chip mc-kcal">${meal.kcal?`Objectif ${meal.kcal} kcal`:'Repas libre'}</span></div>
+      ${(entry.items.length||entry.kcal)?`<div class="meal-actual">Consommé : ${actual} kcal</div>`:''}
+      <div class="meal-actions">
+        <button class="meal-action done${on?' on':''}" onclick="setMealStatus('${meal.id}','${on?'pending':'done'}','${date}')">Mangé</button>
+        <button class="meal-action mod${modified?' on':''}" onclick="setMealStatus('${meal.id}','${modified?'pending':'modified'}','${date}')">Modifié</button>
+        <button class="meal-action skip${skipped?' on':''}" onclick="setMealStatus('${meal.id}','${skipped?'pending':'skipped'}','${date}')">Skippé</button>
+      </div>
+      <input class="meal-note" value="${escapeAttr(entry.note)}" placeholder="Commentaire sur ce repas" onchange="setMealNote('${meal.id}',this.value,'${date}')">
+      <details class="meal-composer" ${entry.items.length?'open':''}>
+        <summary><span>Composer ce repas</span><span>${itemsCalories(entry)} kcal</span></summary>
+        <div class="food-list">${itemRows||'<div class="training-meta">Aucun aliment ajouté.</div>'}</div>
+        <div class="food-add-row">
+          <select class="food-select" id="food-select-${date}-${meal.id}">${foodOptions()}</select>
+          <button class="small-command" onclick="addFoodToMeal('${meal.id}','${date}')">Ajouter</button>
+          <button class="food-icon" title="Nouvel aliment" onclick="addCustomFood('${meal.id}','${date}')">+</button>
+        </div>
+        ${presetOptions?`<div class="preset-row">
+          <select class="food-select" id="preset-select-${date}-${meal.id}">${presetOptions}</select>
+          <button class="small-command" onclick="applyMealPreset('${meal.id}','${date}')">Utiliser</button>
+          <button class="food-icon" title="Supprimer ce repas favori" onclick="removeMealPreset('${meal.id}','${date}')">×</button>
+        </div>`:''}
+        <div class="composer-actions">
+          <button class="small-command" onclick="saveMealPreset('${meal.id}','${date}')">★ Enregistrer ce repas</button>
+          ${date===today()&&!meal.extra?`<button class="small-command" onclick="duplicateYesterday('${meal.id}')">Dupliquer hier</button>`:''}
+          ${meal.extra?`<button class="small-command" onclick="removeExtraMeal('${meal.id}','${date}')">Supprimer le repas</button>`:''}
+        </div>
+        ${manualKcal}
+      </details>
+    </div>
+  </div>`;
 }
 
 function escapeAttr(value){
   return String(value||'').replaceAll('&','&amp;').replaceAll('"','&quot;').replaceAll('<','&lt;').replaceAll('>','&gt;');
 }
 
-function toggleMeal(id){
-  const d=todayMeals();
+function toggleMeal(id,date=today()){
+  const d=mealsForDate(date);
   const entry=mealEntry(d[id]);
   entry.status=entry.status==='done'?'pending':'done';
   d[id]=entry;
-  saveMeals(d);
+  saveMealsForDate(date,d);
   render();
 }
 
-function setMealStatus(id,status){
-  const d=todayMeals();
+function setMealStatus(id,status,date=today()){
+  const d=mealsForDate(date);
   const entry=mealEntry(d[id]);
   entry.status=status;
   d[id]=entry;
-  saveMeals(d);
+  saveMealsForDate(date,d);
   render();
 }
 
-function setMealNote(id,note){
-  const d=todayMeals();
+function setMealNote(id,note,date=today()){
+  const d=mealsForDate(date);
   const entry=mealEntry(d[id]);
   entry.note=note.trim();
-  if((entry.note||entry.kcal||entry.prot)&&entry.status==='pending')entry.status='modified';
-  if(!entry.note&&!entry.kcal&&!entry.prot&&entry.status==='modified')entry.status='pending';
+  if((entry.note||entry.kcal||entry.items.length)&&entry.status==='pending')entry.status='modified';
+  if(!entry.note&&!entry.kcal&&!entry.items.length&&entry.status==='modified')entry.status='pending';
   d[id]=entry;
-  saveMeals(d);
+  saveMealsForDate(date,d);
   render();
 }
 
-function setMealMacro(id,field,value){
-  const d=todayMeals();
+function setMealKcal(id,value,date=today()){
+  const d=mealsForDate(date);
   const entry=mealEntry(d[id]);
-  entry[field]=Math.max(0,Number(value)||0);
-  if((entry.note||entry.kcal||entry.prot)&&entry.status==='pending')entry.status='modified';
-  if(!entry.note&&!entry.kcal&&!entry.prot&&entry.status==='modified')entry.status='pending';
+  entry.kcal=Math.max(0,Number(value)||0);
+  if((entry.note||entry.kcal||entry.items.length)&&entry.status==='pending')entry.status='modified';
+  if(!entry.note&&!entry.kcal&&!entry.items.length&&entry.status==='modified')entry.status='pending';
   d[id]=entry;
-  saveMeals(d);
+  saveMealsForDate(date,d);
   render();
 }
 
@@ -1049,29 +1324,21 @@ function renderHistory(){
   const allMeals=cloudReady?(cloudState.meals||{}):collectLocalMeals();
   const allTraining=training();
   const dates=Array.from(new Set([...Object.keys(allMeals),...Object.keys(allTraining)])).sort().reverse();
-  let totalKcal=0,totalProt=0,doneMeals=0,skippedMeals=0,modifiedMeals=0,notesCount=0,trainingDays=0,doneExercises=0,trackedDays=0;
+  let totalKcal=0,doneMeals=0,skippedMeals=0,modifiedMeals=0,notesCount=0,trainingDays=0,doneExercises=0,trackedDays=0;
   const calorieChartData=[];
   const daysHTML=dates.map(date=>{
     const dayMeals=allMeals[date]||{};
-    let dayKcal=0,dayProt=0,dayDone=0,daySkipped=0,dayModified=0;
-    const mealLines=MEALS.map(meal=>{
+    let dayKcal=0,dayDone=0,daySkipped=0,dayModified=0;
+    const mealLines=mealDefinitions(dayMeals).map(meal=>{
       const entry=mealEntry(dayMeals[meal.id]);
-      const hasCustomMacros=entry.kcal>0||entry.prot>0;
-      const hasMealLog=entry.status!=='pending'||entry.note||hasCustomMacros;
+      const hasMealLog=entry.status!=='pending'||entry.note||entry.kcal>0||entry.items.length;
       if(!hasMealLog)return'';
+      const kcalValue=mealCalories(entry,meal);
+      totalKcal+=kcalValue;
+      dayKcal+=kcalValue;
       if(entry.status==='done'){
-        totalKcal+=meal.kcal;
-        totalProt+=meal.prot;
-        dayKcal+=meal.kcal;
-        dayProt+=meal.prot;
         doneMeals++;
         dayDone++;
-      }
-      if(entry.status==='modified'){
-        totalKcal+=entry.kcal;
-        totalProt+=entry.prot;
-        dayKcal+=entry.kcal;
-        dayProt+=entry.prot;
       }
       if(entry.status==='skipped'){
         skippedMeals++;
@@ -1083,15 +1350,16 @@ function renderHistory(){
       }
       if(entry.note)notesCount++;
       const status=entry.status==='done'?'Mangé':entry.status==='skipped'?'Skippé':entry.status==='modified'?'Modifié':'Note';
-      const kcal=entry.status==='done'
-        ? ` · ${meal.kcal} kcal · ${meal.prot}g prot`
-        : entry.status==='modified'
-          ? hasCustomMacros
-            ? ` · ${entry.kcal} kcal${entry.prot?` · ${entry.prot}g prot`:''}`
-            : ' · kcal non renseignées'
-          : '';
+      const kcal=entry.status==='skipped'?'':` · ${kcalValue} kcal`;
+      const foods=entry.items.length?`<span class="history-note">${entry.items.map(item=>`${escapeText(item.name)} ${item.qty}${escapeText(item.unit)} (${itemCalories(item)} kcal)`).join(' · ')}</span>`:'';
       const note=entry.note?`<span class="history-note">${escapeText(entry.note)}</span>`:'';
-      return `<div class="history-line">${meal.time} · ${meal.name} · ${status}${kcal}${note}</div>`;
+      const editKey=`${date}:${meal.id}`;
+      const editor=historyEditKey===editKey?renderHistoryMealEditor(date,meal,entry):'';
+      return `<div class="history-line">${meal.time} · ${escapeText(meal.name)} · ${status}${kcal}${foods}${note}
+        <div class="history-actions">
+          <button class="small-command" onclick="toggleHistoryEdit('${date}','${meal.id}')">${historyEditKey===editKey?'Fermer':'Modifier'}</button>
+          <button class="small-command" onclick="resumeMeal('${date}','${meal.id}')">Reprendre aujourd’hui</button>
+        </div>${editor}</div>`;
     }).join('');
     const session=allTraining[date];
     let trainingLines='';
@@ -1109,10 +1377,10 @@ function renderHistory(){
     }
     if(!mealLines&&!trainingLines)return'';
     trackedDays++;
-    if(mealLines)calorieChartData.push({date,kcal:dayKcal,prot:dayProt});
+    if(mealLines)calorieChartData.push({date,kcal:dayKcal});
     const label=new Date(`${date}T12:00:00`).toLocaleDateString('fr-FR',{weekday:'long',day:'2-digit',month:'short',year:'numeric'});
     const nutritionSummary=mealLines
-      ? `<div class="history-line" style="font-weight:800;color:var(--text)">Nutrition · ${dayKcal} kcal · ${dayProt}g prot · ${dayDone} mangé(s) · ${dayModified} modifié(s) · ${daySkipped} skippé(s)</div>`
+      ? `<div class="history-line" style="font-weight:800;color:var(--text)">Nutrition · ${dayKcal} kcal · ${dayDone} mangé(s) · ${dayModified} modifié(s) · ${daySkipped} skippé(s)</div>`
       : '';
     return `<div class="history-card">
       <div class="history-date">${label}</div>
@@ -1127,7 +1395,6 @@ function renderHistory(){
     <div class="training-meta">Tous les repas enregistrés, depuis le début du tracking synchronisé.</div>
     <div class="history-summary">
       <div class="history-stat"><strong>${totalKcal}</strong><span>kcal mangées</span></div>
-      <div class="history-stat"><strong>${totalProt}g</strong><span>protéines</span></div>
       <div class="history-stat"><strong>${doneMeals}</strong><span>repas mangés</span></div>
       <div class="history-stat"><strong>${modifiedMeals}</strong><span>repas modifiés</span></div>
       <div class="history-stat"><strong>${skippedMeals}</strong><span>repas skippés</span></div>
@@ -1143,6 +1410,33 @@ function renderHistory(){
     ${buildCaloriesChart(calorieChartData)}
   </div>
   ${daysHTML||'<div class="history-card"><div class="training-meta">Aucun historique enregistré pour le moment.</div></div>'}`;
+}
+
+function toggleHistoryEdit(date,mealId){
+  const key=`${date}:${mealId}`;
+  historyEditKey=historyEditKey===key?'':key;
+  renderHistory();
+}
+
+function renderHistoryMealEditor(date,meal,entry){
+  const favorites=foodFavorites();
+  const rows=entry.items.map(item=>`<div class="food-row">
+    <div class="food-name">${escapeText(item.name)}<div style="font-size:9px;color:var(--muted)">${item.kcal} kcal / ${item.base} ${escapeText(item.unit)}</div></div>
+    <input class="food-qty" type="number" min="0" step="${item.base===1?'1':'5'}" value="${item.qty}" onchange="updateFoodQty('${meal.id}','${item.id}',this.value,'${date}')">
+    <div class="food-kcal">${itemCalories(item)} kcal</div>
+    <button class="food-icon${favorites[item.foodId]?' on':''}" onclick="toggleFoodFavorite('${item.foodId}')">★</button>
+    <button class="food-icon" onclick="removeFoodItem('${meal.id}','${item.id}','${date}')">×</button>
+  </div>`).join('');
+  return `<div class="meal-composer" style="margin-top:8px">
+    <div class="food-list">${rows||'<div class="training-meta">Aucun aliment ajouté.</div>'}</div>
+    <div class="food-add-row">
+      <select class="food-select" id="food-select-${date}-${meal.id}">${foodOptions()}</select>
+      <button class="small-command" onclick="addFoodToMeal('${meal.id}','${date}')">Ajouter</button>
+      <button class="food-icon" onclick="addCustomFood('${meal.id}','${date}')">+</button>
+    </div>
+    <input class="meal-note" value="${escapeAttr(entry.note)}" placeholder="Commentaire" onchange="setMealNote('${meal.id}',this.value,'${date}')">
+    ${entry.items.length?'':`<input class="custom-macro" type="number" min="0" step="10" value="${entry.kcal||''}" placeholder="kcal manuelles" onchange="setMealKcal('${meal.id}',this.value,'${date}')">`}
+  </div>`;
 }
 
 function collectLocalMeals(){

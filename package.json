@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "npx vercel dev",
     "build": "echo \"Static app ready\"",
-    "test": "node tests/sync-flow.test.mjs"
+    "test": "node tests/sync-flow.test.mjs && node tests/api-scopes.test.mjs"
   },
   "dependencies": {}
 }

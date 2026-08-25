@@ -13,19 +13,25 @@ const DEFAULT_STATE = {
     "2026-09-08": 92.3,
     "2026-09-15": 90.75
   },
-  training: {}
+  training: {},
+  foods: {},
+  favorites: {},
+  mealPresets: {}
 };
 
 function normalizeState(value) {
   return {
     meals: value && typeof value.meals === "object" ? value.meals : {},
     weights: value && typeof value.weights === "object" ? value.weights : DEFAULT_STATE.weights,
-    training: value && typeof value.training === "object" ? value.training : {}
+    training: value && typeof value.training === "object" ? value.training : {},
+    foods: value && typeof value.foods === "object" ? value.foods : {},
+    favorites: value && typeof value.favorites === "object" ? value.favorites : {},
+    mealPresets: value && typeof value.mealPresets === "object" ? value.mealPresets : {}
   };
 }
 
 function applyMutation(state, mutation) {
-  const allowedScopes = new Set(["meals", "weights", "training"]);
+  const allowedScopes = new Set(["meals", "weights", "training", "foods", "favorites", "mealPresets"]);
   if (!mutation || !allowedScopes.has(mutation.scope) || typeof mutation.key !== "string") {
     throw new Error("Invalid sync mutation");
   }
