@@ -10,8 +10,8 @@ const DEFAULT_STATE = {
     "2026-07-14": 90,
     "2026-07-25": 92.1,
     "2026-08-22": 90,
-    "2026-09-08": 92.3,
-    "2026-09-15": 90.75
+    "2026-08-09": 92.3,
+    "2026-08-15": 90.775
   },
   training: {},
   foods: {},
@@ -19,10 +19,25 @@ const DEFAULT_STATE = {
   mealPresets: {}
 };
 
+function normalizeWeights(value) {
+  const weights = value && typeof value === "object" ? { ...value } : { ...DEFAULT_STATE.weights };
+
+  if (Number(weights["2026-09-08"]) === 92.3) {
+    if (weights["2026-08-09"] == null) weights["2026-08-09"] = 92.3;
+    delete weights["2026-09-08"];
+  }
+  if (Number(weights["2026-09-15"]) === 90.75) {
+    if (weights["2026-08-15"] == null) weights["2026-08-15"] = 90.775;
+    delete weights["2026-09-15"];
+  }
+
+  return weights;
+}
+
 function normalizeState(value) {
   return {
     meals: value && typeof value.meals === "object" ? value.meals : {},
-    weights: value && typeof value.weights === "object" ? value.weights : DEFAULT_STATE.weights,
+    weights: normalizeWeights(value?.weights),
     training: value && typeof value.training === "object" ? value.training : {},
     foods: value && typeof value.foods === "object" ? value.foods : {},
     favorites: value && typeof value.favorites === "object" ? value.favorites : {},
@@ -37,7 +52,11 @@ function applyMutation(state, mutation) {
   }
 
   const next = normalizeState(state);
-  next[mutation.scope] = { ...next[mutation.scope], [mutation.key]: mutation.value };
+  if (mutation.value === null) {
+    delete next[mutation.scope][mutation.key];
+  } else {
+    next[mutation.scope] = { ...next[mutation.scope], [mutation.key]: mutation.value };
+  }
   return next;
 }
 
