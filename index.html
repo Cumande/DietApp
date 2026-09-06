@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
@@ -16,10 +16,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;ba
 .goal-badge{background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff;padding:5px 11px;border-radius:20px;font-size:11px;font-weight:700}
 .sync-badge{border:0;cursor:pointer;font:inherit;font-size:11px;font-weight:700;white-space:nowrap}
 .sync-badge:disabled{cursor:wait;opacity:.8}
-.save-changes{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:70;width:min(320px,calc(100% - 28px));padding:13px 18px;border:0;border-radius:8px;background:var(--accent);color:#06130a;font-size:13px;font-weight:800;box-shadow:0 8px 28px rgba(0,0,0,.24);cursor:pointer}
-.save-changes:disabled{cursor:wait;opacity:.75}
+.toast{position:fixed;left:50%;bottom:18px;transform:translate(-50%,12px);z-index:80;width:min(380px,calc(100% - 28px));padding:12px 14px;border-radius:8px;background:#111827;color:#fff;font-size:12px;font-weight:800;text-align:center;box-shadow:0 8px 28px rgba(0,0,0,.28);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.toast.success{background:#15803d}.toast.warning{background:#b45309}.toast.error{background:#b91c1c}
 .icon-badge{border:1px solid var(--border);background:var(--surface);color:var(--text);padding:5px 9px;border-radius:20px;font-size:12px;font-weight:800;cursor:pointer}
-.tabs{display:flex;gap:6px}
+.tabs{display:flex;gap:6px;overflow-x:auto}.tab{min-width:75px}
 .tab{flex:1;padding:8px;border-radius:12px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-size:12px;font-weight:700;transition:all .18s;text-align:center}
 .tab.active{background:var(--accent);border-color:var(--accent);color:#000}
 /* MAIN */
@@ -108,6 +109,8 @@ body:not(.light) .meal-card.modified{background:#1f1308}
 .weight-table td{padding:9px 8px;border-bottom:1px solid #111;color:#ccc}
 .weight-table tr.current td{color:var(--accent);font-weight:700}
 .weight-table tr.past td{color:#555}
+.weight-actions{display:flex;gap:4px;justify-content:flex-end}
+.weight-action{width:28px;height:28px;border:1px solid var(--border);border-radius:7px;background:var(--surface);color:var(--text);cursor:pointer;font-size:12px}
 .delta-pos{color:var(--accent)}
 .delta-neg{color:#ef4444}
 /* RULES */
@@ -181,50 +184,51 @@ body:not(.light) .meal-card.modified{background:#1f1308}
     <h1>Cee's Diet & Gym plan</h1>
     <div style="display:flex;gap:8px;align-items:center">
       <button class="icon-badge" id="themeToggle" onclick="toggleTheme()">🌙</button>
-      <button class="goal-badge sync-badge" id="cloudStatus" type="button" onclick="syncAndSave()" title="Enregistrer et synchroniser">☁️ Sync</button>
-      <span class="goal-badge">🎯 97kg · 22 oct.</span>
+      <button class="goal-badge sync-badge" id="cloudStatus" type="button" onclick="syncNow()" title="Sync now">☁️ Sync</button>
+      <span class="goal-badge">🎯 97kg · 22 Oct</span>
     </div>
   </div>
   <div class="tabs">
-    <button class="tab active" id="tab0" onclick="switchTab(0)">📋 Aujourd'hui</button>
+    <button class="tab active" id="tab0" onclick="switchTab(0)">📋 Today</button>
     <button class="tab" id="tab1" onclick="switchTab(1)">🏋️ Training</button>
-    <button class="tab" id="tab2" onclick="switchTab(2)">⚖️ Poids</button>
-    <button class="tab" id="tab3" onclick="switchTab(3)">📊 Historique</button>
+    <button class="tab" id="tab2" onclick="switchTab(2)">⚖️ Weight</button>
+    <button class="tab" id="tab3" onclick="switchTab(3)">📊 History</button>
+    <button class="tab" id="tab4" onclick="switchTab(4)">🏃 5K Runs</button>
   </div>
 </div>
 <div class="main" id="main"></div>
-<button class="save-changes" id="saveChanges" type="button" onclick="saveAllChanges()" hidden>💾 Enregistrer</button>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
 // ═══════════════════════════════════════════════════════
 // DATA
 // ═══════════════════════════════════════════════════════
 const MEALS = [
-  {id:'m1',time:'07:30',emoji:'🥣',name:'Breakfast',desc:'Yaourt grec/fromage blanc 300g · Flocons 100g · Beurre de cac 40g · 1 banane · Lait entier 300ml · 4 œufs entiers',kcal:1300},
-  {id:'m2',time:'10:00',emoji:'💪',name:'Gainer 1 — Hard Mass Harder',desc:'2 dosettes (100g de poudre)',kcal:390},
-  {id:'m3',time:'12:30',emoji:'🍚',name:'Lunch',desc:'Riz cuit 250g · Poulet 250g ou bœuf maigre · Légumes · 1 càs huile olive',kcal:1150},
-  {id:'m4',time:'15:30',emoji:'🍞',name:'Snack',desc:'Yaourt grec 250g · Pain complet 4 tranches · Beurre de cac 60g · 1 pomme',kcal:900},
-  {id:'m5',time:'18:30',emoji:'🍝',name:'Dinner',desc:'Pâtes ou riz cuits 250g · Poulet 250g ou bœuf maigre · Légumes · 1 càs huile olive',kcal:1150},
-  {id:'m6',time:'21:00',emoji:'💪',name:'Gainer 2 — Hard Mass Harder',desc:'2 dosettes (100g de poudre)',kcal:390}
+  {id:'m1',time:'07:30',emoji:'🥣',name:'Breakfast',desc:'Greek yogurt/quark 300g · Oats 100g · Peanut butter 40g · 1 banana · Whole milk 300ml · 4 whole eggs',kcal:1300},
+  {id:'m2',time:'10:00',emoji:'💪',name:'Gainer 1 — Hard Mass Harder',desc:'2 scoops (100g powder)',kcal:390},
+  {id:'m3',time:'12:30',emoji:'🍚',name:'Lunch',desc:'Cooked rice 250g · Chicken 250g or lean beef · Vegetables · 1 tbsp olive oil',kcal:1150},
+  {id:'m4',time:'15:30',emoji:'🍞',name:'Snack',desc:'Greek yogurt 250g · Wholemeal bread 4 slices · Peanut butter 60g · 1 apple',kcal:900},
+  {id:'m5',time:'18:30',emoji:'🍝',name:'Dinner',desc:'Cooked pasta or rice 250g · Chicken 250g or lean beef · Vegetables · 1 tbsp olive oil',kcal:1150},
+  {id:'m6',time:'21:00',emoji:'💪',name:'Gainer 2 — Hard Mass Harder',desc:'2 scoops (100g powder)',kcal:390}
 ];
 const TOTAL_KCAL = MEALS.reduce((a,m)=>a+m.kcal,0); // 5500
 
 const BASE_FOODS = [
-  {id:'egg',name:'Œuf entier moyen',unit:'unité',base:1,kcal:68,defaultQty:1},
-  {id:'oats',name:'Flocons d’avoine',unit:'g',base:100,kcal:370,defaultQty:100},
-  {id:'greek-yogurt',name:'Yaourt grec',unit:'g',base:100,kcal:111,defaultQty:250},
-  {id:'peanut-butter',name:'Beurre de cacahuète',unit:'g',base:100,kcal:588,defaultQty:40},
-  {id:'banana',name:'Banane',unit:'unité',base:1,kcal:105,defaultQty:1},
-  {id:'apple',name:'Pomme',unit:'unité',base:1,kcal:95,defaultQty:1},
-  {id:'whole-milk',name:'Lait entier',unit:'ml',base:100,kcal:64,defaultQty:300},
-  {id:'wholemeal-bread',name:'Pain complet',unit:'tranche',base:1,kcal:90,defaultQty:1},
-  {id:'cooked-rice',name:'Riz cuit',unit:'g',base:100,kcal:130,defaultQty:250},
-  {id:'cooked-pasta',name:'Pâtes cuites',unit:'g',base:100,kcal:157,defaultQty:250},
-  {id:'chicken',name:'Blanc de poulet cuit',unit:'g',base:100,kcal:165,defaultQty:250},
-  {id:'lean-beef',name:'Bœuf maigre cuit',unit:'g',base:100,kcal:200,defaultQty:250},
-  {id:'vegetables',name:'Légumes',unit:'g',base:100,kcal:35,defaultQty:200},
-  {id:'olive-oil',name:'Huile d’olive',unit:'c. à soupe',base:1,kcal:119,defaultQty:1},
-  {id:'gainer',name:'Hard Mass Harder',unit:'dosette',base:1,kcal:195,defaultQty:2}
+  {id:'egg',name:'Medium whole egg',unit:'piece',base:1,kcal:68,defaultQty:1},
+  {id:'oats',name:'Rolled oats',unit:'g',base:100,kcal:370,defaultQty:100},
+  {id:'greek-yogurt',name:'Greek yogurt',unit:'g',base:100,kcal:111,defaultQty:250},
+  {id:'peanut-butter',name:'Peanut butter',unit:'g',base:100,kcal:588,defaultQty:40},
+  {id:'banana',name:'Banana',unit:'piece',base:1,kcal:105,defaultQty:1},
+  {id:'apple',name:'Apple',unit:'piece',base:1,kcal:95,defaultQty:1},
+  {id:'whole-milk',name:'Whole milk',unit:'ml',base:100,kcal:64,defaultQty:300},
+  {id:'wholemeal-bread',name:'Wholemeal bread',unit:'slice',base:1,kcal:90,defaultQty:1},
+  {id:'cooked-rice',name:'Cooked rice',unit:'g',base:100,kcal:130,defaultQty:250},
+  {id:'cooked-pasta',name:'Cooked pasta',unit:'g',base:100,kcal:157,defaultQty:250},
+  {id:'chicken',name:'Cooked chicken breast',unit:'g',base:100,kcal:165,defaultQty:250},
+  {id:'lean-beef',name:'Cooked lean beef',unit:'g',base:100,kcal:200,defaultQty:250},
+  {id:'vegetables',name:'Vegetables',unit:'g',base:100,kcal:35,defaultQty:200},
+  {id:'olive-oil',name:'Olive oil',unit:'tbsp',base:1,kcal:119,defaultQty:1},
+  {id:'gainer',name:'Hard Mass Harder',unit:'scoop',base:1,kcal:195,defaultQty:2}
 ];
 
 const STORAGE_PREFIX = 'nut_90_97';
@@ -243,14 +247,14 @@ const WEEKS = [
   {week:'W7',date:'2026-10-03'},
   {week:'W8',date:'2026-10-10'},
   {week:'W9',date:'2026-10-17'},
-  {week:'Objectif',date:'2026-10-22'}
+  {week:'Goal',date:'2026-10-22'}
 ];
 
 const MILESTONES = [
-  {month:'7 septembre',target:92,date:'2026-09-07'},
-  {month:'24 septembre',target:94,date:'2026-09-24'},
-  {month:'10 octobre',target:96,date:'2026-10-10'},
-  {month:'22 octobre',target:97,date:'2026-10-22'}
+  {month:'7 September',target:92,date:'2026-09-07'},
+  {month:'24 September',target:94,date:'2026-09-24'},
+  {month:'10 October',target:96,date:'2026-10-10'},
+  {month:'22 October',target:97,date:'2026-10-22'}
 ];
 
 const INITIAL_WEIGHTS = {
@@ -259,7 +263,7 @@ const INITIAL_WEIGHTS = {
   '2026-07-25':92.1,
   '2026-08-22':90,
   '2026-08-09':92.3,
-  '2026-08-15':90.775
+  '2026-08-15':90.5
 };
 
 function migrateWeightDates(source){
@@ -269,84 +273,77 @@ function migrateWeightDates(source){
     delete w['2026-09-08'];
   }
   if(Number(w['2026-09-15'])===90.75){
-    if(w['2026-08-15']==null)w['2026-08-15']=90.775;
+    if(w['2026-08-15']==null)w['2026-08-15']=90.5;
     delete w['2026-09-15'];
   }
+  if(Number(w['2026-08-15'])===90.775)w['2026-08-15']=90.5;
   return w;
 }
 
 const TRAINING_PLAN = {
-  1:{name:'Lundi',type:'Push + dos + abdos',items:[
-    'Bench press prise large : échauffement 50kg',
-    'Bench press prise large : 3x4 à 100kg, 2/3min rest, tenter 110kg si accompagné',
-    'Bench press prise large : 2x4 à 90kg, 2/3min rest',
-    'Bench press prise large : 3x6 à 80kg',
-    'Bench press prise large : 3x8 à 70kg',
-    'Bench press prise large : 3x12 à 60kg',
-    'Développé incliné barre : 3x8 à 80kg',
-    'Rowing barre large : 8x10 à 50kg',
-    'Développé épaules haltères : 4x10 à 24kg par main',
-    'Élévations latérales : 4x12 à 16kg',
-    'Poulie abdos : 5x10 à 40kg',
-    'Crunch : 25x7 à 20kg',
+  1:{name:'Monday',type:'Push + back + abs',items:[
+    'Bench press wide grip : warm-up 50kg',
+    'Bench press wide grip : 3x4 at 100kg, 2/3min rest, try 110kg with a spotter',
+    'Bench press wide grip : 2x4 at 90kg, 2/3min rest',
+    'Bench press wide grip : 3x6 at 80kg',
+    'Bench press wide grip : 3x8 at 70kg',
+    'Bench press wide grip : 3x12 at 60kg',
+    'Incline barbell press : 3x8 at 80kg',
+    'Wide barbell row : 8x10 at 50kg',
+    'Dumbbell shoulder press : 4x10 at 24kg per hand',
+    'Lateral raises : 4x12 at 16kg',
+    'Cable crunch : 5x10 at 40kg',
+    'Crunch : 25x7 at 20kg',
     'Plank : 1m20',
     'Lateral planks',
     'Lateral crunch : 20x4'
   ]},
-  2:{name:'Mardi',type:'Cardio + abdos + mobilité',items:[
-    'CARDIO : 5K',
-    'Abdos',
-    'Étirements mobilité'
-  ]},
-  3:{name:'Mercredi',type:'Upper + bras + abdos',items:[
-    'Bench press prise serrée : échauffement 50kg',
-    'Bench press prise serrée : x4 à 100kg, 2/3min rest',
-    'Bench press prise serrée : 2x4 à 90kg, 2/3min rest',
-    'Bench press prise serrée : 3x6 à 80kg, 2/3min rest',
-    'Bench press prise serrée : 3x8 à 70kg, 2/3min rest',
-    'Bench press prise serrée : 3x12 à 60kg, 2/3min rest',
-    'Tirage vertical large : 4x8-10 à 80kg',
-    'Pull-over haltère : 3x12 à 22kg',
-    'Skull crushers haltères : 6x6 à 14kg par main',
-    'Curl barre EZ : 6x10 à 20-25kg',
-    'Élévations latérales drop set : 4x12 à 16kg, puis 10kg, puis 6kg',
-    'Dumbbell shrugs : 4x10 à 30-35kg par main',
-    'Curl alterné : 3x10 à 14kg par main',
-    'Poulie abdos : 5x10 à 40kg',
-    'Crunch : 25x7 à 20kg',
+  2:{name:'Tuesday',type:'5K Run',items:['5K Run']},
+  3:{name:'Wednesday',type:'Upper body + arms + abs',items:[
+    'Bench press close grip : warm-up 50kg',
+    'Bench press close grip : x4 at 100kg, 2/3min rest',
+    'Bench press close grip : 2x4 at 90kg, 2/3min rest',
+    'Bench press close grip : 3x6 at 80kg, 2/3min rest',
+    'Bench press close grip : 3x8 at 70kg, 2/3min rest',
+    'Bench press close grip : 3x12 at 60kg, 2/3min rest',
+    'Wide-grip lat pulldown : 4x8-10 at 80kg',
+    'Dumbbell pull-over : 3x12 at 22kg',
+    'Dumbbell skull crushers : 6x6 at 14kg per hand',
+    'EZ bar curl : 6x10 at 20-25kg',
+    'Lateral raises drop set : 4x12 at 16kg, then 10kg, then 6kg',
+    'Dumbbell shrugs : 4x10 at 30-35kg per hand',
+    'Alternating dumbbell curl : 3x10 at 14kg per hand',
+    'Cable crunch : 5x10 at 40kg',
+    'Crunch : 25x7 at 20kg',
     'Plank : 1m20'
   ]},
-  4:{name:'Jeudi',type:'Leg day + core',items:[
-    'Échauffement jambes et hanches avant leg day',
-    'Back squat : 5x5 à 70kg',
-    'Romanian deadlift : 6x6 à 70kg, focus technique',
-    'Leg press : 6x10 à 200kg, ajuster la machine',
-    'Leg curl : 5x12 à 60kg',
-    'Steps with dumbbell : 3x12 à 15kg',
-    'Mollets debout : 6x12 à 50kg',
+  4:{name:'Thursday',type:'Leg day + core',items:[
+    'Leg and hip warm-up before leg day',
+    'Back squat : 5x5 at 70kg',
+    'Romanian deadlift : 6x6 at 70kg, focus technique',
+    'Leg press : 6x10 at 200kg, adjust the machine',
+    'Leg curl : 5x12 at 60kg',
+    'Steps with dumbbell : 3x12 at 15kg',
+    'Standing calf raises : 6x12 at 50kg',
     'Hanging leg raises : 3x12',
-    'Poulie abdos : 5x10 à 40kg',
-    'Crunch : 25x7 à 20kg',
+    'Cable crunch : 5x10 at 40kg',
+    'Crunch : 25x7 at 20kg',
     'Plank : 1m20',
     'Lateral planks',
     'Stretching'
   ]},
-  5:{name:'Vendredi',type:'Pull + circuit + bench',items:[
-    'Pull ups : 6x5',
-    'Dips : 50 reps',
-    'Upright row prise serrée : 3x10 à 30kg, ajouter du poids si possible',
-    'Upright row prise large : 3x10 à 30kg, ajouter du poids si possible',
-    'Tirage horizontal neutre : 60kg x3',
-    'Triceps corde : 3x12 à 20-25kg',
-    'Parcours x5 : 10 tractions',
-    'Parcours x5 : 30 pompes',
-    'Parcours x5 : 10 leg raises/knee raises',
-    'Parcours x5 : 10 dips',
-    'Bench press : 80kg x6 x4',
-    'Crunch à la poulie : 4x12'
+  5:{name:'Friday',type:'Repeat the circuit 6 times in order, then cable crunches',items:[
+    'Circuit — Pull-ups: 5 reps per round',
+    'Circuit — Push-ups: 50 reps per round',
+    'Circuit — Dips: 10 reps per round',
+    'After all 6 rounds — Cable crunch: 4x12'
   ]},
-  0:{name:'Dimanche',type:'Repos / récupération',items:['Repos actif ou mobilité légère']},
-  6:{name:'Samedi',type:'Repos / récupération',items:['Repos actif ou mobilité légère']}
+  0:{name:'Sunday',type:'Rest or swimming',items:['Rest or swimming']},
+  6:{name:'Saturday',type:'Interval run',items:[
+    'Warm-up: 8 minutes at 8–9 km/h',
+    'Intervals: 6 × 2 minutes at 12 km/h, with 1 minute 30 seconds at 8–9 km/h between intervals',
+    'Cool-down: 5 minutes at an easy pace'
+  ]}
 };
 
 const YOUTUBE_VIDEOS = {
@@ -391,7 +388,7 @@ const YOUTUBE_VIDEOS = {
 // ═══════════════════════════════════════════════════════
 function ls(k){return JSON.parse(localStorage.getItem(k)||'null')}
 function ss(k,v){localStorage.setItem(k,JSON.stringify(v))}
-function today(){return new Date().toISOString().slice(0,10)}
+function today(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
 const CLOUD_ENDPOINT = '/api/nutrition-data';
 let cloudReady = false;
 let cloudStatus = 'local';
@@ -399,6 +396,8 @@ let cloudError = '';
 let cloudState = {meals:{},weights:null,training:{},foods:{},favorites:{},mealPresets:{}};
 let cloudSyncPromise = null;
 let saveAllPromise = null;
+let autoSaveTimer = null;
+let toastTimer = null;
 const PENDING_CHANGES_KEY = `${STORAGE_PREFIX}_pending_sync`;
 let pendingChanges = ls(PENDING_CHANGES_KEY)||{};
 
@@ -419,31 +418,39 @@ function setCloudStatus(status,message=''){
   cloudError=message;
   const el=document.getElementById('cloudStatus');
   if(el){
-    el.textContent=status==='synced'?'☁️ Sync':status==='saving'?'☁️ Sauvegarde...':status==='syncing'?'☁️ Sync...':'⚠️ Réessayer';
-    el.title=message||'Synchroniser maintenant';
+    el.textContent=status==='synced'?'☁️ Sync':status==='saving'?'☁️ Saving...':status==='syncing'?'☁️ Sync...':'⚠️ Retry';
+    el.title=message||'Sync now';
     el.disabled=status==='saving'||status==='syncing';
   }
 }
 function mutationId(mutation){
   return `${mutation.scope}:${mutation.key}`;
 }
-function updateSaveButton(saving=false){
-  const el=document.getElementById('saveChanges');
+function showToast(message,type='success'){
+  const el=document.getElementById('toast');
   if(!el)return;
-  const count=Object.keys(pendingChanges).length;
-  el.hidden=!count;
-  el.disabled=saving;
-  el.textContent=saving?'☁️ Enregistrement...':`💾 Enregistrer${count>1?` (${count})`:''}`;
+  clearTimeout(toastTimer);
+  el.textContent=message;
+  el.className=`toast ${type} show`;
+  toastTimer=setTimeout(()=>el.className=`toast ${type}`,2800);
+}
+function scheduleCloudSave(delay=350){
+  clearTimeout(autoSaveTimer);
+  autoSaveTimer=setTimeout(()=>{
+    autoSaveTimer=null;
+    saveAllChanges();
+  },delay);
 }
 function applyMutationLocally(mutation){
   cloudState[mutation.scope]=cloudState[mutation.scope]||{};
-  cloudState[mutation.scope][mutation.key]=mutation.value;
+  if(mutation.value===null)delete cloudState[mutation.scope][mutation.key];
+  else cloudState[mutation.scope][mutation.key]=mutation.value;
 }
 function stageCloudChange(mutation){
   pendingChanges[mutationId(mutation)]=mutation;
   ss(PENDING_CHANGES_KEY,pendingChanges);
   if(cloudReady)applyMutationLocally(mutation);
-  updateSaveButton();
+  scheduleCloudSave();
 }
 function applyPendingChanges(){
   Object.values(pendingChanges).forEach(applyMutationLocally);
@@ -475,32 +482,26 @@ async function syncNow({mergeLocal=false,quiet=false,skipSaveWait=false}={}){
       applyPendingChanges();
       if(mergeLocal)mergeLocalIntoCloud();
       setCloudStatus('synced');
-      updateSaveButton();
       render();
     }catch(e){
       console.warn('Supabase sync unavailable:',e);
-      setCloudStatus('local',e.message||'Synchronisation indisponible');
+      setCloudStatus('local',e.message||'Sync unavailable');
     }finally{
       cloudSyncPromise=null;
     }
   })();
   return cloudSyncPromise;
 }
-async function syncAndSave(){
-  if(Object.keys(pendingChanges).length){
-    await saveAllChanges();
-    if(Object.keys(pendingChanges).length)return;
-  }
-  await syncNow();
-}
 async function saveAllChanges(){
   if(saveAllPromise)return saveAllPromise;
+  if(!Object.keys(pendingChanges).length)return true;
+  clearTimeout(autoSaveTimer);
+  autoSaveTimer=null;
   saveAllPromise=(async()=>{
     try{
-      updateSaveButton(true);
       setCloudStatus('saving');
       if(!cloudReady)await syncNow({mergeLocal:true,quiet:true,skipSaveWait:true});
-      if(!cloudReady)throw new Error(cloudError||'Synchronisation indisponible');
+      if(!cloudReady)throw new Error(cloudError||'Sync unavailable');
 
       const changes=Object.entries(pendingChanges);
       for(const [id,mutation] of changes){
@@ -517,8 +518,11 @@ async function saveAllChanges(){
       const verifiedState=await verifyRes.json();
       for(const [,mutation] of changes){
         const savedValue=verifiedState?.[mutation.scope]?.[mutation.key];
-        if(JSON.stringify(savedValue)!==JSON.stringify(mutation.value)){
-          throw new Error('Supabase n\'a pas confirmé toutes les modifications');
+        const confirmed=mutation.value===null
+          ? savedValue===undefined
+          : JSON.stringify(savedValue)===JSON.stringify(mutation.value);
+        if(!confirmed){
+          throw new Error('Supabase did not confirm all changes');
         }
       }
 
@@ -537,12 +541,15 @@ async function saveAllChanges(){
       applyPendingChanges();
       setCloudStatus('synced');
       render();
+      showToast('Changes saved','success');
+      return true;
     }catch(e){
       console.warn('Supabase save failed:',e);
       setCloudStatus('local',e.message||'Enregistrement impossible');
+      showToast('Offline: changes saved locally','warning');
+      return false;
     }finally{
       saveAllPromise=null;
-      updateSaveButton();
     }
   })();
   return saveAllPromise;
@@ -651,7 +658,7 @@ function allFoods(){
     const fav=(favorites[b.id]?1:0)-(favorites[a.id]?1:0);
     const recentA=recent.includes(a.id)?recent.indexOf(a.id):999;
     const recentB=recent.includes(b.id)?recent.indexOf(b.id):999;
-    return fav||(recentA-recentB)||a.name.localeCompare(b.name,'fr');
+    return fav||(recentA-recentB)||a.name.localeCompare(b.name,'en');
   });
 }
 function foodById(id){return allFoods().find(food=>food.id===id)}
@@ -668,8 +675,8 @@ function mealDefinitions(dayMeals){
     id,
     time:value.time||'--:--',
     emoji:'➕',
-    name:value.name||'Repas libre',
-    desc:'Repas ajouté librement',
+    name:value.name||'Extra meal',
+    desc:'Custom meal',
     kcal:0,
     extra:true
   }));
@@ -678,17 +685,17 @@ function mealDefinitions(dayMeals){
 function foodOptions(){
   const favorites=foodFavorites();
   const recent=new Set(recentFoodIds());
-  return allFoods().map(food=>`<option value="${food.id}">${favorites[food.id]?'★ ':recent.has(food.id)?'Récent · ':''}${escapeText(food.name)} · ${food.kcal} kcal/${food.base}${food.unit}</option>`).join('');
+  return allFoods().map(food=>`<option value="${food.id}">${favorites[food.id]?'★ ':recent.has(food.id)?'Recent · ':''}${escapeText(food.name)} · ${food.kcal} kcal/${food.base}${food.unit}</option>`).join('');
 }
 function mealPresetOptions(){
-  return Object.values(mealPresets()).filter(Boolean).sort((a,b)=>a.name.localeCompare(b.name,'fr')).map(preset=>`<option value="${preset.id}">${escapeText(preset.name)} · ${itemsCalories(preset)} kcal</option>`).join('');
+  return Object.values(mealPresets()).filter(Boolean).sort((a,b)=>a.name.localeCompare(b.name,'en')).map(preset=>`<option value="${preset.id}">${escapeText(preset.name)} · ${itemsCalories(preset)} kcal</option>`).join('');
 }
 function saveMealPreset(mealId,date=today()){
   const day=mealsForDate(date);
   const entry=mealEntry(day[mealId]);
-  if(!entry.items.length&&!entry.kcal){alert('Ajoute au moins un aliment avant d’enregistrer ce repas.');return}
+  if(!entry.items.length&&!entry.kcal){alert('Add at least one food before saving this meal.');return}
   const meal=mealDefinitions(day).find(value=>value.id===mealId);
-  const name=(prompt('Nom du repas favori',`${meal?.name||'Repas'} habituel`)||'').trim();
+  const name=(prompt('Favorite meal name',`${meal?.name||'Meal'} usual`)||'').trim();
   if(!name)return;
   const preset={
     id:`preset-${Date.now()}`,
@@ -719,7 +726,7 @@ function applyMealPreset(mealId,date=today()){
 function removeMealPreset(mealId,date=today()){
   const select=document.getElementById(`preset-select-${date}-${mealId}`);
   const id=select?.value;
-  if(!id||!confirm('Supprimer ce repas favori ?'))return;
+  if(!id||!confirm('Delete this favorite meal?'))return;
   const presets={...mealPresets(),[id]:null};
   ss(`${STORAGE_PREFIX}_meal_presets`,presets);
   stageCloudChange({scope:'mealPresets',key:id,value:null});
@@ -773,14 +780,14 @@ function toggleFoodFavorite(foodId){
   render();
 }
 function addCustomFood(mealId,date=today()){
-  const name=prompt('Nom de l’aliment');
+  const name=prompt('Food name');
   if(!name?.trim())return;
-  let unit=(prompt('Unité : g, ml, unité ou tranche','g')||'g').trim().toLowerCase();
-  if(!['g','ml','unité','tranche'].includes(unit))unit='g';
+  let unit=(prompt('Unit: g, ml, piece or slice','g')||'g').trim().toLowerCase();
+  if(!['g','ml','piece','slice'].includes(unit))unit='g';
   const base=unit==='g'||unit==='ml'?100:1;
-  const kcal=Math.max(0,Number(prompt(`Calories pour ${base} ${unit}`,''))||0);
+  const kcal=Math.max(0,Number(prompt(`Calories per ${base} ${unit}`,''))||0);
   if(!kcal)return;
-  const defaultQty=Math.max(0,Number(prompt(`Portion habituelle en ${unit}`,String(base)))||base);
+  const defaultQty=Math.max(0,Number(prompt(`Usual portion in ${unit}`,String(base)))||base);
   const food={id:`custom-${Date.now()}`,name:name.trim(),unit,base,kcal,defaultQty};
   const foods={...customFoods(),[food.id]:food};
   ss(`${STORAGE_PREFIX}_foods`,foods);
@@ -788,9 +795,9 @@ function addCustomFood(mealId,date=today()){
   addFoodToMeal(mealId,date,food.id);
 }
 function addExtraMeal(){
-  const name=(prompt('Nom du repas libre','Repas libre')||'Repas libre').trim();
+  const name=(prompt('Extra meal name','Extra meal')||'Extra meal').trim();
   const now=new Date();
-  const time=now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+  const time=now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
   const day=todayMeals();
   const id=`extra-${Date.now()}`;
   day[id]={status:'pending',note:'',kcal:0,items:[],extra:true,name,time};
@@ -811,7 +818,7 @@ function previousDate(date){
 function duplicateYesterday(mealId){
   const source=mealsForDate(previousDate(today()));
   const original=source[mealId];
-  if(!original){alert('Aucun repas correspondant enregistré hier.');return}
+  if(!original){alert('No matching meal was saved yesterday.');return}
   const day=todayMeals();
   day[mealId]=JSON.parse(JSON.stringify(original));
   saveMeals(day);
@@ -842,18 +849,19 @@ function saveWeight(date,val){
 function training(){
   return cloudReady?(cloudState.training||{}):(ls(`${STORAGE_PREFIX}_training`)||{});
 }
-function saveTraining(t){
+function saveTraining(t,date=trainingDate){
   ss(`${STORAGE_PREFIX}_training`,t);
-  stageCloudChange({scope:'training',key:today(),value:t[today()]});
+  stageCloudChange({scope:'training',key:date,value:t[date]});
 }
 // ═══════════════════════════════════════════════════════
 // NAV
 // ═══════════════════════════════════════════════════════
 let activeTab=0;
+let trainingDate=today();
 let historyEditKey='';
 function switchTab(i){
   activeTab=i;
-  [0,1,2,3].forEach(j=>{
+  [0,1,2,3,4].forEach(j=>{
     document.getElementById(`tab${j}`).classList.toggle('active',j===i);
   });
   render();
@@ -866,7 +874,8 @@ function render(){
   if(activeTab===0)renderToday();
   else if(activeTab===1)renderTraining();
   else if(activeTab===2)renderWeight();
-  else renderHistory();
+  else if(activeTab===3)renderHistory();
+  else renderRuns();
 }
 
 // ── TODAY ────────────────────────────────────────────
@@ -885,7 +894,7 @@ function renderToday(){
   const done=lastWeight-WEIGHT_START;
   const pctWeight=Math.max(0,Math.min(100,Math.round(done/totalGain*100)));
   // next milestone
-  const nextM=MILESTONES.find(m=>lastWeight<m.target)||{month:'Objectif',target:WEIGHT_GOAL};
+  const nextM=MILESTONES.find(m=>lastWeight<m.target)||{month:'Goal',target:WEIGHT_GOAL};
   const daysLeft=Math.round((new Date(GOAL_DATE)-new Date())/(1000*60*60*24));
   // ring stroke
   const circ=2*Math.PI*39;
@@ -901,22 +910,22 @@ function renderToday(){
       <div class="ring-text"><strong>${pctWeight}%</strong><span class="ring-sub">${lastWeight} kg</span></div>
     </div>
     <div class="hero-info">
-      <h2>${pctWeight}% vers ${WEIGHT_GOAL}kg</h2>
-      <p>${lastWeight}kg → ${WEIGHT_GOAL}kg · ${daysLeft}j restants</p>
-      <p class="milestone">→ Prochain : ${nextM.target}kg en ${nextM.month}</p>
+      <h2>${pctWeight}% towards ${WEIGHT_GOAL}kg</h2>
+      <p>${lastWeight}kg → ${WEIGHT_GOAL}kg · ${daysLeft} days left</p>
+      <p class="milestone">→ Next: ${nextM.target}kg by ${nextM.month}</p>
     </div>
   </div>
   <div class="macro-row">
     <div class="macro-card">
       <div class="mv" style="color:var(--orange)">${doneKcal}<span style="font-size:12px;color:#555"> / ${TOTAL_KCAL}</span></div>
-      <div class="ml">Calories aujourd'hui</div>
+      <div class="ml">Calories today</div>
       <div class="mp"><div class="mf kcal-fill" style="width:${pctK}%"></div></div>
     </div>
   </div>
   <div class="day-actions">
-    <button class="small-command" onclick="addExtraMeal()">+ Repas libre</button>
+    <button class="small-command" onclick="addExtraMeal()">+ Extra meal</button>
   </div>
-  <div class="sec-lbl">${mealsDone}/${definitions.length} mangés · ${mealsModified} modifié(s) · ${mealsSkipped} skippé(s) · ${today()}</div>
+  <div class="sec-lbl">${mealsDone}/${definitions.length} eaten · ${mealsModified} modified · ${mealsSkipped} skipped · ${today()}</div>
   ${mealsHTML}`;
 }
 
@@ -929,44 +938,44 @@ function renderMealCard(meal,day,date){
   const favorites=foodFavorites();
   const presetOptions=mealPresetOptions();
   const itemRows=entry.items.map(item=>`<div class="food-row">
-    <div class="food-name">${escapeText(item.name)}<div style="font-size:9px;color:var(--muted)">${item.kcal} kcal / ${item.base} ${escapeText(item.unit)}</div></div>
+    <div class="food-name">${escapeText(BASE_FOODS.find(food=>food.id===item.foodId)?.name||item.name)}<div style="font-size:9px;color:var(--muted)">${item.kcal} kcal / ${item.base} ${escapeText(BASE_FOODS.find(food=>food.id===item.foodId)?.unit||item.unit)}</div></div>
     <input class="food-qty" type="number" min="0" step="${item.base===1?'1':'5'}" value="${item.qty}" onchange="updateFoodQty('${meal.id}','${item.id}',this.value,'${date}')">
     <div class="food-kcal">${itemCalories(item)} kcal</div>
-    <button class="food-icon${favorites[item.foodId]?' on':''}" title="Favori" onclick="toggleFoodFavorite('${item.foodId}')">★</button>
-    <button class="food-icon" title="Supprimer" onclick="removeFoodItem('${meal.id}','${item.id}','${date}')">×</button>
+    <button class="food-icon${favorites[item.foodId]?' on':''}" title="Favorite" onclick="toggleFoodFavorite('${item.foodId}')">★</button>
+    <button class="food-icon" title="Delete" onclick="removeFoodItem('${meal.id}','${item.id}','${date}')">×</button>
   </div>`).join('');
-  const manualKcal=entry.items.length?'':`<input class="custom-macro" type="number" min="0" step="10" value="${entry.kcal||''}" placeholder="kcal manuelles si l’aliment n’est pas listé" onchange="setMealKcal('${meal.id}',this.value,'${date}')">`;
+  const manualKcal=entry.items.length?'':`<input class="custom-macro" type="number" min="0" step="10" value="${entry.kcal||''}" placeholder="Manual calories if the food is not listed" onchange="setMealKcal('${meal.id}',this.value,'${date}')">`;
   return `<div class="meal-card${on?' checked':''}${skipped?' skipped':''}${modified?' modified':''}">
     <div class="meal-check${on?' on':''}${skipped?' skip':''}${modified?' mod':''}">${on?'✓':skipped?'×':modified?'~':''}</div>
     <div class="meal-body">
       <div class="meal-time">${meal.time}</div>
       <div class="meal-name">${meal.emoji} ${escapeText(meal.name)}</div>
-      <div class="meal-desc"><b>Plan conseillé :</b> ${escapeText(meal.desc)}</div>
-      <div class="meal-macros"><span class="meal-chip mc-kcal">${meal.kcal?`Objectif ${meal.kcal} kcal`:'Repas libre'}</span></div>
-      ${(entry.items.length||entry.kcal)?`<div class="meal-actual">Consommé : ${actual} kcal</div>`:''}
+      <div class="meal-desc"><b>Suggested plan:</b> ${escapeText(meal.desc)}</div>
+      <div class="meal-macros"><span class="meal-chip mc-kcal">${meal.kcal?`Goal ${meal.kcal} kcal`:'Extra meal'}</span></div>
+      ${(entry.items.length||entry.kcal)?`<div class="meal-actual">Consumed: ${actual} kcal</div>`:''}
       <div class="meal-actions">
-        <button class="meal-action done${on?' on':''}" onclick="setMealStatus('${meal.id}','${on?'pending':'done'}','${date}')">Mangé</button>
-        <button class="meal-action mod${modified?' on':''}" onclick="setMealStatus('${meal.id}','${modified?'pending':'modified'}','${date}')">Modifié</button>
-        <button class="meal-action skip${skipped?' on':''}" onclick="setMealStatus('${meal.id}','${skipped?'pending':'skipped'}','${date}')">Skippé</button>
+        <button class="meal-action done${on?' on':''}" onclick="setMealStatus('${meal.id}','${on?'pending':'done'}','${date}')">Eaten</button>
+        <button class="meal-action mod${modified?' on':''}" onclick="setMealStatus('${meal.id}','${modified?'pending':'modified'}','${date}')">Modified</button>
+        <button class="meal-action skip${skipped?' on':''}" onclick="setMealStatus('${meal.id}','${skipped?'pending':'skipped'}','${date}')">Skipped</button>
       </div>
-      <input class="meal-note" value="${escapeAttr(entry.note)}" placeholder="Commentaire sur ce repas" onchange="setMealNote('${meal.id}',this.value,'${date}')">
+      <input class="meal-note" value="${escapeAttr(entry.note)}" placeholder="Meal notes" onchange="setMealNote('${meal.id}',this.value,'${date}')">
       <details class="meal-composer" ${entry.items.length?'open':''}>
-        <summary><span>Composer ce repas</span><span>${itemsCalories(entry)} kcal</span></summary>
-        <div class="food-list">${itemRows||'<div class="training-meta">Aucun aliment ajouté.</div>'}</div>
+        <summary><span>Build this meal</span><span>${itemsCalories(entry)} kcal</span></summary>
+        <div class="food-list">${itemRows||'<div class="training-meta">No foods added yet.</div>'}</div>
         <div class="food-add-row">
           <select class="food-select" id="food-select-${date}-${meal.id}">${foodOptions()}</select>
-          <button class="small-command" onclick="addFoodToMeal('${meal.id}','${date}')">Ajouter</button>
-          <button class="food-icon" title="Nouvel aliment" onclick="addCustomFood('${meal.id}','${date}')">+</button>
+          <button class="small-command" onclick="addFoodToMeal('${meal.id}','${date}')">Add</button>
+          <button class="food-icon" title="New food" onclick="addCustomFood('${meal.id}','${date}')">+</button>
         </div>
         ${presetOptions?`<div class="preset-row">
           <select class="food-select" id="preset-select-${date}-${meal.id}">${presetOptions}</select>
-          <button class="small-command" onclick="applyMealPreset('${meal.id}','${date}')">Utiliser</button>
-          <button class="food-icon" title="Supprimer ce repas favori" onclick="removeMealPreset('${meal.id}','${date}')">×</button>
+          <button class="small-command" onclick="applyMealPreset('${meal.id}','${date}')">Use</button>
+          <button class="food-icon" title="Delete this favorite meal" onclick="removeMealPreset('${meal.id}','${date}')">×</button>
         </div>`:''}
         <div class="composer-actions">
-          <button class="small-command" onclick="saveMealPreset('${meal.id}','${date}')">★ Enregistrer ce repas</button>
-          ${date===today()&&!meal.extra?`<button class="small-command" onclick="duplicateYesterday('${meal.id}')">Dupliquer hier</button>`:''}
-          ${meal.extra?`<button class="small-command" onclick="removeExtraMeal('${meal.id}','${date}')">Supprimer le repas</button>`:''}
+          <button class="small-command" onclick="saveMealPreset('${meal.id}','${date}')">★ Save this meal</button>
+          ${date===today()&&!meal.extra?`<button class="small-command" onclick="duplicateYesterday('${meal.id}')">Copy yesterday</button>`:''}
+          ${meal.extra?`<button class="small-command" onclick="removeExtraMeal('${meal.id}','${date}')">Delete meal</button>`:''}
         </div>
         ${manualKcal}
       </details>
@@ -1041,6 +1050,10 @@ function renderWeight(){
       <td>${date.slice(8,10)}/${date.slice(5,7)}</td>
       <td>${val?`<b>${val} kg</b>`:'—'}</td>
       <td>${deltaHTML||'—'}</td>
+      <td><div class="weight-actions">
+        <button class="weight-action" title="Edit" onclick="editWeight('${date}')">✎</button>
+        <button class="weight-action" title="Delete" onclick="deleteWeight('${date}')">×</button>
+      </div></td>
     </tr>`;
   }).join('');
   // chart
@@ -1064,39 +1077,64 @@ function renderWeight(){
   }).join('');
   document.getElementById('main').innerHTML=`
   <div class="weight-input-card">
-    <h3>⚖️ Entrer le poids de cette semaine</h3>
+    <h3>⚖️ Enter this week's weight</h3>
     <div class="weight-input-row">
       <input class="weight-input" id="weightIn" type="number" step="0.001" min="70" max="130" placeholder="ex: 91.250" value="${w[todayStr]||''}">
-      <button class="weight-save-btn" onclick="doSaveWeight()">Sauvegarder</button>
+      <button class="weight-save-btn" onclick="doSaveWeight()">Save</button>
     </div>
-    <div style="font-size:11px;color:var(--muted);margin-top:8px">Peser le lundi matin à jeun, après les toilettes.</div>
-    <div style="font-size:11px;color:var(--muted);margin-top:4px">Objectif 2 mois : 90kg → 97kg, soit environ +0,8kg/semaine.</div>
+    <div style="font-size:11px;color:var(--muted);margin-top:8px">Weigh yourself on Monday morning before breakfast, after using the bathroom.</div>
+    <div style="font-size:11px;color:var(--muted);margin-top:4px">2-month goal: 90kg → 97kg, about +0.8kg/week.</div>
   </div>
   <div class="chart-card">
-    <h4>Courbe de poids vers ${WEIGHT_GOAL}kg</h4>
+    <h4>Courbe de poids towards ${WEIGHT_GOAL}kg</h4>
     ${chartHTML}
   </div>
   <div class="chart-card">
-    <h4>Jalons 2 mois</h4>
+    <h4>2-month milestones</h4>
     ${mHTML}
   </div>
   <div class="chart-card" style="padding:0 16px 4px">
     <table class="weight-table">
-      <thead><tr><th>Sem.</th><th>Date</th><th>Poids</th><th>Δ</th></tr></thead>
+      <thead><tr><th>Week</th><th>Date</th><th>Weight</th><th>Δ</th><th></th></tr></thead>
       <tbody>${tableRows}</tbody>
     </table>
   </div>`;
 }
 
-function doSaveWeight(){
+async function doSaveWeight(){
   const val=parseFloat(document.getElementById('weightIn').value);
-  if(!val||val<50||val>200)return;
+  if(!val||val<50||val>200){showToast('Enter a valid weight','error');return}
   saveWeight(today(),val);
   render();
+  const saved=await saveAllChanges();
+  if(saved)showToast(`Weight saved : ${val} kg`,'success');
+}
+
+async function editWeight(date){
+  const current=weights()[date];
+  const value=prompt(`Edit weight for ${date.slice(8,10)}/${date.slice(5,7)}`,String(current));
+  if(value===null)return;
+  const val=parseFloat(value);
+  if(!val||val<50||val>200){showToast('Enter a valid weight','error');return}
+  saveWeight(date,val);
+  render();
+  const saved=await saveAllChanges();
+  if(saved)showToast(`Weight updated : ${val} kg`,'success');
+}
+
+async function deleteWeight(date){
+  if(!confirm(`Delete weight for ${date.slice(8,10)}/${date.slice(5,7)} ?`))return;
+  const w=weights();
+  delete w[date];
+  ss(`${STORAGE_PREFIX}_weights`,w);
+  stageCloudChange({scope:'weights',key:date,value:null});
+  render();
+  const saved=await saveAllChanges();
+  if(saved)showToast('Weight deleted','success');
 }
 
 function buildWeightChart(pts,w){
-  if(pts.length<1)return`<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px">Aucun poids enregistré</div>`;
+  if(pts.length<1)return`<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px">No weights recorded</div>`;
   const allDates=Array.from(new Set([...WEEKS.map(wk=>wk.date),...Object.keys(w).filter(d=>w[d])])).sort();
   const values=Object.values(w).filter(Boolean);
   const minW=Math.floor(Math.min(88,WEIGHT_START,...values))-1;
@@ -1140,11 +1178,11 @@ function buildWeightChart(pts,w){
     ${yLabels}${xLabels}${targetLine}${mLines}${linePath}${dotHTML}
     <line x1="${pad.l}" y1="${pad.t}" x2="${pad.l}" y2="${pad.t+ch}" stroke="var(--border)" stroke-width="1"/>
     <line x1="${pad.l}" y1="${pad.t+ch}" x2="${pad.l+cw}" y2="${pad.t+ch}" stroke="var(--border)" stroke-width="1"/>
-    <text x="${pad.l+cw}" y="${Math.max(12,tEnd-8)}" text-anchor="end" font-size="10" fill="#f97316" font-weight="800">${WEIGHT_GOAL}kg objectif</text>
+    <text x="${pad.l+cw}" y="${Math.max(12,tEnd-8)}" text-anchor="end" font-size="10" fill="#f97316" font-weight="800">${WEIGHT_GOAL}kg goal</text>
   </svg>
   <div style="font-size:11px;color:var(--muted);margin-top:8px;display:flex;gap:16px;flex-wrap:wrap">
-    <span style="color:var(--accent)">● Poids réel</span>
-    <span style="color:var(--orange)">- - Trajectoire cible</span>
+    <span style="color:var(--accent)">● Actual weight</span>
+    <span style="color:var(--orange)">- - Target trajectory</span>
     <span style="color:var(--orange)">● Milestones</span>
   </div>
   </div>`;
@@ -1152,9 +1190,9 @@ function buildWeightChart(pts,w){
 
 // ── TRAINING ─────────────────────────────────────────
 function renderTraining(){
-  const day=new Date().getDay();
+  const day=new Date(`${trainingDate}T12:00:00`).getDay();
   const plan=TRAINING_PLAN[day]||TRAINING_PLAN[0];
-  const date=today();
+  const date=trainingDate;
   const all=training();
   const state=all[date]||{done:{},notes:{},comment:''};
   state.notes=state.notes||{};
@@ -1163,7 +1201,7 @@ function renderTraining(){
     const p=TRAINING_PLAN[dayNum];
     const isToday=dayNum===day;
     const doneForToday=isToday?doneCount:null;
-    const progress=isToday?`${doneForToday}/${p.items.length}`:`${p.items.length} blocs`;
+    const progress=isToday?`${doneForToday}/${p.items.length}`:`${p.items.length} blocks`;
     const details=p.items.map(item=>`<div class="week-exercise">
       ${exerciseVideo(item)}
       <div>${item}</div>
@@ -1172,7 +1210,7 @@ function renderTraining(){
       <summary>
       <div class="week-day-top">
         <div class="week-day-name">${p.name}</div>
-        <div class="week-day-progress">${progress} · ouvrir</div>
+        <div class="week-day-progress">${progress} · expand</div>
       </div>
       <div class="week-day-type">${p.type}</div>
       </summary>
@@ -1187,69 +1225,71 @@ function renderTraining(){
         ${exerciseVideo(item)}
         <div class="exercise-text${on?' done-text':''}">${item}</div>
       </div>
-      <input class="exercise-note" value="${escapeAttr(state.notes[i]||'')}" placeholder="Charge, reps, difficulté, sensation..." onclick="event.stopPropagation()" onchange="setExerciseComment(${i},this.value)">
+      <input class="exercise-note" value="${escapeAttr(state.notes[i]||'')}" placeholder="Weight, reps, difficulty, how it felt..." onclick="event.stopPropagation()" onchange="setExerciseComment(${i},this.value)">
     </div>`;
   }).join('');
   document.getElementById('main').innerHTML=`
   <div class="training-day">
     <h3>🏋️ ${plan.name}</h3>
-    <div class="training-meta">${plan.type} · ${doneCount}/${plan.items.length} exercices · ${date}</div>
+    <label>Workout date <input class="exercise-note" type="date" value="${date}" max="${today()}" onchange="selectTrainingDate(this.value)"></label>
+    <div class="training-meta">${plan.type} · ${doneCount}/${plan.items.length} exercises · ${date}</div>
     ${exerciseHTML}
+    ${day===2?runForm(date):''}
   </div>
   <div class="training-day">
-    <h3>📝 Commentaire séance</h3>
-    <div class="training-meta">Note les charges réelles, sensations, douleur, énergie, reps ratées ou progression à tenter.</div>
-    <textarea class="session-comment" placeholder="Ex: Bench 100kg OK sur 2 séries, dernière série dure. Épaule droite sensible. Prochaine fois rester à 100 avant 110." onchange="setTrainingComment(this.value)">${escapeText(state.comment||'')}</textarea>
+    <h3>📝 Workout notes</h3>
+    <div class="training-meta">Record actual weights, how you felt, pain, energy, missed reps, or next targets.</div>
+    <textarea class="session-comment" placeholder="Example: Bench 100kg for 2 sets; last set was hard. Right shoulder felt sensitive. Stay at 100kg next time." onchange="setTrainingComment(this.value)">${escapeText(state.comment||'')}</textarea>
   </div>
   <div class="training-day">
-    <h3>📆 Plan de la semaine</h3>
-    <div class="training-meta">Vue rapide de la structure hebdo.</div>
+    <h3>📆 Weekly plan</h3>
+    <div class="training-meta">Your weekly workout schedule.</div>
     <div class="week-grid">${weekHTML}</div>
   </div>`;
 }
 
 function exerciseVideo(item){
   const id=exerciseVideoId(item);
-  if(!id)return `<button class="exercise-video no-video" onclick="event.stopPropagation()" aria-label="Pas de vidéo">À préciser</button>`;
-  return `<button class="exercise-video" data-exercise="${escapeAttr(item)}" onclick="openExerciseVideo(event,this.dataset.exercise)" aria-label="Voir la vidéo dans l'app"><img src="https://img.youtube.com/vi/${id}/mqdefault.jpg" alt=""></button>`;
+  if(!id)return `<button class="exercise-video no-video" onclick="event.stopPropagation()" aria-label="No video">No video yet</button>`;
+  return `<button class="exercise-video" data-exercise="${escapeAttr(item)}" onclick="openExerciseVideo(event,this.dataset.exercise)" aria-label="Watch exercise video"><img src="https://img.youtube.com/vi/${id}/mqdefault.jpg" alt=""></button>`;
 }
 
 function exerciseVideoId(item){
   const s=item.toLowerCase();
   if(s.includes('piste melun'))return null;
-  if(s.includes('poulie abdos'))return YOUTUBE_VIDEOS.cableCrunch;
+  if(s.includes('cable crunch'))return YOUTUBE_VIDEOS.cableCrunch;
   if(s.includes('leg press'))return YOUTUBE_VIDEOS.legPress;
   if(s.includes('leg curl'))return YOUTUBE_VIDEOS.legCurl;
-  if(s.includes('mollets'))return YOUTUBE_VIDEOS.calfRaise;
-  if(s.includes('crunch à la poulie'))return YOUTUBE_VIDEOS.cableCrunch;
-  if(s.includes('rowing barre'))return YOUTUBE_VIDEOS.barbellRow;
-  if(s.includes('développé épaules'))return YOUTUBE_VIDEOS.shoulderPress;
-  if(s.includes('élévations latérales'))return YOUTUBE_VIDEOS.lateralRaise;
+  if(s.includes('calf raises'))return YOUTUBE_VIDEOS.calfRaise;
+  if(s.includes('cable crunch'))return YOUTUBE_VIDEOS.cableCrunch;
+  if(s.includes('barbell row'))return YOUTUBE_VIDEOS.barbellRow;
+  if(s.includes('dumbbell shoulder press'))return YOUTUBE_VIDEOS.shoulderPress;
+  if(s.includes('lateral raises'))return YOUTUBE_VIDEOS.lateralRaise;
   if(s.includes('lateral crunch'))return YOUTUBE_VIDEOS.lateralCrunch;
   if(s.includes('lateral planks'))return YOUTUBE_VIDEOS.sidePlank;
   if(s.includes('plank'))return YOUTUBE_VIDEOS.plank;
   if(s.includes('crunch'))return YOUTUBE_VIDEOS.crunch;
   if(s.includes('cardio')||s.includes('5k'))return YOUTUBE_VIDEOS.running;
-  if(s.trim()==='abdos')return YOUTUBE_VIDEOS.abs;
-  if(s.includes('étirements')||s.includes('stretching')||s.includes('repos actif')||s.includes('mobilité légère'))return YOUTUBE_VIDEOS.mobility;
-  if(s.includes('tirage vertical'))return YOUTUBE_VIDEOS.latPulldown;
+  if(s.trim()==='abs')return YOUTUBE_VIDEOS.abs;
+  if(s.includes('stretching')||s.includes('stretching')||s.includes('active recovery')||s.includes('light mobility'))return YOUTUBE_VIDEOS.mobility;
+  if(s.includes('lat pulldown'))return YOUTUBE_VIDEOS.latPulldown;
   if(s.includes('pull-over'))return YOUTUBE_VIDEOS.pullover;
   if(s.includes('skull'))return YOUTUBE_VIDEOS.skullCrusher;
-  if(s.includes('curl barre ez'))return YOUTUBE_VIDEOS.ezCurl;
+  if(s.includes('ez bar curl'))return YOUTUBE_VIDEOS.ezCurl;
   if(s.includes('dumbbell shrugs'))return YOUTUBE_VIDEOS.shrugs;
-  if(s.includes('curl alterné'))return YOUTUBE_VIDEOS.alternatingCurl;
-  if(s.includes('échauffement jambes'))return YOUTUBE_VIDEOS.hipWarmup;
+  if(s.includes('alternating dumbbell curl'))return YOUTUBE_VIDEOS.alternatingCurl;
+  if(s.includes('leg and hip warm-up'))return YOUTUBE_VIDEOS.hipWarmup;
   if(s.includes('hanging leg raises')||s.includes('leg raises/knee raises'))return YOUTUBE_VIDEOS.hangingLegRaise;
-  if(s.includes('pull ups')||s.includes('tractions'))return YOUTUBE_VIDEOS.pullUp;
+  if(s.includes('pull ups')||s.includes('pull-ups'))return YOUTUBE_VIDEOS.pullUp;
   if(s.includes('dips'))return YOUTUBE_VIDEOS.dips;
-  if(s.includes('upright row prise serrée'))return YOUTUBE_VIDEOS.closeGripUprightRow;
-  if(s.includes('upright row prise large'))return YOUTUBE_VIDEOS.wideGripUprightRow;
-  if(s.includes('tirage horizontal'))return YOUTUBE_VIDEOS.seatedCableRow;
-  if(s.includes('triceps corde'))return YOUTUBE_VIDEOS.ropeTriceps;
-  if(s.includes('pompes'))return YOUTUBE_VIDEOS.pushUp;
-  if(s.includes('bench')&&s.includes('serrée'))return YOUTUBE_VIDEOS.bench;
+  if(s.includes('upright row close grip'))return YOUTUBE_VIDEOS.closeGripUprightRow;
+  if(s.includes('upright row wide grip'))return YOUTUBE_VIDEOS.wideGripUprightRow;
+  if(s.includes('seated cable row'))return YOUTUBE_VIDEOS.seatedCableRow;
+  if(s.includes('rope triceps extensions'))return YOUTUBE_VIDEOS.ropeTriceps;
+  if(s.includes('push-ups'))return YOUTUBE_VIDEOS.pushUp;
+  if(s.includes('bench')&&s.includes('close grip'))return YOUTUBE_VIDEOS.bench;
   if(s.includes('bench'))return YOUTUBE_VIDEOS.bench;
-  if(s.includes('développé incliné'))return YOUTUBE_VIDEOS.incline;
+  if(s.includes('incline barbell press'))return YOUTUBE_VIDEOS.incline;
   if(s.includes('romanian')||s.includes('deadlift'))return YOUTUBE_VIDEOS.rdl;
   if(s.includes('squat')||s.includes('steps'))return YOUTUBE_VIDEOS.squat;
   return null;
@@ -1260,7 +1300,7 @@ function openExerciseVideo(event,item){
   const id=exerciseVideoId(item);
   const content=id
     ? `<iframe class="video-frame" src="https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0" title="${escapeAttr(item)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`
-    : `<div class="video-empty">Vidéo YouTube à compléter pour cet exercice.<br>Le lecteur intégré est prêt, il manque seulement l'ID YouTube précis à associer à ce mouvement.</div>`;
+    : `<div class="video-empty">No video has been added for this exercise yet.</div>`;
   const modal=document.createElement('div');
   modal.className='video-modal';
   modal.id='videoModal';
@@ -1268,7 +1308,7 @@ function openExerciseVideo(event,item){
   modal.innerHTML=`<div class="video-panel" onclick="event.stopPropagation()">
     <div class="video-panel-top">
       <div class="video-panel-title">${escapeText(item)}</div>
-      <button class="video-close" onclick="closeVideo()">Fermer</button>
+      <button class="video-close" onclick="closeVideo()">Close</button>
     </div>
     ${content}
   </div>`;
@@ -1286,7 +1326,7 @@ function escapeText(value){
 
 function toggleExercise(idx){
   const all=training();
-  const date=today();
+  const date=trainingDate;
   const state=all[date]||{done:{},notes:{},comment:''};
   state.done=state.done||{};
   state.done[idx]=!state.done[idx];
@@ -1297,7 +1337,7 @@ function toggleExercise(idx){
 
 function setExerciseComment(idx,comment){
   const all=training();
-  const date=today();
+  const date=trainingDate;
   const state=all[date]||{done:{},notes:{},comment:''};
   state.notes=state.notes||{};
   state.notes[idx]=comment.trim();
@@ -1307,16 +1347,88 @@ function setExerciseComment(idx,comment){
 
 function setTrainingComment(comment){
   const all=training();
-  const date=today();
+  const date=trainingDate;
   const state=all[date]||{done:{},notes:{},comment:''};
   state.comment=comment;
   all[date]=state;
   saveTraining(all);
 }
 
+
+function validRunDate(date){
+  return /^\d{4}-\d{2}-\d{2}$/.test(date)&&!Number.isNaN(new Date(`${date}T12:00:00`).getTime())&&new Date(`${date}T12:00:00`).toISOString().slice(0,10)===date&&date<=today();
+}
+function selectTrainingDate(date){
+  if(!validRunDate(date)){showToast('Choose a valid date up to today.','error');return}
+  trainingDate=date;
+  renderTraining();
+}
+function parseRunTime(value){
+  const match=/^(\d{1,3}):([0-5]\d)$/.exec(String(value).trim());
+  return match&&Number(match[1])*60+Number(match[2])>0?Number(match[1])*60+Number(match[2]):null;
+}
+function formatRunTime(seconds){return `${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,'0')}`}
+function runForm(date,withDate=false){
+  const seconds=training()[date]?.runSeconds;
+  return `<form onsubmit="event.preventDefault();saveRunTime(${withDate?"document.getElementById('runDate').value":`'${date}'`},document.getElementById('runTime').value)">
+    ${withDate?`<label for="runDate">Run date</label><input class="exercise-note" id="runDate" type="date" max="${today()}" value="${date}" required onchange="loadRunTime(this.value)">`:''}
+    <label for="runTime">5K finish time (minutes:seconds)</label>
+    <input class="exercise-note" id="runTime" type="text" inputmode="text" placeholder="25:30" pattern="[0-9]{1,3}:[0-5][0-9]" value="${seconds?formatRunTime(seconds):''}" required>
+    <button class="small-command" type="submit">Save run time</button>
+    <p class="training-meta">One result per date. Saving again updates that day's time.</p>
+  </form>`;
+}
+function loadRunTime(date){
+  const seconds=training()[date]?.runSeconds;
+  document.getElementById('runTime').value=seconds?formatRunTime(seconds):'';
+}
+function saveRunTime(date,value){
+  const seconds=parseRunTime(value);
+  if(!validRunDate(date)||seconds===null){showToast('Enter a valid date and a time such as 25:30.','error');return false}
+  const all=training();
+  const state=all[date]||{done:{},notes:{},comment:''};
+  state.runSeconds=seconds;
+  if(new Date(`${date}T12:00:00`).getDay()===2)state.done={...state.done,0:true};
+  all[date]=state;
+  saveTraining(all,date);
+  render();
+  showToast('Run time saved on this device. Syncing automatically.');
+  return true;
+}
+function deleteRunTime(date){
+  if(!confirm(`Delete the 5K time for ${date}?`))return;
+  const all=training();
+  if(!all[date])return;
+  delete all[date].runSeconds;
+  saveTraining(all,date);
+  render();
+}
+function editRunTime(date){
+  document.getElementById('runDate').value=date;
+  loadRunTime(date);
+  document.getElementById('runTime').focus();
+}
+function renderRuns(){
+  const runs=Object.entries(training()).filter(([,v])=>Number.isInteger(v?.runSeconds)&&v.runSeconds>0).sort(([a],[b])=>a.localeCompare(b));
+  const best=runs.length?Math.min(...runs.map(([,v])=>v.runSeconds)):null;
+  const latest=runs.at(-1)?.[1].runSeconds;
+  const change=runs.length>1?latest-runs[0][1].runSeconds:null;
+  const rows=runs.map(([date,run],i)=>{
+    const delta=i?run.runSeconds-runs[i-1][1].runSeconds:null;
+    return `<tr><td>${date}</td><td><b>${formatRunTime(run.runSeconds)}</b>${run.runSeconds===best?' ★':''}</td><td>${formatRunTime(Math.round(run.runSeconds/5))}/km</td><td>${delta===null?'—':delta===0?'Same':`${formatRunTime(Math.abs(delta))} ${delta<0?'faster':'slower'}`}</td><td><button class="weight-action" onclick="editRunTime('${date}')" aria-label="Edit run for ${date}">✎</button><button class="weight-action" onclick="deleteRunTime('${date}')" aria-label="Delete run for ${date}">×</button></td></tr>`;
+  }).reverse().join('');
+  document.getElementById('main').innerHTML=`<div class="training-day"><h3>🏃 5K Runs</h3><p class="training-meta">Log your finish times and follow your progress.</p>${runForm(today(),true)}</div>
+    <div class="history-card"><h3>Your progress</h3><div class="history-summary">
+    <div class="history-stat"><strong>${runs.length}</strong><span>Runs logged</span></div>
+    <div class="history-stat"><strong>${best===null?'—':formatRunTime(best)}</strong><span>Personal best</span></div>
+    <div class="history-stat"><strong>${latest?formatRunTime(latest):'—'}</strong><span>Latest time</span></div>
+    <div class="history-stat"><strong>${change===null?'—':formatRunTime(Math.abs(change))}</strong><span>${change===null?'Change since first run':change<0?'Faster since first run':change>0?'Slower since first run':'Same as first run'}</span></div></div></div>
+    <div class="history-card" style="overflow-x:auto"><table class="weight-table"><thead><tr><th>Date</th><th>Time</th><th>Pace</th><th>Vs previous</th><th>Actions</th></tr></thead><tbody>${rows}</tbody></table>${runs.length?'':'<p class="training-meta">No 5K runs recorded yet. Add your first time above.</p>'}</div>`;
+}
+
 // ── HISTORY ──────────────────────────────────────────
 function buildCaloriesChart(points){
-  if(!points.length)return`<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px">Aucune calorie enregistrée pour le moment</div>`;
+  if(!points.length)return`<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px">No calories recorded yet</div>`;
   const sorted=[...points].sort((a,b)=>a.date>b.date?1:-1);
   const maxKcal=Math.max(TOTAL_KCAL, ...sorted.map(p=>p.kcal), 1000);
   const svgW=Math.max(560,sorted.length*64);
@@ -1343,7 +1455,7 @@ function buildCaloriesChart(points){
     : '';
   const targetY=py(TOTAL_KCAL);
   const targetLine=`<line x1="${pad.l}" y1="${targetY}" x2="${pad.l+cw}" y2="${targetY}" stroke="var(--blue)" stroke-width="2" stroke-dasharray="6,6" opacity=".75"/>
-  <text x="${pad.l+cw}" y="${Math.max(12,targetY-8)}" text-anchor="end" font-size="10" fill="var(--blue)" font-weight="800">${TOTAL_KCAL} kcal objectif</text>`;
+  <text x="${pad.l+cw}" y="${Math.max(12,targetY-8)}" text-anchor="end" font-size="10" fill="var(--blue)" font-weight="800">${TOTAL_KCAL} kcal goal</text>`;
   const xLabels=sorted.map((p,i)=>`<text x="${px(i)}" y="${svgH-18}" text-anchor="middle" font-size="11" fill="var(--muted)">${p.date.slice(5)}</text>`).join('');
   return`<div class="chart-wrap">
   <svg viewBox="0 0 ${svgW} ${svgH}" width="${svgW}" height="${svgH}" xmlns="http://www.w3.org/2000/svg" style="min-width:${svgW}px">
@@ -1352,9 +1464,9 @@ function buildCaloriesChart(points){
     <line x1="${pad.l}" y1="${pad.t+ch}" x2="${pad.l+cw}" y2="${pad.t+ch}" stroke="var(--border)" stroke-width="1"/>
   </svg>
   <div style="font-size:11px;color:var(--muted);margin-top:8px;display:flex;gap:16px;flex-wrap:wrap">
-    <span style="color:var(--accent)">● Objectif atteint</span>
-    <span style="color:var(--orange)">● Sous objectif</span>
-    <span style="color:var(--blue)">- - Objectif journalier</span>
+    <span style="color:var(--accent)">● Goal reached</span>
+    <span style="color:var(--orange)">● Below goal</span>
+    <span style="color:var(--blue)">- - Daily goal</span>
   </div>
   </div>`;
 }
@@ -1392,10 +1504,10 @@ function renderHistory(){
   const weekly=sevenDayCalorieStats(allMeals);
   const weeklyPct=weekly.tracked?Math.min(100,Math.round(weekly.average/TOTAL_KCAL*100)):0;
   const weeklyDeltaText=!weekly.tracked
-    ? 'Aucune journée calorique renseignée'
+    ? 'No calorie entries yet'
     : Math.abs(weekly.delta)<=200
-      ? 'Dans la zone objectif'
-      : `${Math.abs(weekly.delta)} kcal ${weekly.delta<0?'sous':'au-dessus de'} l’objectif`;
+      ? 'Within target range'
+      : `${Math.abs(weekly.delta)} kcal ${weekly.delta<0?'below':'above'} the goal`;
   const dates=Array.from(new Set([...Object.keys(allMeals),...Object.keys(allTraining)])).sort().reverse();
   let totalKcal=0,doneMeals=0,skippedMeals=0,modifiedMeals=0,notesCount=0,trainingDays=0,doneExercises=0,trackedDays=0;
   const calorieChartData=[];
@@ -1422,17 +1534,17 @@ function renderHistory(){
         dayModified++;
       }
       if(entry.note)notesCount++;
-      const status=entry.status==='done'?'Mangé':entry.status==='skipped'?'Skippé':entry.status==='modified'?'Modifié':'Note';
+      const status=entry.status==='done'?'Eaten':entry.status==='skipped'?'Skipped':entry.status==='modified'?'Modified':'Note';
       const kcal=entry.status==='skipped'?'':` · ${kcalValue} kcal`;
-      const foods=entry.items.length?`<span class="history-note">${entry.items.map(item=>`${escapeText(item.name)} ${item.qty}${escapeText(item.unit)} (${itemCalories(item)} kcal)`).join(' · ')}</span>`:'';
+      const foods=entry.items.length?`<span class="history-note">${entry.items.map(item=>`${escapeText(BASE_FOODS.find(food=>food.id===item.foodId)?.name||item.name)} ${item.qty}${escapeText(BASE_FOODS.find(food=>food.id===item.foodId)?.unit||item.unit)} (${itemCalories(item)} kcal)`).join(' · ')}</span>`:'';
       const note=entry.note?`<span class="history-note">${escapeText(entry.note)}</span>`:'';
       const editKey=`${date}:${meal.id}`;
       const editor=historyEditKey===editKey?renderHistoryMealEditor(date,meal,entry):'';
       return `<div class="history-line">${meal.time} · ${escapeText(meal.name)} · ${status}${kcal}${foods}${note}
         <div class="history-actions">
-          <button class="small-command" onclick="toggleHistoryEdit('${date}','${meal.id}')">${historyEditKey===editKey?'Fermer':'Modifier'}</button>
-          <button class="small-command" onclick="resumeMeal('${date}','${meal.id}')">Reprendre aujourd’hui</button>
-          <button class="small-command" onclick="deleteHistoryMeal('${date}','${meal.id}')">Supprimer</button>
+          <button class="small-command" onclick="toggleHistoryEdit('${date}','${meal.id}')">${historyEditKey===editKey?'Close':'Edit'}</button>
+          <button class="small-command" onclick="resumeMeal('${date}','${meal.id}')">Use today</button>
+          <button class="small-command" onclick="deleteHistoryMeal('${date}','${meal.id}')">Delete</button>
         </div>${editor}</div>`;
     }).join('');
     const session=allTraining[date];
@@ -1440,28 +1552,29 @@ function renderHistory(){
     if(session){
       const dayNum=new Date(`${date}T12:00:00`).getDay();
       const plan=TRAINING_PLAN[dayNum]||TRAINING_PLAN[0];
+      const historyItems=dayNum===2?['5K Run','Abs (previous plan)','Mobility stretching (previous plan)']:plan.items;
       const checked=Object.entries(session.done||{}).filter(([,v])=>v).map(([i])=>Number(i));
       const exerciseNotes=Object.entries(session.notes||{}).filter(([,note])=>String(note||'').trim());
       const loggedExercises=Array.from(new Set([...checked,...exerciseNotes.map(([i])=>Number(i))])).sort((a,b)=>a-b);
-      if(loggedExercises.length||session.comment){
+      if(loggedExercises.length||session.comment||session.runSeconds){
         trainingDays++;
         doneExercises+=checked.length;
         notesCount+=exerciseNotes.length+(session.comment?1:0);
         const checkedLines=loggedExercises.map(i=>{
           const done=checked.includes(i);
           const note=session.notes?.[i]?`<span class="history-note">${escapeText(session.notes[i])}</span>`:'';
-          return `<div class="history-line">Training · ${plan.items[i]||`Exercice ${i+1}`} · ${done?'Fait':'Commenté'}${note}</div>`;
+          return `<div class="history-line">Training · ${historyItems[i]||`Exercise ${i+1}`} · ${done?'Done':'With notes'}${note}</div>`;
         }).join('');
-        const comment=session.comment?`<div class="history-line">Commentaire séance<span class="history-note">${escapeText(session.comment)}</span></div>`:'';
-        trainingLines=`<div class="history-line" style="font-weight:800;color:var(--text)">🏋️ ${plan.name} · ${checked.length}/${plan.items.length} exercices</div>${checkedLines}${comment}`;
+        const comment=session.comment?`<div class="history-line">Workout notes<span class="history-note">${escapeText(session.comment)}</span></div>`:'';
+        trainingLines=`<div class="history-line" style="font-weight:800;color:var(--text)">🏋️ ${plan.name} · ${checked.length}/${plan.items.length} exercises</div>${checkedLines}${comment}${session.runSeconds?`<div class="history-line">🏃 5K Run · ${formatRunTime(session.runSeconds)} · ${formatRunTime(Math.round(session.runSeconds/5))}/km</div>`:''}`;
       }
     }
     if(!mealLines&&!trainingLines)return'';
     trackedDays++;
     if(mealLines)calorieChartData.push({date,kcal:dayKcal});
-    const label=new Date(`${date}T12:00:00`).toLocaleDateString('fr-FR',{weekday:'long',day:'2-digit',month:'short',year:'numeric'});
+    const label=new Date(`${date}T12:00:00`).toLocaleDateString('en-GB',{weekday:'long',day:'2-digit',month:'short',year:'numeric'});
     const nutritionSummary=mealLines
-      ? `<div class="history-line" style="font-weight:800;color:var(--text)">Nutrition · ${dayKcal} kcal · ${dayDone} mangé(s) · ${dayModified} modifié(s) · ${daySkipped} skippé(s)</div>`
+      ? `<div class="history-line" style="font-weight:800;color:var(--text)">Nutrition · ${dayKcal} kcal · ${dayDone} eaten · ${dayModified} modified · ${daySkipped} skipped</div>`
       : '';
     return `<div class="history-card">
       <div class="history-date">${label}</div>
@@ -1472,34 +1585,34 @@ function renderHistory(){
   }).join('');
   document.getElementById('main').innerHTML=`
   <div class="history-card">
-    <h3>Moyenne calorique sur 7 jours</h3>
-    <div class="training-meta">Comparaison avec l’objectif quotidien de ${TOTAL_KCAL} kcal.</div>
+    <h3>7-day calorie average</h3>
+    <div class="training-meta">Compared with the daily goal of ${TOTAL_KCAL} kcal.</div>
     <div class="weekly-average">
-      <div><strong>${weekly.average}</strong><span>kcal par jour</span></div>
-      <div class="weekly-target">${weeklyDeltaText}<br><span>${weekly.tracked}/7 jours renseignés</span></div>
+      <div><strong>${weekly.average}</strong><span>kcal per day</span></div>
+      <div class="weekly-target">${weeklyDeltaText}<br><span>${weekly.tracked}/7 days logged</span></div>
     </div>
     <div class="weekly-bar"><div class="weekly-bar-fill" style="width:${weeklyPct}%"></div></div>
   </div>
   <div class="history-card">
-    <h3>📊 Historique complet</h3>
-    <div class="training-meta">Tous les repas enregistrés, depuis le début du tracking synchronisé.</div>
+    <h3>📊 Full history</h3>
+    <div class="training-meta">All meals recorded since you started tracking.</div>
     <div class="history-summary">
-      <div class="history-stat"><strong>${totalKcal}</strong><span>kcal mangées</span></div>
-      <div class="history-stat"><strong>${doneMeals}</strong><span>repas mangés</span></div>
-      <div class="history-stat"><strong>${modifiedMeals}</strong><span>repas modifiés</span></div>
-      <div class="history-stat"><strong>${skippedMeals}</strong><span>repas skippés</span></div>
-      <div class="history-stat"><strong>${trackedDays}</strong><span>jours trackés</span></div>
+      <div class="history-stat"><strong>${totalKcal}</strong><span>kcal eaten</span></div>
+      <div class="history-stat"><strong>${doneMeals}</strong><span>meals eaten</span></div>
+      <div class="history-stat"><strong>${modifiedMeals}</strong><span>meals modified</span></div>
+      <div class="history-stat"><strong>${skippedMeals}</strong><span>meals skipped</span></div>
+      <div class="history-stat"><strong>${trackedDays}</strong><span>days tracked</span></div>
       <div class="history-stat"><strong>${notesCount}</strong><span>notes</span></div>
-      <div class="history-stat"><strong>${trainingDays}</strong><span>séances loggées</span></div>
-      <div class="history-stat"><strong>${doneExercises}</strong><span>exercices cochés</span></div>
+      <div class="history-stat"><strong>${trainingDays}</strong><span>workouts logged</span></div>
+      <div class="history-stat"><strong>${doneExercises}</strong><span>exercises completed</span></div>
     </div>
   </div>
   <div class="history-card">
-    <h3>📈 Calories dans le temps</h3>
-    <div class="training-meta">Evolution des calories mangées par jour, avec la ligne objectif du plan.</div>
+    <h3>📈 Calories over time</h3>
+    <div class="training-meta">Daily calorie intake compared with your plan target.</div>
     ${buildCaloriesChart(calorieChartData)}
   </div>
-  ${daysHTML||'<div class="history-card"><div class="training-meta">Aucun historique enregistré pour le moment.</div></div>'}`;
+  ${daysHTML||'<div class="history-card"><div class="training-meta">No history recorded yet.</div></div>'}`;
 }
 
 function toggleHistoryEdit(date,mealId){
@@ -1509,7 +1622,7 @@ function toggleHistoryEdit(date,mealId){
 }
 
 function deleteHistoryMeal(date,mealId){
-  if(!confirm('Supprimer définitivement ce repas de l’historique ?'))return;
+  if(!confirm('Permanently delete this meal from history?'))return;
   const day=mealsForDate(date);
   delete day[mealId];
   historyEditKey='';
@@ -1520,21 +1633,21 @@ function deleteHistoryMeal(date,mealId){
 function renderHistoryMealEditor(date,meal,entry){
   const favorites=foodFavorites();
   const rows=entry.items.map(item=>`<div class="food-row">
-    <div class="food-name">${escapeText(item.name)}<div style="font-size:9px;color:var(--muted)">${item.kcal} kcal / ${item.base} ${escapeText(item.unit)}</div></div>
+    <div class="food-name">${escapeText(BASE_FOODS.find(food=>food.id===item.foodId)?.name||item.name)}<div style="font-size:9px;color:var(--muted)">${item.kcal} kcal / ${item.base} ${escapeText(BASE_FOODS.find(food=>food.id===item.foodId)?.unit||item.unit)}</div></div>
     <input class="food-qty" type="number" min="0" step="${item.base===1?'1':'5'}" value="${item.qty}" onchange="updateFoodQty('${meal.id}','${item.id}',this.value,'${date}')">
     <div class="food-kcal">${itemCalories(item)} kcal</div>
     <button class="food-icon${favorites[item.foodId]?' on':''}" onclick="toggleFoodFavorite('${item.foodId}')">★</button>
     <button class="food-icon" onclick="removeFoodItem('${meal.id}','${item.id}','${date}')">×</button>
   </div>`).join('');
   return `<div class="meal-composer" style="margin-top:8px">
-    <div class="food-list">${rows||'<div class="training-meta">Aucun aliment ajouté.</div>'}</div>
+    <div class="food-list">${rows||'<div class="training-meta">No foods added yet.</div>'}</div>
     <div class="food-add-row">
       <select class="food-select" id="food-select-${date}-${meal.id}">${foodOptions()}</select>
-      <button class="small-command" onclick="addFoodToMeal('${meal.id}','${date}')">Ajouter</button>
+      <button class="small-command" onclick="addFoodToMeal('${meal.id}','${date}')">Add</button>
       <button class="food-icon" onclick="addCustomFood('${meal.id}','${date}')">+</button>
     </div>
-    <input class="meal-note" value="${escapeAttr(entry.note)}" placeholder="Commentaire" onchange="setMealNote('${meal.id}',this.value,'${date}')">
-    ${entry.items.length?'':`<input class="custom-macro" type="number" min="0" step="10" value="${entry.kcal||''}" placeholder="kcal manuelles" onchange="setMealKcal('${meal.id}',this.value,'${date}')">`}
+    <input class="meal-note" value="${escapeAttr(entry.note)}" placeholder="Notes" onchange="setMealNote('${meal.id}',this.value,'${date}')">
+    ${entry.items.length?'':`<input class="custom-macro" type="number" min="0" step="10" value="${entry.kcal||''}" placeholder="Manual calories" onchange="setMealKcal('${meal.id}',this.value,'${date}')">`}
   </div>`;
 }
 
@@ -1550,17 +1663,23 @@ function collectLocalMeals(){
 
 // INIT
 applyTheme(currentTheme());
-updateSaveButton();
 render();
 syncNow({mergeLocal:true});
-window.addEventListener('online',()=>syncNow());
+window.addEventListener('online',()=>{
+  if(Object.keys(pendingChanges).length)saveAllChanges();
+  else syncNow();
+});
 document.addEventListener('visibilitychange',()=>{
-  if(document.visibilityState==='visible')syncNow({quiet:true});
+  if(document.visibilityState!=='visible')return;
+  if(Object.keys(pendingChanges).length)saveAllChanges();
+  else syncNow({quiet:true});
 });
 setInterval(()=>{
   const editing=document.activeElement?.matches('input, textarea');
   const hasPending=Object.keys(pendingChanges).length>0;
-  if(document.visibilityState==='visible'&&!editing&&!hasPending)syncNow({quiet:true});
+  if(document.visibilityState!=='visible'||editing)return;
+  if(hasPending)saveAllChanges();
+  else syncNow({quiet:true});
 },30000);
 </script>
 </body>

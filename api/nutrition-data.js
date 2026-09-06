@@ -11,7 +11,7 @@ const DEFAULT_STATE = {
     "2026-07-25": 92.1,
     "2026-08-22": 90,
     "2026-08-09": 92.3,
-    "2026-08-15": 90.775
+    "2026-08-15": 90.5
   },
   training: {},
   foods: {},
@@ -27,9 +27,10 @@ function normalizeWeights(value) {
     delete weights["2026-09-08"];
   }
   if (Number(weights["2026-09-15"]) === 90.75) {
-    if (weights["2026-08-15"] == null) weights["2026-08-15"] = 90.775;
+    if (weights["2026-08-15"] == null) weights["2026-08-15"] = 90.5;
     delete weights["2026-09-15"];
   }
+  if (Number(weights["2026-08-15"]) === 90.775) weights["2026-08-15"] = 90.5;
 
   return weights;
 }
@@ -80,19 +81,39 @@ async function supabaseRequest(path, options = {}) {
   return data;
 }
 
+async function persistState(state) {
+  await supabaseRequest(`${TABLE}?on_conflict=id`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      prefer: "resolution=merge-duplicates"
+    },
+    body: JSON.stringify({
+      id: STATE_ID,
+      data: state,
+      updated_at: new Date().toISOString()
+    })
+  });
+}
+
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
 
   if (!SUPABASE_KEY) {
     return res.status(503).json({
-      error: "SUPABASE_SERVICE_ROLE_KEY manque dans les variables Vercel"
+      error: "SUPABASE_SERVICE_ROLE_KEY is missing from the Vercel environment variables"
     });
   }
 
   try {
     if (req.method === "GET") {
       const rows = await supabaseRequest(`${TABLE}?id=eq.${STATE_ID}&select=data`);
-      return res.status(200).json(normalizeState(rows?.[0]?.data || DEFAULT_STATE));
+      const originalState = rows?.[0]?.data || DEFAULT_STATE;
+      const state = normalizeState(originalState);
+      if (JSON.stringify(originalState.weights || {}) !== JSON.stringify(state.weights)) {
+        await persistState(state);
+      }
+      return res.status(200).json(state);
     }
 
     if (req.method === "POST") {
@@ -106,18 +127,7 @@ export default async function handler(req, res) {
         state = normalizeState(body);
       }
 
-      await supabaseRequest(`${TABLE}?on_conflict=id`, {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          prefer: "resolution=merge-duplicates"
-        },
-        body: JSON.stringify({
-          id: STATE_ID,
-          data: state,
-          updated_at: new Date().toISOString()
-        })
-      });
+      await persistState(state);
 
       return res.status(200).json(state);
     }
