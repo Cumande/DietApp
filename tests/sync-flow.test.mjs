@@ -338,3 +338,27 @@ assert.equal(serverState.meals['2026-08-25'].m2.items[0].qty,150);
 aiDevice.context.setAiDescription('2026-08-25','m2','A different meal');
 assert.equal(vm.runInContext("aiMeals['2026-08-25:m2'].result",aiDevice.context),null);
 console.log('AI meal review, editable portions, explicit save and sync: OK');
+
+const photoDevice=createDevice();await new Promise(resolve=>setImmediate(resolve));
+const photoSyncFetch=photoDevice.context.fetch;
+const samplePhoto='data:image/jpeg;base64,/9j/AAAAAAAAAAAA';
+vm.runInContext("aiAccessCode='test-code'",photoDevice.context);
+photoDevice.context.prepareAiPhoto=async()=>samplePhoto;
+await photoDevice.context.selectAiPhoto('2026-08-25','m3',{type:'image/jpeg',size:100});
+assert.match(photoDevice.element('main').innerHTML,/Selected meal or nutrition label/);
+photoDevice.context.fetch=async(url,options)=>{
+ const body=JSON.parse(options.body);assert.equal(body.image,samplePhoto);assert.equal(body.description,'');
+ return {ok:true,json:async()=>({items:[{name:'Rice',grams:150,kcalPer100g:130}],assumptions:'Photo portion estimated.',question:''})};
+};
+await photoDevice.context.estimateMeal('2026-08-25','m3');
+assert.equal(vm.runInContext("aiMeals['2026-08-25:m3'].result.items.length",photoDevice.context),1);
+photoDevice.context.saveAiMeal('2026-08-25','m3');
+photoDevice.context.fetch=photoSyncFetch;await photoDevice.context.saveAllChanges();
+assert.equal(serverState.meals['2026-08-25'].m3.items[0].qty,150);
+assert.doesNotMatch(JSON.stringify(serverState),/data:image/);
+assert.doesNotMatch(JSON.stringify([...photoDevice.values.values()]),/data:image/);
+await photoDevice.context.selectAiPhoto('2026-08-25','m3',{});
+photoDevice.context.removeAiPhoto('2026-08-25','m3');
+assert.equal(vm.runInContext("aiMeals['2026-08-25:m3'].image",photoDevice.context),undefined);
+assert.equal(vm.runInContext("aiMeals['2026-08-25:m3'].result",photoDevice.context),null);
+console.log('Photo preview, photo-only estimate, removal and image-free persistence: OK');

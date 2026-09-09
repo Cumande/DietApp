@@ -22,3 +22,21 @@ globalThis.fetch=async()=>({ok:true,json:async()=>({status:'incomplete'})});asse
 globalThis.fetch=async()=>{throw new Error('secret upstream text')};const failure=await request();assert.equal(failure.status,502);assert.doesNotMatch(JSON.stringify(failure),/secret upstream/);
 globalThis.fetch=oldFetch;
 console.log('AI meal API: configuration, access, validation, structured output and failures OK');
+
+const {validPhoto}=await import('../api/estimate-meal.js');
+const photo='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=';
+assert.equal(validPhoto(photo),true);
+assert.equal(validPhoto('https://example.com/photo.jpg'),false);
+assert.equal(validPhoto('data:image/jpeg;base64,'+Buffer.from('not a photograph').toString('base64')),false);
+assert.equal(validPhoto('data:image/png;base64,'+'A'.repeat(2800000)),false);
+globalThis.fetch=async(url,options)=>{
+ const body=JSON.parse(options.body);
+ assert.equal(body.input[0].content[1].type,'input_image');
+ assert.equal(body.input[0].content[1].image_url,photo);
+ assert.equal(body.input[0].content[1].detail,'high');
+ return {ok:true,json:async()=>({status:'completed',output:[{content:[{type:'output_text',text:JSON.stringify(estimate)}]}]})};
+};
+assert.equal((await request('POST',{description:'',image:photo})).status,200);
+assert.equal((await request('POST',{description:'A meal',image:'data:image/svg+xml;base64,AAAA'})).status,400);
+globalThis.fetch=oldFetch;
+console.log('Photo input: validation, size limits and multimodal request OK');

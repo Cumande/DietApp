@@ -1771,14 +1771,45 @@ setInterval(updateInterval,250);
 
 let aiAccessCode='';
 const aiMeals={};
+
+async function prepareAiPhoto(file){
+  if(!file||!['image/jpeg','image/png','image/webp'].includes(file.type))throw new Error('Choose a JPEG, PNG or WebP photo. Export HEIC photos as JPEG first.');
+  if(file.size>12*1024*1024)throw new Error('Choose a photo smaller than 12 MB.');
+  const url=URL.createObjectURL(file);
+  try{
+    const img=new Image();
+    await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=()=>reject(new Error('This photo could not be opened. Try another image.'));img.src=url;});
+    if(!img.naturalWidth||!img.naturalHeight)throw new Error('This photo is empty.');
+    const scale=Math.min(1,1600/Math.max(img.naturalWidth,img.naturalHeight));
+    const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(img.naturalWidth*scale));canvas.height=Math.max(1,Math.round(img.naturalHeight*scale));
+    const context=canvas.getContext('2d');context.fillStyle='#fff';context.fillRect(0,0,canvas.width,canvas.height);context.drawImage(img,0,0,canvas.width,canvas.height);
+    const image=canvas.toDataURL('image/jpeg',.85);
+    if(image.length>2666660)throw new Error('Photo is too large after resizing. Crop it or choose a smaller image.');
+    return image;
+  }finally{URL.revokeObjectURL(url);}
+}
+async function selectAiPhoto(date,id,file){
+  if(!file)return;
+  const key=aiMealKey(date,id),revision=(aiMeals[key]?.photoRevision||0)+1;
+  aiMeals[key]={...aiMeals[key],open:true,photoLoading:true,photoRevision:revision,result:null,error:'',image:undefined};render();
+  try{const image=await prepareAiPhoto(file);if(aiMeals[key]?.photoRevision===revision)aiMeals[key].image=image;}
+  catch(error){if(aiMeals[key]?.photoRevision===revision)aiMeals[key].error=error.message;}
+  finally{if(aiMeals[key]?.photoRevision===revision)aiMeals[key].photoLoading=false;render();}
+}
+function removeAiPhoto(date,id){const key=aiMealKey(date,id);aiMeals[key]={...aiMeals[key],image:undefined,result:null,photoLoading:false,photoRevision:(aiMeals[key]?.photoRevision||0)+1};render()}
+
 function aiMealKey(date,id){return `${date}:${id}`}
 function aiMealPanel(id,date){
   const key=aiMealKey(date,id),draft=aiMeals[key]||{};
   return `<details class="meal-composer" ${draft.open?'open':''} ontoggle="rememberAiPanel('${date}','${id}',this.open)"><summary>✨ Estimate calories with AI</summary>
-    <p class="training-meta">Describe what you ate, including portions, cooking oil and sauces. Your description is sent to OpenAI. Review estimates before saving.</p>
-    <label>Meal description<textarea class="session-comment" maxlength="2000" placeholder="200g cooked rice, 150g grilled chicken and 1 tbsp olive oil" oninput="setAiDescription('${date}','${id}',this.value)">${escapeText(draft.description||'')}</textarea></label>
+    <p class="training-meta">Describe what you ate, including portions, cooking oil and sauces. Your description and chosen photo are sent to OpenAI only when you press Estimate. Review estimates before saving.</p>
+    <label>Meal or nutrition-label photo<input class="exercise-note" type="file" accept="image/jpeg,image/png,image/webp" ${draft.loading?'disabled':''} onchange="selectAiPhoto('${date}','${id}',this.files[0])"></label>
+    <p class="training-meta">Choose a photo or use your phone camera through the file picker. JPEG, PNG or WebP, up to 12 MB. For labels, include how much you ate below.</p>
+    ${draft.photoLoading?'<p role="status">Preparing photo…</p>':''}
+    ${draft.image?`<img src="${escapeAttr(draft.image)}" alt="Selected meal or nutrition label" style="display:block;max-width:100%;max-height:260px;margin:10px 0;border-radius:8px"><button class="small-command" onclick="removeAiPhoto('${date}','${id}')">Remove photo</button>`:''}
+    <label>Meal description (optional with photo)<textarea class="session-comment" maxlength="2000" placeholder="200g cooked rice, 150g grilled chicken and 1 tbsp olive oil" oninput="setAiDescription('${date}','${id}',this.value)">${escapeText(draft.description||'')}</textarea></label>
     <label>AI access code <input class="exercise-note" type="password" autocomplete="off" placeholder="${aiAccessCode?'Code remembered until page reload':'Enter your private access code'}" oninput="aiAccessCode=this.value"></label>
-    <button class="small-command" ${draft.loading?'disabled':''} onclick="estimateMeal('${date}','${id}')">${draft.loading?'Estimating…':'Estimate calories'}</button>
+    <button class="small-command" ${draft.loading||draft.photoLoading?'disabled':''} onclick="estimateMeal('${date}','${id}')">${draft.loading?'Estimating…':'Estimate calories'}</button>
     <div role="status">${escapeText(draft.error||draft.result?.question||'')}</div>
     ${draft.result?.items.length?`<p class="training-meta">AI estimate · ${escapeText(draft.result.assumptions)}</p>${draft.result.items.map((item,i)=>`<div class="field-grid"><label>Ingredient<input class="exercise-note" maxlength="200" value="${escapeAttr(item.name)}" onchange="editAiIngredient('${date}','${id}',${i},'name',this.value)"></label><label>Portion (g)<input class="exercise-note" type="number" min="0.1" max="10000" step="any" value="${item.grams}" onchange="editAiIngredient('${date}','${id}',${i},'grams',this.value)"></label><label>kcal per 100g<input class="exercise-note" type="number" min="0" max="1000" step="any" value="${item.kcalPer100g}" onchange="editAiIngredient('${date}','${id}',${i},'kcalPer100g',this.value)"></label><button class="small-command" onclick="removeAiIngredient('${date}','${id}',${i})">Remove ingredient</button></div>`).join('')}<p><strong>Estimated total: ${aiEstimateTotal(draft.result.items)} kcal</strong></p><button class="small-command" onclick="saveAiMeal('${date}','${id}')">Use reviewed estimate for this meal</button>`:''}
   </details>`;
@@ -1788,17 +1819,17 @@ function setAiDescription(date,id,description){const key=aiMealKey(date,id);aiMe
 function aiEstimateTotal(items){return items.reduce((sum,item)=>sum+Math.round(item.grams*item.kcalPer100g/100),0)}
 async function estimateMeal(date,id){
   const key=aiMealKey(date,id),draft=aiMeals[key]||{};
-  if(draft.loading)return;
+  if(draft.loading||draft.photoLoading)return;
   if(!aiAccessCode){aiMeals[key]={...draft,open:true,error:'Enter your AI access code.'};render();return}
-  if((draft.description||'').trim().length<5){aiMeals[key]={...draft,open:true,error:'Describe the foods and portions you ate.'};render();return}
-  const description=draft.description;
+  if(!draft.image&&(draft.description||'').trim().length<5){aiMeals[key]={...draft,open:true,error:'Describe the foods and portions you ate.'};render();return}
+  const description=draft.description||'',image=draft.image;
   aiMeals[key]={...draft,open:true,loading:true,error:'',result:null};render();
   try{
-    const response=await fetch('/api/estimate-meal',{method:'POST',headers:{'content-type':'application/json','x-ai-access-code':aiAccessCode},body:JSON.stringify({description})});
+    const response=await fetch('/api/estimate-meal',{method:'POST',headers:{'content-type':'application/json','x-ai-access-code':aiAccessCode},body:JSON.stringify({description,...(image?{image}:{})})});
     const result=await response.json();
     if(!response.ok)throw new Error(result.error||'Could not estimate this meal.');
-    if(aiMeals[key].description===description)aiMeals[key].result=result;
-    else aiMeals[key].error='Your description changed. Estimate again to use the updated meal.';
+    if((aiMeals[key].description||'')===description&&aiMeals[key].image===image)aiMeals[key].result=result;
+    else aiMeals[key].error='Your photo or description changed. Estimate again to use the updated meal.';
   }catch(error){aiMeals[key].error=error.message||'Could not connect. Please try again.';}
   finally{aiMeals[key].loading=false;render();}
 }
@@ -1815,7 +1846,7 @@ function saveAiMeal(date,id){
   if((entry.items.length||entry.kcal||entry.status==='done')&&!confirm('Replace this meal’s existing foods and calories with the reviewed estimate?'))return;
   entry.items=draft.result.items.map((item,i)=>({id:`ai-${Date.now()}-${i}`,name:item.name,unit:'g',base:100,kcal:item.kcalPer100g,qty:item.grams,source:'ai'}));
   entry.status='modified';entry.kcal=0;
-  entry.note=[entry.note,`AI estimate: ${draft.description}`,draft.result.assumptions].filter(Boolean).join('\n');
+  entry.note=[entry.note,`AI estimate: ${draft.description||'Meal photo'}${draft.image?' (photo supplied)':''}`,draft.result.assumptions].filter(Boolean).join('\n');
   day[id]=entry;saveMealsForDate(date,day);delete aiMeals[key];render();showToast('Reviewed estimate added to your meal.');
 }
 

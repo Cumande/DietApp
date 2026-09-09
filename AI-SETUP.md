@@ -21,3 +21,11 @@ Open Today → a meal → Estimate calories with AI. Enter your access code and 
 Tests mock OpenAI responses, so passing tests do not verify a live API key, billing, model access, or nutrition accuracy. Run `npm test` for API access checks, error handling, output validation, editable portions and persistence.
 
 Reference: https://developers.openai.com/api/docs/guides/structured-outputs
+
+## Meal and nutrition-label photos
+
+Choose one JPEG, PNG or WebP image (up to 12 MB) in a meal's AI panel. The browser resizes it to at most 1600 pixels on its longest side and re-encodes it as JPEG before upload (under 2 MB). HEIC files need exporting to JPEG. The preview is kept only in page memory. Removing/changing a photo invalidates the previous estimate. Images are sent to OpenAI only on Estimate; they are not stored in the app's local storage or Supabase history. The model must support image input; the default gpt-4.1-mini does.
+
+For labels, include how much you ate and photograph the serving size and energy information clearly. The prompt asks for clarification when portions or label values are missing. The ingredient review and explicit save are unchanged.
+
+Automated tests check multimodal requests, invalid images, size limits, photo-only estimates, and image-free persistence. Real camera/file-picker behavior, browser resizing, and AI photo accuracy still require a device check.
