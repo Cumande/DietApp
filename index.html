@@ -210,7 +210,7 @@ fieldset{border:0;min-width:0}fieldset:disabled{opacity:.65}
     <button class="tab" id="tab1" onclick="switchTab(1)">🏋️ Training</button>
     <button class="tab" id="tab2" onclick="switchTab(2)">⚖️ Weight</button>
     <button class="tab" id="tab3" onclick="switchTab(3)">📊 History</button>
-    <button class="tab" id="tab4" onclick="switchTab(4)">🏃 5K Runs</button>
+    <button class="tab" id="tab4" onclick="switchTab(4)">🏃 Runs</button>
   </div>
 </div>
 <div class="main" id="main"></div>
@@ -268,9 +268,9 @@ const WEEKS = [
 ];
 
 const MILESTONES = [
-  {month:'7 September',target:92,date:'2026-09-07'},
-  {month:'24 September',target:94,date:'2026-09-24'},
-  {month:'10 October',target:96,date:'2026-10-10'},
+  {month:'23 September',target:92,date:'2026-09-23'},
+  {month:'7 October',target:94,date:'2026-10-07'},
+  {month:'21 October',target:96,date:'2026-10-21'},
   {month:'22 October',target:97,date:'2026-10-22'}
 ];
 
@@ -317,6 +317,9 @@ const TRAINING_PLAN = {
   ]},
   2:{name:'Tuesday',type:'5K Run',items:['5K Run']},
   3:{name:'Wednesday',type:'Upper body + arms + abs',items:[
+    'Cable crunch : 5x10 at 40kg',
+    'Crunch : 25x7 at 20kg',
+    'Plank : 1m20',
     'Bench press close grip : warm-up 50kg',
     'Bench press close grip : x4 at 100kg, 2/3min rest',
     'Bench press close grip : 2x4 at 90kg, 2/3min rest',
@@ -329,10 +332,7 @@ const TRAINING_PLAN = {
     'EZ bar curl : 6x10 at 20-25kg',
     'Lateral raises drop set : 4x12 at 16kg, then 10kg, then 6kg',
     'Dumbbell shrugs : 4x10 at 30-35kg per hand',
-    'Alternating dumbbell curl : 3x10 at 14kg per hand',
-    'Cable crunch : 5x10 at 40kg',
-    'Crunch : 25x7 at 20kg',
-    'Plank : 1m20'
+    'Alternating dumbbell curl : 3x10 at 14kg per hand'
   ]},
   4:{name:'Thursday',type:'Leg day + core',items:[
     'Leg and hip warm-up before leg day',
@@ -382,7 +382,7 @@ const YOUTUBE_VIDEOS = {
   latPulldown:'Ad_WOMtfyc4',
   pullover:'t_lYFd8pl1M',
   skullCrusher:'VP9Qp72zZ_c',
-  ezCurl:'JhDDKwag2vE',
+  ezCurl:'njzRGdW0PGk',
   shrugs:'rFsSeClGnNA',
   alternatingCurl:'8d2we4UqOSs',
   hipWarmup:'EFZigzEhYcU',
@@ -864,9 +864,16 @@ function saveWeight(date,val){
   stageCloudChange({scope:'weights',key:date,value:val});
 }
 function training(){
-  return cloudReady?(cloudState.training||{}):(ls(`${STORAGE_PREFIX}_training`)||{});
+  const all=cloudReady?(cloudState.training||{}):(ls(`${STORAGE_PREFIX}_training`)||{});
+  for(const [date,state] of Object.entries(all)){
+    if(new Date(`${date}T12:00:00`).getDay()!==3||state.wednesdayOrder==='core-first')continue;
+    for(const field of ['done','notes'])state[field]=Object.fromEntries(Object.entries(state[field]||{}).map(([i,v])=>[Number(i)>=13?Number(i)-13:Number(i)+3,v]));
+    state.wednesdayOrder='core-first';
+  }
+  return all;
 }
 function saveTraining(t,date=trainingDate){
+  if(t[date]&&new Date(`${date}T12:00:00`).getDay()===3)t[date].wednesdayOrder='core-first';
   ss(`${STORAGE_PREFIX}_training`,t);
   stageCloudChange({scope:'training',key:date,value:t[date]});
 }
@@ -1071,7 +1078,6 @@ function renderWeight(){
   <div class="chart-card">
     <h4>Weight progress towards ${WEIGHT_GOAL}kg</h4>
     ${chartHTML}
-    <p class="training-meta">7-day rolling average: ${rollingWeightAverage(w,weightRows.at(-1)?.[0]||today()).toFixed(2)} kg · based on recorded measurements.</p>
   </div>
   <div class="chart-card">
     <h4>2-month milestones</h4>
@@ -1152,7 +1158,6 @@ function buildWeightChart(pts,w){
   }
   dotHTML=dataPoints.map(p=>`<circle cx="${px(p.i)}" cy="${py(p.v)}" r="6" fill="var(--accent)" stroke="var(--card)" stroke-width="2"/>
   <text x="${px(p.i)}" y="${py(p.v)-12}" text-anchor="middle" font-size="11" fill="var(--accent)" font-weight="800">${p.v}</text>`).join('');
-  const averageLine=`<polyline points="${dataPoints.map(p=>`${px(p.i)},${py(rollingWeightAverage(w,allDates[p.i]))}`).join(' ')}" fill="none" stroke="var(--blue)" stroke-width="2"/>`;
   // y axis
   const yStep=Math.max(1,Math.ceil((maxW-minW)/5));
   const yValues=[];
@@ -1162,13 +1167,13 @@ function buildWeightChart(pts,w){
   const xLabels=allDates.filter((_,i)=>i%2===0||i===allDates.length-1).map(d=>{const i=allDates.indexOf(d);return`<text x="${px(i)}" y="${svgH-16}" text-anchor="middle" font-size="11" fill="var(--muted)">${d.slice(5)}</text>`}).join('');
   return`<div class="chart-wrap">
   <svg viewBox="0 0 ${svgW} ${svgH}" width="${svgW}" height="${svgH}" xmlns="http://www.w3.org/2000/svg" style="min-width:${svgW}px">
-    ${yLabels}${xLabels}${targetLine}${mLines}${linePath}${averageLine}${dotHTML}
+    ${yLabels}${xLabels}${targetLine}${mLines}${linePath}${dotHTML}
     <line x1="${pad.l}" y1="${pad.t}" x2="${pad.l}" y2="${pad.t+ch}" stroke="var(--border)" stroke-width="1"/>
     <line x1="${pad.l}" y1="${pad.t+ch}" x2="${pad.l+cw}" y2="${pad.t+ch}" stroke="var(--border)" stroke-width="1"/>
     <text x="${pad.l+cw}" y="${Math.max(12,tEnd-8)}" text-anchor="end" font-size="10" fill="#f97316" font-weight="800">${WEIGHT_GOAL}kg goal</text>
   </svg>
   <div style="font-size:11px;color:var(--muted);margin-top:8px;display:flex;gap:16px;flex-wrap:wrap">
-    <span style="color:var(--accent)">● Actual weight</span><span style="color:var(--blue)">● 7-day average</span>
+    <span style="color:var(--accent)">● Actual weight</span>
     <span style="color:var(--orange)">- - Target trajectory</span>
     <span style="color:var(--orange)">● Milestones</span>
   </div>
@@ -1371,7 +1376,7 @@ function runForm(date,withDate=false){
   const seconds=training()[date]?.runSeconds;
   return `<form onsubmit="event.preventDefault();saveRunTime(${withDate?"document.getElementById('runDate').value":`'${date}'`},document.getElementById('runTime').value)">
     ${withDate?`<label for="runDate">Run date</label><input class="exercise-note" id="runDate" type="date" max="${today()}" value="${date}" required onchange="loadRunTime(this.value)">`:''}
-    <label for="runTime">5K finish time (minutes:seconds)</label>
+    <label for="runDistance">Distance (km)</label><input class="exercise-note" id="runDistance" type="number" min="0.01" max="200" step="0.01" value="${training()[date]?.runDistanceKm||5}" required><label for="runTime">Finish time (minutes:seconds)</label>
     <input class="exercise-note" id="runTime" type="text" inputmode="text" placeholder="25:30" pattern="[0-9]{1,3}:[0-5][0-9]" value="${seconds?formatRunTime(seconds):''}" required>
     <div class="field-grid"><label>Route (optional)<input class="exercise-note" id="runRoute" value="${escapeAttr(training()[date]?.runDetails?.route||'')}" maxlength="200"></label><label>Effort (optional)<select class="exercise-note" id="runEffort"><option value="">Not recorded</option>${['Easy','Moderate','Hard','All-out'].map(v=>`<option ${training()[date]?.runDetails?.effort===v?'selected':''}>${v}</option>`).join('')}</select></label><label>Surface (optional)<select class="exercise-note" id="runSurface"><option value="">Not recorded</option>${['Outdoor','Treadmill'].map(v=>`<option ${training()[date]?.runDetails?.surface===v?'selected':''}>${v}</option>`).join('')}</select></label></div>
     <button class="small-command" type="submit">Save run time</button>
@@ -1381,6 +1386,7 @@ function runForm(date,withDate=false){
 function loadRunTime(date){
   const seconds=training()[date]?.runSeconds;
   document.getElementById('runTime').value=seconds?formatRunTime(seconds):'';
+  document.getElementById('runDistance').value=training()[date]?.runDistanceKm||5;
   for(const [id,key] of [['runRoute','route'],['runEffort','effort'],['runSurface','surface']])document.getElementById(id).value=training()[date]?.runDetails?.[key]||'';
 }
 function saveRunTime(date,value){
@@ -1388,9 +1394,13 @@ function saveRunTime(date,value){
   if(!validRunDate(date)||seconds===null){showToast('Enter a valid date and a time such as 25:30.','error');return false}
   const all=training();
   const state=all[date]||{done:{},notes:{},comment:''};
+  const distance=Number(document.getElementById('runDistance')?.value||state.runDistanceKm||5);
+  if(!Number.isFinite(distance)||distance<=0||distance>200){showToast('Enter a valid distance.','error');return false}
+  if((state.runDistanceKm||5)!==distance||state.runSeconds!==seconds){if(state.runDetails)delete state.runDetails.recordedPace;}
+  state.runDistanceKm=distance;
   state.runSeconds=seconds;
-  if(document.getElementById('runRoute')?.value!==undefined)state.runDetails={route:document.getElementById('runRoute').value.trim(),effort:document.getElementById('runEffort').value,surface:document.getElementById('runSurface').value};
-  if(new Date(`${date}T12:00:00`).getDay()===2)state.done={...state.done,0:true};
+  if(document.getElementById('runRoute')?.value!==undefined)state.runDetails={...state.runDetails,route:document.getElementById('runRoute').value.trim(),effort:document.getElementById('runEffort').value,surface:document.getElementById('runSurface').value};
+  if(new Date(`${date}T12:00:00`).getDay()===2&&isFiveK(state))state.done={...state.done,0:true};
   all[date]=state;
   saveTraining(all,date);
   render();
@@ -1398,10 +1408,11 @@ function saveRunTime(date,value){
   return true;
 }
 function deleteRunTime(date){
-  if(!confirm(`Delete the 5K time for ${date}?`))return;
+  if(!confirm(`Delete the run for ${date}?`))return;
   const all=training();
   if(!all[date])return;
   delete all[date].runSeconds;
+  delete all[date].runDistanceKm;
   delete all[date].runDetails;
   saveTraining(all,date);
   render();
@@ -1411,23 +1422,27 @@ function editRunTime(date){
   loadRunTime(date);
   document.getElementById('runTime').focus();
 }
+function isFiveK(run){return Math.abs((run.runDistanceKm||5)-5)<=0.05}
+function runPace(run){return run.runDetails?.recordedPace||formatRunTime(Math.round(run.runSeconds/(run.runDistanceKm||5)))}
 function renderRuns(){
-  const runs=Object.entries(training()).filter(([,v])=>Number.isInteger(v?.runSeconds)&&v.runSeconds>0).sort(([a],[b])=>a.localeCompare(b));
+  const allRuns=Object.entries(training()).filter(([,v])=>Number.isInteger(v?.runSeconds)&&v.runSeconds>0).sort(([a],[b])=>a.localeCompare(b));
+  const runs=allRuns.filter(([,run])=>isFiveK(run));
   const best=runs.length?Math.min(...runs.map(([,v])=>v.runSeconds)):null;
   const latest=runs.at(-1)?.[1].runSeconds;
   const change=runs.length>1?latest-runs[0][1].runSeconds:null;
-  const rows=runs.map(([date,run],i)=>{
-    const delta=i?run.runSeconds-runs[i-1][1].runSeconds:null;
-    return `<tr><td>${date}<small style="display:block">${escapeText([run.runDetails?.route,run.runDetails?.surface,run.runDetails?.effort].filter(Boolean).join(' · '))}</small></td><td><b>${formatRunTime(run.runSeconds)}</b>${run.runSeconds===best?' ★':''}</td><td>${formatRunTime(Math.round(run.runSeconds/5))}/km</td><td>${delta===null?'—':delta===0?'Same':`${formatRunTime(Math.abs(delta))} ${delta<0?'faster':'slower'}`}</td><td><button class="weight-action" onclick="editRunTime('${date}')" aria-label="Edit run for ${date}">✎</button><button class="weight-action" onclick="deleteRunTime('${date}')" aria-label="Delete run for ${date}">×</button></td></tr>`;
+  const rows=allRuns.map(([date,run])=>{
+    const i=runs.findIndex(([d])=>d===date);
+    const delta=i>0?run.runSeconds-runs[i-1][1].runSeconds:null;
+    return `<tr><td>${date}<small style="display:block">${escapeText([run.runDetails?.time,run.runDetails?.route,run.runDetails?.surface,run.runDetails?.effort,run.runDetails?.calories!=null?`${run.runDetails.calories} kcal`:null].filter(Boolean).join(' · '))}</small></td><td>${run.runDistanceKm||5} km</td><td><b>${formatRunTime(run.runSeconds)}</b>${isFiveK(run)&&run.runSeconds===best?' ★':''}</td><td>${runPace(run)}/km</td><td>${delta===null?'—':delta===0?'Same':`${formatRunTime(Math.abs(delta))} ${delta<0?'faster':'slower'}`}</td><td><button class="weight-action" onclick="editRunTime('${date}')" aria-label="Edit run for ${date}">✎</button><button class="weight-action" onclick="deleteRunTime('${date}')" aria-label="Delete run for ${date}">×</button></td></tr>`;
   }).reverse().join('');
-  document.getElementById('main').innerHTML=`<div class="training-day"><h3>🏃 5K Runs</h3><p class="training-meta">Log your finish times and follow your progress.</p>${runForm(today(),true)}</div>
-    <div class="history-card"><h3>Your progress</h3><div class="history-summary">
-    <div class="history-stat"><strong>${runs.length}</strong><span>Runs logged</span></div>
+  document.getElementById('main').innerHTML=`<div class="training-day"><h3>🏃 Runs</h3><p class="training-meta">Log your finish times and follow your progress.</p>${runForm(today(),true)}</div>
+    <div class="history-card"><h3>Your 5K progress</h3><div class="history-summary">
+    <div class="history-stat"><strong>${runs.length}</strong><span>5K runs logged</span></div>
     <div class="history-stat"><strong>${best===null?'—':formatRunTime(best)}</strong><span>Personal best</span></div>
     <div class="history-stat"><strong>${latest?formatRunTime(latest):'—'}</strong><span>Latest time</span></div>
     <div class="history-stat"><strong>${change===null?'—':formatRunTime(Math.abs(change))}</strong><span>${change===null?'Change since first run':change<0?'Faster since first run':change>0?'Slower since first run':'Same as first run'}</span></div></div></div>
-    <div class="history-card"><h3>5K finish times</h3>${runChart(runs)}<p class="training-meta">Lower is faster. ★ marks your personal best. Average of last 5 runs: ${runs.length?formatRunTime(Math.round(runs.slice(-5).reduce((sum,[,v])=>sum+v.runSeconds,0)/Math.min(5,runs.length))):'—'}</p></div>
-    <div class="history-card" style="overflow-x:auto"><table class="weight-table"><thead><tr><th>Date</th><th>Time</th><th>Pace</th><th>Vs previous</th><th>Actions</th></tr></thead><tbody>${rows}</tbody></table>${runs.length?'':'<p class="training-meta">No 5K runs recorded yet. Add your first time above.</p>'}</div>`;
+    <div class="history-card"><h3>5K finish times</h3>${runChart(runs)}<p class="training-meta">5K comparisons include recorded distances from 4.95 to 5.05 km. Times are the recorded finish times. ★ marks your personal best. Average of last 5 runs: ${runs.length?formatRunTime(Math.round(runs.slice(-5).reduce((sum,[,v])=>sum+v.runSeconds,0)/Math.min(5,runs.length))):'—'}</p></div>
+    <div class="history-card" style="overflow-x:auto"><table class="weight-table"><thead><tr><th>Date</th><th>Distance</th><th>Time</th><th>Pace</th><th>Vs previous</th><th>Actions</th></tr></thead><tbody>${rows}</tbody></table>${allRuns.length?'':'<p class="training-meta">No runs recorded yet. Add your first time above.</p>'}</div>`;
 }
 
 // ── HISTORY ──────────────────────────────────────────
@@ -1570,7 +1585,7 @@ function renderHistory(){
           return `<div class="history-line">Training · ${historyItems[i]||`Exercise ${i+1}`} · ${done?'Done':'With notes'}${note}</div>`;
         }).join('');
         const comment=session.comment?`<div class="history-line">Workout notes<span class="history-note">${escapeText(session.comment)}</span></div>`:'';
-        trainingLines=`<div class="history-line" style="font-weight:800;color:var(--text)">🏋️ ${plan.name} · ${checked.length}/${plan.items.length} exercises</div>${checkedLines}${comment}${Object.entries(session.strength||{}).map(([name,v])=>`<div class="history-line">${escapeText(name)} · ${v.sets??'—'} sets × ${v.reps??'—'} reps · ${v.kg??'—'} kg</div>`).join('')}${session.rounds?`<div class="history-line">Circuit: ${Object.values(session.rounds).filter(Boolean).length}/6 rounds complete</div>`:''}${session.runSeconds?`<div class="history-line">🏃 5K Run · ${formatRunTime(session.runSeconds)} · ${formatRunTime(Math.round(session.runSeconds/5))}/km</div>`:''}`;
+        trainingLines=`<div class="history-line" style="font-weight:800;color:var(--text)">🏋️ ${plan.name} · ${checked.length}/${plan.items.length} exercises</div>${checkedLines}${comment}${Object.entries(session.strength||{}).map(([name,v])=>`<div class="history-line">${escapeText(name)} · ${v.sets??'—'} sets × ${v.reps??'—'} reps · ${v.kg??'—'} kg</div>`).join('')}${session.rounds?`<div class="history-line">Circuit: ${Object.values(session.rounds).filter(Boolean).length}/6 rounds complete</div>`:''}${session.runSeconds?`<div class="history-line">🏃 ${session.runDistanceKm||5} km Run · ${formatRunTime(session.runSeconds)} · ${runPace(session)}/km</div>`:''}`;
       }
     }
     if(!mealLines&&!trainingLines)return'';
@@ -1588,15 +1603,6 @@ function renderHistory(){
     </div>`;
   }).join('');
   document.getElementById('main').innerHTML=`
-  <div class="history-card">
-    <h3>7-day calorie average</h3>
-    <div class="training-meta">Compared with the daily goal of ${TOTAL_KCAL} kcal.</div>
-    <div class="weekly-average">
-      <div><strong>${weekly.average}</strong><span>kcal per day</span></div>
-      <div class="weekly-target">${weeklyDeltaText}<br><span>${weekly.tracked}/7 days logged</span></div>
-    </div>
-    <div class="weekly-bar"><div class="weekly-bar-fill" style="width:${weeklyPct}%"></div></div>
-  </div>
   <div class="history-card">
     <h3>📊 Full history</h3>
     <div class="training-meta">All meals recorded since you started tracking.</div>

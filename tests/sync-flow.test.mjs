@@ -160,8 +160,8 @@ assert.match(thirdDevice.element("main").innerHTML, /Calories today/);
 const weeklyStats = thirdDevice.context.sevenDayCalorieStats(serverState.meals);
 assert.deepEqual({ average: weeklyStats.average, tracked: weeklyStats.tracked }, { average: 325, tracked: 1 });
 thirdDevice.context.switchTab(3);
-assert.match(thirdDevice.element("main").innerHTML, /7-day calorie average/);
-assert.match(thirdDevice.element("main").innerHTML, /1\/7 days logged/);
+assert.doesNotMatch(thirdDevice.element("main").innerHTML, /7-day calorie average/);
+
 assert.equal(html.includes("Protéines aujourd'hui"), false);
 
 thirdDevice.context.deleteHistoryMeal("2026-08-25", "m1");
@@ -222,7 +222,7 @@ assert.equal(runDevice.context.saveRunTime('2026-02-30', '25:30'), false);
 assert.equal(runDevice.context.saveRunTime('2027-01-01', '25:30'), false);
 runDevice.context.switchTab(1);
 assert.equal(vm.runInContext('TRAINING_PLAN[2].items.length',runDevice.context),1);
-assert.match(runDevice.element('main').innerHTML, /5K finish time/);
+assert.match(runDevice.element('main').innerHTML, /Finish time/);
 assert.equal(runDevice.context.saveRunTime('2026-08-25', '25:30'), true);
 assert.equal(runDevice.context.saveRunTime('2026-08-18', '26:00'), true);
 await runDevice.context.saveAllChanges();
@@ -235,7 +235,7 @@ runCheck.context.switchTab(4);
 assert.match(runCheck.element('main').innerHTML,/0:30/);
 assert.match(runCheck.element('main').innerHTML,/5:06\/km/);
 runCheck.context.switchTab(3);
-assert.match(runCheck.element('main').innerHTML,/5K Run · 25:30/);
+assert.match(runCheck.element('main').innerHTML,/5 km Run · 25:30/);
 runCheck.setOffline(true);
 runCheck.context.saveRunTime('2026-08-18','24:00');
 assert.equal(await runCheck.context.saveAllChanges(),false);
@@ -382,3 +382,17 @@ assert.equal(Object.values(simple.context.todayMeals()).filter(entry=>entry.extr
 await simple.context.saveAllChanges();
 assert.equal(Object.values(serverState.meals['2026-08-25']).some(entry=>entry.extra&&entry.name==='Eggs'),true);
 console.log('Simple meal entry: clean home, new meal save, no duplicate save, existing meals preserved: OK');
+
+const revised=createDevice();await new Promise(resolve=>setImmediate(resolve));
+assert.deepEqual(JSON.parse(vm.runInContext('JSON.stringify(TRAINING_PLAN[3].items.slice(0,3))',revised.context)),['Cable crunch : 5x10 at 40kg','Crunch : 25x7 at 20kg','Plank : 1m20']);
+assert.equal(revised.context.exerciseVideoId('EZ bar curl'),'njzRGdW0PGk');
+vm.runInContext("cloudState.training['2026-08-19']={done:{0:true,13:true},notes:{0:'Bench note',13:'Cable note'}}",revised.context);
+assert.equal(revised.context.training()['2026-08-19'].notes[3],'Bench note');
+assert.equal(revised.context.training()['2026-08-19'].notes[0],'Cable note');
+assert.equal(revised.context.training()['2026-08-19'].notes[0],'Cable note');
+assert.equal(revised.context.isFiveK({runDistanceKm:2.51}),false);
+assert.equal(revised.context.isFiveK({runDistanceKm:5.02}),true);
+assert.equal(revised.context.runPace({runDistanceKm:2.51,runSeconds:945,runDetails:{recordedPace:'6:17'}}),'6:17');
+revised.context.switchTab(2);assert.doesNotMatch(revised.element('main').innerHTML,/7-day/);
+revised.context.switchTab(3);assert.doesNotMatch(revised.element('main').innerHTML,/7-day/);
+console.log('Wednesday remapping, video, mixed-distance runs and removed averages: OK');
