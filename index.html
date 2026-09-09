@@ -1769,7 +1769,6 @@ function resetInterval(){if(!confirm('Reset the interval timer?'))return;interva
 function updateInterval(){const elapsed=intervalElapsed(),phase=intervalPosition(elapsed);if(phase.index!==lastTimerStage){if(lastTimerStage>=0&&intervalState.started!==null)intervalCue();lastTimerStage=phase.index}if(elapsed>=INTERVAL_TOTAL&&intervalState.started!==null){intervalState.elapsed=INTERVAL_TOTAL;intervalState.started=null;persistInterval()}const clock=document.getElementById('intervalClock'),label=document.getElementById('intervalPhase'),button=document.getElementById('intervalToggle');if(clock)clock.textContent=formatRunTime(phase.remaining);if(label)label.textContent=`${phase.name} · ${phase.speed}`;if(button)button.textContent=intervalState.started===null?'Start / Resume':'Pause'}
 setInterval(updateInterval,250);
 
-let aiAccessCode='';
 const aiMeals={};
 
 async function prepareAiPhoto(file){
@@ -1803,12 +1802,13 @@ function aiMealPanel(id,date){
   const key=aiMealKey(date,id),draft=aiMeals[key]||{};
   return `<details class="meal-composer" ${draft.open?'open':''} ontoggle="rememberAiPanel('${date}','${id}',this.open)"><summary>✨ Estimate calories with AI</summary>
     <p class="training-meta">Describe what you ate, including portions, cooking oil and sauces. Your description and chosen photo are sent to OpenAI only when you press Estimate. Review estimates before saving.</p>
-    <label>Meal or nutrition-label photo<input class="exercise-note" type="file" accept="image/jpeg,image/png,image/webp" ${draft.loading?'disabled':''} onchange="selectAiPhoto('${date}','${id}',this.files[0])"></label>
-    <p class="training-meta">Choose a photo or use your phone camera through the file picker. JPEG, PNG or WebP, up to 12 MB. For labels, include how much you ate below.</p>
+    <div class="day-actions"><button class="small-command" ${draft.loading||draft.photoLoading?'disabled':''} onclick="document.getElementById('camera-${date}-${id}').click()">📷 Take photo</button><button class="small-command" ${draft.loading||draft.photoLoading?'disabled':''} onclick="document.getElementById('upload-${date}-${id}').click()">Choose existing photo</button></div>
+    <input hidden id="camera-${date}-${id}" type="file" accept="image/*" capture="environment" aria-label="Take a meal photo" onchange="selectAiPhoto('${date}','${id}',this.files[0]);this.value=''">
+    <label hidden>Meal or nutrition-label photo<input id="upload-${date}-${id}" class="exercise-note" type="file" accept="image/jpeg,image/png,image/webp" ${draft.loading?'disabled':''} onchange="selectAiPhoto('${date}','${id}',this.files[0])"></label>
+    <p class="training-meta">Take photo opens the camera on supported phones. On other devices, use the photo picker. JPEG, PNG or WebP, up to 12 MB. For labels, include how much you ate below.</p>
     ${draft.photoLoading?'<p role="status">Preparing photo…</p>':''}
     ${draft.image?`<img src="${escapeAttr(draft.image)}" alt="Selected meal or nutrition label" style="display:block;max-width:100%;max-height:260px;margin:10px 0;border-radius:8px"><button class="small-command" onclick="removeAiPhoto('${date}','${id}')">Remove photo</button>`:''}
     <label>Meal description (optional with photo)<textarea class="session-comment" maxlength="2000" placeholder="200g cooked rice, 150g grilled chicken and 1 tbsp olive oil" oninput="setAiDescription('${date}','${id}',this.value)">${escapeText(draft.description||'')}</textarea></label>
-    <label>AI access code <input class="exercise-note" type="password" autocomplete="off" placeholder="${aiAccessCode?'Code remembered until page reload':'Enter your private access code'}" oninput="aiAccessCode=this.value"></label>
     <button class="small-command" ${draft.loading||draft.photoLoading?'disabled':''} onclick="estimateMeal('${date}','${id}')">${draft.loading?'Estimating…':'Estimate calories'}</button>
     <div role="status">${escapeText(draft.error||draft.result?.question||'')}</div>
     ${draft.result?.items.length?`<p class="training-meta">AI estimate · ${escapeText(draft.result.assumptions)}</p>${draft.result.items.map((item,i)=>`<div class="field-grid"><label>Ingredient<input class="exercise-note" maxlength="200" value="${escapeAttr(item.name)}" onchange="editAiIngredient('${date}','${id}',${i},'name',this.value)"></label><label>Portion (g)<input class="exercise-note" type="number" min="0.1" max="10000" step="any" value="${item.grams}" onchange="editAiIngredient('${date}','${id}',${i},'grams',this.value)"></label><label>kcal per 100g<input class="exercise-note" type="number" min="0" max="1000" step="any" value="${item.kcalPer100g}" onchange="editAiIngredient('${date}','${id}',${i},'kcalPer100g',this.value)"></label><button class="small-command" onclick="removeAiIngredient('${date}','${id}',${i})">Remove ingredient</button></div>`).join('')}<p><strong>Estimated total: ${aiEstimateTotal(draft.result.items)} kcal</strong></p><button class="small-command" onclick="saveAiMeal('${date}','${id}')">Use reviewed estimate for this meal</button>`:''}
@@ -1820,12 +1820,11 @@ function aiEstimateTotal(items){return items.reduce((sum,item)=>sum+Math.round(i
 async function estimateMeal(date,id){
   const key=aiMealKey(date,id),draft=aiMeals[key]||{};
   if(draft.loading||draft.photoLoading)return;
-  if(!aiAccessCode){aiMeals[key]={...draft,open:true,error:'Enter your AI access code.'};render();return}
   if(!draft.image&&(draft.description||'').trim().length<5){aiMeals[key]={...draft,open:true,error:'Describe the foods and portions you ate.'};render();return}
   const description=draft.description||'',image=draft.image;
   aiMeals[key]={...draft,open:true,loading:true,error:'',result:null};render();
   try{
-    const response=await fetch('/api/estimate-meal',{method:'POST',headers:{'content-type':'application/json','x-ai-access-code':aiAccessCode},body:JSON.stringify({description,...(image?{image}:{})})});
+    const response=await fetch('/api/estimate-meal',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({description,...(image?{image}:{})})});
     const result=await response.json();
     if(!response.ok)throw new Error(result.error||'Could not estimate this meal.');
     if((aiMeals[key].description||'')===description&&aiMeals[key].image===image)aiMeals[key].result=result;

@@ -1,5 +1,3 @@
-import { timingSafeEqual } from 'node:crypto';
-
 const schema={type:'object',additionalProperties:false,properties:{items:{type:'array',items:{type:'object',additionalProperties:false,properties:{name:{type:'string'},grams:{type:'number'},kcalPer100g:{type:'number'}},required:['name','grams','kcalPer100g']}},assumptions:{type:'string'},question:{type:'string'}},required:['items','assumptions','question']};
 export function validateEstimate(value){
   if(!value||!Array.isArray(value.items)||value.items.length>20||typeof value.assumptions!=='string'||typeof value.question!=='string')throw new Error('Invalid estimate');
@@ -19,11 +17,8 @@ export function validPhoto(value){
 export default async function handler(req,res){
   res.setHeader('Cache-Control','no-store');
   if(req.method!=='POST'){res.setHeader('Allow','POST');return res.status(405).json({error:'Method not allowed'});}
-  const key=process.env.OPENAI_API_KEY,code=process.env.AI_ACCESS_CODE;
-  if(!key||!code||code.length<16)return res.status(503).json({error:'AI estimates are not configured yet. The app owner needs to finish setup.'});
-  const supplied=String(req.headers?.['x-ai-access-code']||'');
-  const a=Buffer.from(code),b=Buffer.from(supplied);
-  if(a.length!==b.length||!timingSafeEqual(a,b))return res.status(401).json({error:'Enter the correct AI access code.'});
+  const key=process.env.OPENAI_API_KEY;
+  if(!key)return res.status(503).json({error:'AI estimates are not configured yet. The app owner needs to finish setup.'});
   let body;
   try{body=typeof req.body==='string'?JSON.parse(req.body):req.body;}catch{return res.status(400).json({error:'Invalid request.'});}
   if(!body||typeof body.description!=='string'||body.description.length>2000)return res.status(400).json({error:'Add a description of up to 2,000 characters.'});

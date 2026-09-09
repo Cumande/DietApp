@@ -323,7 +323,6 @@ console.log('Round tracking, strength history, interval boundaries, navigation, 
 const aiDevice=createDevice();await new Promise(resolve=>setImmediate(resolve));
 const syncFetch=aiDevice.context.fetch;
 aiDevice.context.fetch=async()=>({ok:true,json:async()=>({items:[{name:'Cooked rice',grams:200,kcalPer100g:130}],assumptions:'Cooked weight.',question:''})});
-vm.runInContext("aiAccessCode='test-access-code-1234'",aiDevice.context);
 aiDevice.context.setAiDescription('2026-08-25','m2','200g cooked rice');
 const beforeAi=JSON.stringify(aiDevice.context.todayMeals().m2);
 await aiDevice.context.estimateMeal('2026-08-25','m2');
@@ -342,7 +341,6 @@ console.log('AI meal review, editable portions, explicit save and sync: OK');
 const photoDevice=createDevice();await new Promise(resolve=>setImmediate(resolve));
 const photoSyncFetch=photoDevice.context.fetch;
 const samplePhoto='data:image/jpeg;base64,/9j/AAAAAAAAAAAA';
-vm.runInContext("aiAccessCode='test-code'",photoDevice.context);
 photoDevice.context.prepareAiPhoto=async()=>samplePhoto;
 await photoDevice.context.selectAiPhoto('2026-08-25','m3',{type:'image/jpeg',size:100});
 assert.match(photoDevice.element('main').innerHTML,/Selected meal or nutrition label/);
@@ -362,3 +360,9 @@ photoDevice.context.removeAiPhoto('2026-08-25','m3');
 assert.equal(vm.runInContext("aiMeals['2026-08-25:m3'].image",photoDevice.context),undefined);
 assert.equal(vm.runInContext("aiMeals['2026-08-25:m3'].result",photoDevice.context),null);
 console.log('Photo preview, photo-only estimate, removal and image-free persistence: OK');
+
+assert.ok(html.includes('capture="environment"'));
+assert.ok(html.includes('📷 Take photo'));
+assert.ok(html.includes('Choose existing photo'));
+assert.ok(!html.includes('aiAccessCode'));
+assert.ok(!html.includes('x-ai-access-code'));
