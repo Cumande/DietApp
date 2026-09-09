@@ -958,7 +958,7 @@ function renderMealCard(meal,day,date){
     <div class="food-name">${escapeText(BASE_FOODS.find(food=>food.id===item.foodId)?.name||item.name)}<div style="font-size:9px;color:var(--muted)">${item.kcal} kcal / ${item.base} ${escapeText(BASE_FOODS.find(food=>food.id===item.foodId)?.unit||item.unit)}</div></div>
     <input aria-label="Food quantity" class="food-qty" type="number" min="0" step="any" value="${item.qty}" onchange="updateFoodQty('${meal.id}','${item.id}',this.value,'${date}')">
     <div class="food-kcal">${itemCalories(item)} kcal</div>
-    <button class="food-icon${favorites[item.foodId]?' on':''}" title="Favorite" onclick="toggleFoodFavorite('${item.foodId}')">★</button>
+    <button class="food-icon${favorites[item.foodId]?' on':''}" ${item.foodId?'':'disabled'} title="Favorite" onclick="toggleFoodFavorite('${item.foodId}')">★</button>
     <button class="food-icon" title="Delete" onclick="removeFoodItem('${meal.id}','${item.id}','${date}')">×</button>
   </div>`).join('');
   const manualKcal=entry.items.length?'':`<input class="custom-macro" type="number" min="0" step="10" value="${entry.kcal||''}" placeholder="Manual calories if the food is not listed" onchange="setMealKcal('${meal.id}',this.value,'${date}')">`;
@@ -969,7 +969,8 @@ function renderMealCard(meal,day,date){
       <div class="meal-name">${meal.emoji} ${escapeText(meal.name)}</div>
       <div class="meal-desc"><b>Suggested plan:</b> ${escapeText(meal.desc)}</div>
       <div class="meal-macros"><span class="meal-chip mc-kcal">${meal.kcal?`Goal ${meal.kcal} kcal`:'Extra meal'}</span></div>
-      <div class="meal-actual">${actual} kcal · ${entry.status==='skipped'||entry.status==='pending'?'Not consumed':entry.items.length?'Calculated from entered foods':entry.status==='modified'?'Manually entered':'Estimated from meal plan'}</div>
+      <div class="meal-actual">${actual} kcal · ${entry.status==='skipped'||entry.status==='pending'?'Not consumed':entry.items.length?(entry.items.some(item=>item.source==='ai')?'AI estimate · reviewed':'Calculated from entered foods'):entry.status==='modified'?'Manually entered':'Estimated from meal plan'}</div>
+      ${aiMealPanel(meal.id,date)}
       <div class="meal-actions">
         <button class="meal-action done${on?' on':''}" onclick="setMealStatus('${meal.id}','${on?'pending':'done'}','${date}')">Eaten</button>
         <button class="meal-action mod${modified?' on':''}" onclick="setMealStatus('${meal.id}','${modified?'pending':'modified'}','${date}')">Modified</button>
@@ -1767,6 +1768,56 @@ function toggleInterval(){if(intervalState.started!==null){intervalState.elapsed
 function resetInterval(){if(!confirm('Reset the interval timer?'))return;intervalState={elapsed:0,started:null,sound:intervalState.sound};lastTimerStage=-1;persistInterval();updateInterval()}
 function updateInterval(){const elapsed=intervalElapsed(),phase=intervalPosition(elapsed);if(phase.index!==lastTimerStage){if(lastTimerStage>=0&&intervalState.started!==null)intervalCue();lastTimerStage=phase.index}if(elapsed>=INTERVAL_TOTAL&&intervalState.started!==null){intervalState.elapsed=INTERVAL_TOTAL;intervalState.started=null;persistInterval()}const clock=document.getElementById('intervalClock'),label=document.getElementById('intervalPhase'),button=document.getElementById('intervalToggle');if(clock)clock.textContent=formatRunTime(phase.remaining);if(label)label.textContent=`${phase.name} · ${phase.speed}`;if(button)button.textContent=intervalState.started===null?'Start / Resume':'Pause'}
 setInterval(updateInterval,250);
+
+let aiAccessCode='';
+const aiMeals={};
+function aiMealKey(date,id){return `${date}:${id}`}
+function aiMealPanel(id,date){
+  const key=aiMealKey(date,id),draft=aiMeals[key]||{};
+  return `<details class="meal-composer" ${draft.open?'open':''} ontoggle="rememberAiPanel('${date}','${id}',this.open)"><summary>✨ Estimate calories with AI</summary>
+    <p class="training-meta">Describe what you ate, including portions, cooking oil and sauces. Your description is sent to OpenAI. Review estimates before saving.</p>
+    <label>Meal description<textarea class="session-comment" maxlength="2000" placeholder="200g cooked rice, 150g grilled chicken and 1 tbsp olive oil" oninput="setAiDescription('${date}','${id}',this.value)">${escapeText(draft.description||'')}</textarea></label>
+    <label>AI access code <input class="exercise-note" type="password" autocomplete="off" placeholder="${aiAccessCode?'Code remembered until page reload':'Enter your private access code'}" oninput="aiAccessCode=this.value"></label>
+    <button class="small-command" ${draft.loading?'disabled':''} onclick="estimateMeal('${date}','${id}')">${draft.loading?'Estimating…':'Estimate calories'}</button>
+    <div role="status">${escapeText(draft.error||draft.result?.question||'')}</div>
+    ${draft.result?.items.length?`<p class="training-meta">AI estimate · ${escapeText(draft.result.assumptions)}</p>${draft.result.items.map((item,i)=>`<div class="field-grid"><label>Ingredient<input class="exercise-note" maxlength="200" value="${escapeAttr(item.name)}" onchange="editAiIngredient('${date}','${id}',${i},'name',this.value)"></label><label>Portion (g)<input class="exercise-note" type="number" min="0.1" max="10000" step="any" value="${item.grams}" onchange="editAiIngredient('${date}','${id}',${i},'grams',this.value)"></label><label>kcal per 100g<input class="exercise-note" type="number" min="0" max="1000" step="any" value="${item.kcalPer100g}" onchange="editAiIngredient('${date}','${id}',${i},'kcalPer100g',this.value)"></label><button class="small-command" onclick="removeAiIngredient('${date}','${id}',${i})">Remove ingredient</button></div>`).join('')}<p><strong>Estimated total: ${aiEstimateTotal(draft.result.items)} kcal</strong></p><button class="small-command" onclick="saveAiMeal('${date}','${id}')">Use reviewed estimate for this meal</button>`:''}
+  </details>`;
+}
+function rememberAiPanel(date,id,open){const key=aiMealKey(date,id);aiMeals[key]={...aiMeals[key],open}}
+function setAiDescription(date,id,description){const key=aiMealKey(date,id);aiMeals[key]={...aiMeals[key],description,open:true,result:null,error:''}}
+function aiEstimateTotal(items){return items.reduce((sum,item)=>sum+Math.round(item.grams*item.kcalPer100g/100),0)}
+async function estimateMeal(date,id){
+  const key=aiMealKey(date,id),draft=aiMeals[key]||{};
+  if(draft.loading)return;
+  if(!aiAccessCode){aiMeals[key]={...draft,open:true,error:'Enter your AI access code.'};render();return}
+  if((draft.description||'').trim().length<5){aiMeals[key]={...draft,open:true,error:'Describe the foods and portions you ate.'};render();return}
+  const description=draft.description;
+  aiMeals[key]={...draft,open:true,loading:true,error:'',result:null};render();
+  try{
+    const response=await fetch('/api/estimate-meal',{method:'POST',headers:{'content-type':'application/json','x-ai-access-code':aiAccessCode},body:JSON.stringify({description})});
+    const result=await response.json();
+    if(!response.ok)throw new Error(result.error||'Could not estimate this meal.');
+    if(aiMeals[key].description===description)aiMeals[key].result=result;
+    else aiMeals[key].error='Your description changed. Estimate again to use the updated meal.';
+  }catch(error){aiMeals[key].error=error.message||'Could not connect. Please try again.';}
+  finally{aiMeals[key].loading=false;render();}
+}
+function editAiIngredient(date,id,index,field,value){
+  const item=aiMeals[aiMealKey(date,id)]?.result?.items[index];if(!item)return;
+  if(field==='name'){if(!value.trim())return;item.name=value.trim();}
+  else if(['grams','kcalPer100g'].includes(field)){const n=Number(value);if(value===''||!Number.isFinite(n)||n<(field==='grams'?0.1:0)||n>(field==='grams'?10000:1000)){showToast('Enter a valid ingredient quantity or calorie value.','error');render();return}item[field]=n;}
+  render();
+}
+function removeAiIngredient(date,id,index){aiMeals[aiMealKey(date,id)].result.items.splice(index,1);render()}
+function saveAiMeal(date,id){
+  const key=aiMealKey(date,id),draft=aiMeals[key];if(!draft?.result?.items.length||draft.loading)return;
+  const day=mealsForDate(date),entry=mealEntry(day[id]);
+  if((entry.items.length||entry.kcal||entry.status==='done')&&!confirm('Replace this meal’s existing foods and calories with the reviewed estimate?'))return;
+  entry.items=draft.result.items.map((item,i)=>({id:`ai-${Date.now()}-${i}`,name:item.name,unit:'g',base:100,kcal:item.kcalPer100g,qty:item.grams,source:'ai'}));
+  entry.status='modified';entry.kcal=0;
+  entry.note=[entry.note,`AI estimate: ${draft.description}`,draft.result.assumptions].filter(Boolean).join('\n');
+  day[id]=entry;saveMealsForDate(date,day);delete aiMeals[key];render();showToast('Reviewed estimate added to your meal.');
+}
 
 // INIT
 applyTheme(currentTheme());
