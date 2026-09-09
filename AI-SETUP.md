@@ -1,6 +1,6 @@
 # AI meal estimates
 
-The feature accepts meal descriptions, returns ingredient estimates, and lets you edit grams and calories per 100g before explicitly saving. It does not save model output automatically. Existing foods are replaced only after confirmation. Estimates remain labeled as AI estimates in the meal card.
+The feature accepts meal descriptions, returns ingredient estimates, and lets you edit grams and calories per 100g before explicitly saving. It does not save model output automatically. The home screen creates new meals and preserves existing entries. Estimates remain labeled as AI estimates in the meal card.
 
 ## Enable in Vercel
 
@@ -15,7 +15,7 @@ Meal descriptions are sent to OpenAI via the server, using the Responses API wit
 
 ## Verify
 
-Open Today → a meal → Estimate calories with AI. Enter `200g cooked rice, 150g grilled chicken and 1 tbsp olive oil`. Review the ingredient list, adjust portions, then save. Check that the day's total changes and the saved meal appears on another device. For an extra meal, first choose + Extra meal.
+Open Today → What did you eat? Enter `200g cooked rice, 150g grilled chicken and 1 tbsp olive oil`. Review the ingredient list, adjust portions, then save. Check that the day's total changes and the saved meal appears on another device. Each Save meal creates a new meal; no meal slot or food database selection is required.
 
 Tests mock OpenAI responses, so passing tests do not verify a live API key, billing, model access, or nutrition accuracy. Run `npm test` for API configuration checks, error handling, output validation, editable portions and persistence.
 
@@ -23,9 +23,9 @@ Reference: https://developers.openai.com/api/docs/guides/structured-outputs
 
 ## Meal and nutrition-label photos
 
-Use Take photo for the rear camera on supported phones, or Choose existing photo for your library. Choose one JPEG, PNG or WebP image (up to 12 MB) in a meal's AI panel. The browser resizes it to at most 1600 pixels on its longest side and re-encodes it as JPEG before upload (under 2 MB). HEIC files need exporting to JPEG. The preview is kept only in page memory. Removing/changing a photo invalidates the previous estimate. Images are sent to OpenAI only on Estimate; they are not stored in the app's local storage or Supabase history. The model must support image input; the default gpt-4.1-mini does.
+Use Take photo for the rear camera on supported phones, or the file picker on devices without camera capture. Choose one JPEG, PNG or WebP image (up to 12 MB) on the home screen. The browser resizes it to at most 1600 pixels on its longest side and re-encodes it as JPEG before upload (under 2 MB). HEIC files need exporting to JPEG. The preview is kept only in page memory. Removing/changing a photo invalidates the previous estimate. Images are sent to OpenAI only on Estimate; they are not stored in the app's local storage or Supabase history. The model must support image input; the default gpt-4.1-mini does.
 
-For labels, include how much you ate and photograph the serving size and energy information clearly. The prompt asks for clarification when portions or label values are missing. The ingredient review and explicit save are unchanged.
+For labels, include how much you ate and photograph the serving size and energy information clearly. The prompt asks for clarification when portions or label values are missing. The calorie total and Save meal button appear first; ingredient fields are available under Adjust estimate.
 
 Automated tests check multimodal requests, invalid images, size limits, photo-only estimates, and image-free persistence. Real camera/file-picker behavior, browser resizing, and AI photo accuracy still require a device check.
 

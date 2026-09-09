@@ -897,53 +897,13 @@ function render(){
 
 // ── TODAY ────────────────────────────────────────────
 function renderToday(){
-  const checked=todayMeals();
-  const definitions=mealDefinitions(checked);
-  const doneKcal=definitions.reduce((sum,meal)=>sum+mealCalories(mealEntry(checked[meal.id]),meal),0);
-  const pctK=Math.round(doneKcal/TOTAL_KCAL*100);
-  const mealsDone=definitions.filter(m=>mealEntry(checked[m.id]).status==='done').length;
-  const mealsSkipped=definitions.filter(m=>mealEntry(checked[m.id]).status==='skipped').length;
-  const mealsModified=definitions.filter(m=>mealEntry(checked[m.id]).status==='modified').length;
-  // weight progress
-  const w=weights();
-  const lastWeight=Object.entries(w).sort((a,b)=>a[0]>b[0]?1:-1).filter(([,v])=>v).pop()?.[1]||WEIGHT_START;
-  const totalGain=WEIGHT_GOAL-WEIGHT_START;
-  const done=lastWeight-WEIGHT_START;
-  const pctWeight=Math.max(0,Math.min(100,Math.round(done/totalGain*100)));
-  // next milestone
-  const nextM=MILESTONES.find(m=>lastWeight<m.target)||{month:'Goal',target:WEIGHT_GOAL};
-  const daysLeft=Math.round((new Date(GOAL_DATE)-new Date())/(1000*60*60*24));
-  // ring stroke
-  const circ=2*Math.PI*39;
-  const offset=circ*(1-pctWeight/100);
-  const mealsHTML=definitions.map(meal=>renderMealCard(meal,checked,today())).join('');
+  const date=today(),day=todayMeals(),meals=mealDefinitions(day);
+  const total=meals.reduce((sum,meal)=>sum+mealCalories(mealEntry(day[meal.id]),meal),0);
+  const logged=meals.filter(meal=>{const entry=mealEntry(day[meal.id]);return entry.status!=='pending'||entry.items.length||entry.note});
   document.getElementById('main').innerHTML=`
-  <div class="hero-progress">
-    <div class="ring-wrap">
-      <svg width="96" height="96" viewBox="0 0 96 96">
-        <circle class="ring-bg" cx="48" cy="48" r="39"/>
-        <circle class="ring-fill" cx="48" cy="48" r="39" stroke-dasharray="${circ}" stroke-dashoffset="${offset}"/>
-      </svg>
-      <div class="ring-text"><strong>${pctWeight}%</strong><span class="ring-sub">${lastWeight} kg</span></div>
-    </div>
-    <div class="hero-info">
-      <h2>${pctWeight}% towards ${WEIGHT_GOAL}kg</h2>
-      <p>${lastWeight}kg → ${WEIGHT_GOAL}kg · ${daysLeft} days left</p>
-      <p class="milestone">→ Next: ${nextM.target}kg by ${nextM.month}</p>
-    </div>
-  </div>
-  <div class="macro-row">
-    <div class="macro-card">
-      <div class="mv" style="color:var(--orange)">${doneKcal}<span style="font-size:12px;color:#555"> / ${TOTAL_KCAL}</span></div>
-      <div class="ml">Calories today</div>
-      <div class="mp"><div class="mf kcal-fill" style="width:${pctK}%"></div></div>
-    </div>
-  </div>
-  <div class="day-actions">
-    <button class="small-command" onclick="addExtraMeal()">+ Extra meal</button>
-  </div>
-  <div class="sec-lbl">${mealsDone}/${definitions.length} eaten · ${mealsModified} modified · ${mealsSkipped} skipped · ${today()}</div>
-  ${mealsHTML}`;
+    <div class="history-card"><h3>Calories today</h3><div class="timer-clock">${total} <span style="font-size:18px">kcal</span></div></div>
+    <div class="training-day"><h3>What did you eat?</h3>${aiMealPanel('quick',date)}</div>
+    ${logged.length?`<div class="history-card"><h3>Today’s meals</h3>${logged.map(meal=>{const entry=mealEntry(day[meal.id]);return `<div class="history-line"><strong>${escapeText(meal.name)}</strong> · ${mealCalories(entry,meal)} kcal${entry.items.length?`<span class="history-note">${entry.items.map(item=>escapeText(item.name)).join(' · ')}</span>`:''}</div>`}).join('')}</div>`:'<p class="training-meta">Your saved meals will appear here.</p>'}`;
 }
 
 function renderMealCard(meal,day,date){
@@ -1799,20 +1759,18 @@ function removeAiPhoto(date,id){const key=aiMealKey(date,id);aiMeals[key]={...ai
 
 function aiMealKey(date,id){return `${date}:${id}`}
 function aiMealPanel(id,date){
-  const key=aiMealKey(date,id),draft=aiMeals[key]||{};
-  return `<details class="meal-composer" ${draft.open?'open':''} ontoggle="rememberAiPanel('${date}','${id}',this.open)"><summary>✨ Estimate calories with AI</summary>
-    <p class="training-meta">Describe what you ate, including portions, cooking oil and sauces. Your description and chosen photo are sent to OpenAI only when you press Estimate. Review estimates before saving.</p>
-    <div class="day-actions"><button class="small-command" ${draft.loading||draft.photoLoading?'disabled':''} onclick="document.getElementById('camera-${date}-${id}').click()">📷 Take photo</button><button class="small-command" ${draft.loading||draft.photoLoading?'disabled':''} onclick="document.getElementById('upload-${date}-${id}').click()">Choose existing photo</button></div>
+  const draft=aiMeals[aiMealKey(date,id)]||{},busy=draft.loading||draft.photoLoading;
+  return `<div class="meal-composer">
+    <button class="weight-save-btn" style="width:100%" ${busy?'disabled':''} onclick="document.getElementById('camera-${date}-${id}').click()">📷 Take a photo</button>
     <input hidden id="camera-${date}-${id}" type="file" accept="image/*" capture="environment" aria-label="Take a meal photo" onchange="selectAiPhoto('${date}','${id}',this.files[0]);this.value=''">
-    <label hidden>Meal or nutrition-label photo<input id="upload-${date}-${id}" class="exercise-note" type="file" accept="image/jpeg,image/png,image/webp" ${draft.loading?'disabled':''} onchange="selectAiPhoto('${date}','${id}',this.files[0])"></label>
-    <p class="training-meta">Take photo opens the camera on supported phones. On other devices, use the photo picker. JPEG, PNG or WebP, up to 12 MB. For labels, include how much you ate below.</p>
     ${draft.photoLoading?'<p role="status">Preparing photo…</p>':''}
-    ${draft.image?`<img src="${escapeAttr(draft.image)}" alt="Selected meal or nutrition label" style="display:block;max-width:100%;max-height:260px;margin:10px 0;border-radius:8px"><button class="small-command" onclick="removeAiPhoto('${date}','${id}')">Remove photo</button>`:''}
-    <label>Meal description (optional with photo)<textarea class="session-comment" maxlength="2000" placeholder="200g cooked rice, 150g grilled chicken and 1 tbsp olive oil" oninput="setAiDescription('${date}','${id}',this.value)">${escapeText(draft.description||'')}</textarea></label>
-    <button class="small-command" ${draft.loading||draft.photoLoading?'disabled':''} onclick="estimateMeal('${date}','${id}')">${draft.loading?'Estimating…':'Estimate calories'}</button>
-    <div role="status">${escapeText(draft.error||draft.result?.question||'')}</div>
-    ${draft.result?.items.length?`<p class="training-meta">AI estimate · ${escapeText(draft.result.assumptions)}</p>${draft.result.items.map((item,i)=>`<div class="field-grid"><label>Ingredient<input class="exercise-note" maxlength="200" value="${escapeAttr(item.name)}" onchange="editAiIngredient('${date}','${id}',${i},'name',this.value)"></label><label>Portion (g)<input class="exercise-note" type="number" min="0.1" max="10000" step="any" value="${item.grams}" onchange="editAiIngredient('${date}','${id}',${i},'grams',this.value)"></label><label>kcal per 100g<input class="exercise-note" type="number" min="0" max="1000" step="any" value="${item.kcalPer100g}" onchange="editAiIngredient('${date}','${id}',${i},'kcalPer100g',this.value)"></label><button class="small-command" onclick="removeAiIngredient('${date}','${id}',${i})">Remove ingredient</button></div>`).join('')}<p><strong>Estimated total: ${aiEstimateTotal(draft.result.items)} kcal</strong></p><button class="small-command" onclick="saveAiMeal('${date}','${id}')">Use reviewed estimate for this meal</button>`:''}
-  </details>`;
+    ${draft.image?`<img src="${escapeAttr(draft.image)}" alt="Selected meal or nutrition label" style="display:block;max-width:100%;max-height:240px;margin:12px auto;border-radius:12px"><button class="small-command" onclick="removeAiPhoto('${date}','${id}')">Remove photo</button>`:''}
+    <label style="display:block;margin:16px 0 8px">${draft.image?'Add details (optional)':'Or write what you ate'}<textarea class="session-comment" maxlength="2000" placeholder="e.g. 2 eggs, 2 slices of toast and a little butter" oninput="setAiDescription('${date}','${id}',this.value)">${escapeText(draft.description||'')}</textarea></label>
+    <p class="training-meta">Your photo or description is sent to OpenAI to estimate calories.</p>
+    <button class="weight-save-btn" style="width:100%" ${busy?'disabled':''} onclick="estimateMeal('${date}','${id}')">${draft.loading?'Estimating…':'Estimate calories'}</button>
+    <p role="status" style="margin-top:12px">${escapeText(draft.error||draft.result?.question||'')}</p>
+    ${draft.result?.items.length?`<div class="history-card" style="margin-top:16px"><div class="timer-clock">${aiEstimateTotal(draft.result.items)} <span style="font-size:18px">kcal</span></div><p class="training-meta">Estimated · ${escapeText(draft.result.assumptions)}</p><p>${draft.result.items.map(item=>escapeText(item.name)).join(' · ')}</p><button class="weight-save-btn" style="width:100%;margin-top:16px" onclick="saveAiMeal('${date}','${id}')">Save meal</button><details style="margin-top:12px"><summary>Adjust estimate</summary>${draft.result.items.map((item,i)=>`<div class="field-grid"><label>Ingredient<input class="exercise-note" value="${escapeAttr(item.name)}" onchange="editAiIngredient('${date}','${id}',${i},'name',this.value)"></label><label>Portion (g)<input class="exercise-note" type="number" min="0.1" step="any" value="${item.grams}" onchange="editAiIngredient('${date}','${id}',${i},'grams',this.value)"></label><label>kcal per 100g<input class="exercise-note" type="number" min="0" step="any" value="${item.kcalPer100g}" onchange="editAiIngredient('${date}','${id}',${i},'kcalPer100g',this.value)"></label></div>`).join('')}</details></div>`:''}
+  </div>`;
 }
 function rememberAiPanel(date,id,open){const key=aiMealKey(date,id);aiMeals[key]={...aiMeals[key],open}}
 function setAiDescription(date,id,description){const key=aiMealKey(date,id);aiMeals[key]={...aiMeals[key],description,open:true,result:null,error:''}}
@@ -1841,12 +1799,15 @@ function editAiIngredient(date,id,index,field,value){
 function removeAiIngredient(date,id,index){aiMeals[aiMealKey(date,id)].result.items.splice(index,1);render()}
 function saveAiMeal(date,id){
   const key=aiMealKey(date,id),draft=aiMeals[key];if(!draft?.result?.items.length||draft.loading)return;
-  const day=mealsForDate(date),entry=mealEntry(day[id]);
+  const day=mealsForDate(date);
+  const targetId=id==='quick'?`extra-${Date.now()}-${Math.random().toString(36).slice(2,7)}`:id;
+  const entry=mealEntry(day[targetId]);
+  if(id==='quick'){entry.extra=true;entry.name=draft.result.items.map(item=>item.name).join(', ').slice(0,100);entry.time=new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});}
   if((entry.items.length||entry.kcal||entry.status==='done')&&!confirm('Replace this meal’s existing foods and calories with the reviewed estimate?'))return;
   entry.items=draft.result.items.map((item,i)=>({id:`ai-${Date.now()}-${i}`,name:item.name,unit:'g',base:100,kcal:item.kcalPer100g,qty:item.grams,source:'ai'}));
   entry.status='modified';entry.kcal=0;
   entry.note=[entry.note,`AI estimate: ${draft.description||'Meal photo'}${draft.image?' (photo supplied)':''}`,draft.result.assumptions].filter(Boolean).join('\n');
-  day[id]=entry;saveMealsForDate(date,day);delete aiMeals[key];render();showToast('Reviewed estimate added to your meal.');
+  day[targetId]=entry;saveMealsForDate(date,day);delete aiMeals[key];render();showToast('Reviewed estimate added to your meal.');
 }
 
 // INIT

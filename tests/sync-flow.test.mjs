@@ -156,7 +156,7 @@ const thirdDevice = createDevice();
 await new Promise(resolve => setImmediate(resolve));
 assert.equal(thirdDevice.context.itemsCalories(thirdDevice.context.todayMeals().m1), 325);
 assert.equal(Object.values(thirdDevice.context.mealPresets()).filter(Boolean)[0].name, "Breakfast usual");
-assert.match(thirdDevice.element("main").innerHTML, /<strong>\d+%<\/strong><span class="ring-sub">[\d.]+ kg<\/span>/);
+assert.match(thirdDevice.element("main").innerHTML, /Calories today/);
 const weeklyStats = thirdDevice.context.sevenDayCalorieStats(serverState.meals);
 assert.deepEqual({ average: weeklyStats.average, tracked: weeklyStats.tracked }, { average: 325, tracked: 1 });
 thirdDevice.context.switchTab(3);
@@ -343,7 +343,7 @@ const photoSyncFetch=photoDevice.context.fetch;
 const samplePhoto='data:image/jpeg;base64,/9j/AAAAAAAAAAAA';
 photoDevice.context.prepareAiPhoto=async()=>samplePhoto;
 await photoDevice.context.selectAiPhoto('2026-08-25','m3',{type:'image/jpeg',size:100});
-assert.match(photoDevice.element('main').innerHTML,/Selected meal or nutrition label/);
+assert.match(photoDevice.context.aiMealPanel('m3','2026-08-25'),/Selected meal or nutrition label/);
 photoDevice.context.fetch=async(url,options)=>{
  const body=JSON.parse(options.body);assert.equal(body.image,samplePhoto);assert.equal(body.description,'');
  return {ok:true,json:async()=>({items:[{name:'Rice',grams:150,kcalPer100g:130}],assumptions:'Photo portion estimated.',question:''})};
@@ -362,7 +362,23 @@ assert.equal(vm.runInContext("aiMeals['2026-08-25:m3'].result",photoDevice.conte
 console.log('Photo preview, photo-only estimate, removal and image-free persistence: OK');
 
 assert.ok(html.includes('capture="environment"'));
-assert.ok(html.includes('📷 Take photo'));
-assert.ok(html.includes('Choose existing photo'));
+assert.ok(html.includes('📷 Take a photo'));
+assert.ok(html.includes('Or write what you ate'));
 assert.ok(!html.includes('aiAccessCode'));
 assert.ok(!html.includes('x-ai-access-code'));
+
+const simple=createDevice();await new Promise(resolve=>setImmediate(resolve));
+assert.match(simple.element('main').innerHTML,/What did you eat/);
+assert.doesNotMatch(simple.element('main').innerHTML,/Build this meal|Search foods|Suggested plan|Copy yesterday/);
+const existing=JSON.stringify(simple.context.todayMeals().m2);
+vm.runInContext("aiMeals[aiMealKey(today(),'quick')]={description:'Two eggs',result:{items:[{name:'Eggs',grams:100,kcalPer100g:155}],assumptions:'Estimated portion.',question:''}}",simple.context);
+simple.context.saveAiMeal('2026-08-25','quick');
+const simpleEntries=Object.values(simple.context.todayMeals()).filter(entry=>entry.extra&&entry.name==='Eggs');
+assert.equal(simpleEntries.length,1);
+assert.equal(simple.context.itemsCalories(simpleEntries[0]),155);
+assert.equal(JSON.stringify(simple.context.todayMeals().m2),existing);
+simple.context.saveAiMeal('2026-08-25','quick');
+assert.equal(Object.values(simple.context.todayMeals()).filter(entry=>entry.extra&&entry.name==='Eggs').length,1);
+await simple.context.saveAllChanges();
+assert.equal(Object.values(serverState.meals['2026-08-25']).some(entry=>entry.extra&&entry.name==='Eggs'),true);
+console.log('Simple meal entry: clean home, new meal save, no duplicate save, existing meals preserved: OK');
