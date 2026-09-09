@@ -3,7 +3,7 @@ import handler,{validateEstimate} from '../api/estimate-meal.js';
 const oldFetch=globalThis.fetch;
 let calls=0;
 const estimate={items:[{name:'Cooked rice',grams:200,kcalPer100g:130}],assumptions:'Cooked weight supplied.',question:''};
-globalThis.fetch=async (url,options)=>{calls++;const body=JSON.parse(options.body);assert.equal(body.store,false);assert.equal(body.text.format.strict,true);return {ok:true,json:async()=>({status:'completed',output:[{content:[{type:'output_text',text:JSON.stringify(estimate)}]}]})}};
+globalThis.fetch=async (url,options)=>{calls++;const body=JSON.parse(options.body);assert.equal(body.model,'gpt-4o-mini');assert.equal(body.store,false);assert.equal(body.text.format.strict,true);return {ok:true,json:async()=>({status:'completed',output:[{content:[{type:'output_text',text:JSON.stringify(estimate)}]}]})}};
 async function request(method='POST',body={description:'200g cooked rice'}){
  let status,data;await handler({method,body,headers:{}},{setHeader(){},status(value){status=value;return this},json(value){data=value}});return {status,data};
 }
@@ -31,6 +31,7 @@ assert.equal(validPhoto('data:image/jpeg;base64,'+Buffer.from('not a photograph'
 assert.equal(validPhoto('data:image/png;base64,'+'A'.repeat(2800000)),false);
 globalThis.fetch=async(url,options)=>{
  const body=JSON.parse(options.body);
+ assert.equal(body.model,'gpt-4o-mini');
  assert.equal(body.input[0].content[1].type,'input_image');
  assert.equal(body.input[0].content[1].image_url,photo);
  assert.equal(body.input[0].content[1].detail,'high');

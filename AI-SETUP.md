@@ -7,7 +7,7 @@ The feature accepts meal descriptions, returns ingredient estimates, and lets yo
 In the existing `diet-app` project, open Settings → Environment Variables and add this as a sensitive value for Production:
 
 - `OPENAI_API_KEY`: your OpenAI project API key. Use an API project with billing enabled. Never put this in the app UI, GitHub, or chat.
-- Optional `OPENAI_MODEL`: defaults to `gpt-4.1-mini`.
+- The estimator uses `gpt-4o-mini` for text and photos. `OPENAI_MODEL` is no longer used.
 
 Redeploy after adding the variables. The API returns a setup message until OPENAI_API_KEY exists. No API keys are available in this repository.
 
@@ -23,7 +23,7 @@ Reference: https://developers.openai.com/api/docs/guides/structured-outputs
 
 ## Meal and nutrition-label photos
 
-Use Take photo for the rear camera on supported phones, or the file picker on devices without camera capture. Choose one JPEG, PNG or WebP image (up to 12 MB) on the home screen. The browser resizes it to at most 1600 pixels on its longest side and re-encodes it as JPEG before upload (under 2 MB). HEIC files need exporting to JPEG. The preview is kept only in page memory. Removing/changing a photo invalidates the previous estimate. Images are sent to OpenAI only on Estimate; they are not stored in the app's local storage or Supabase history. The model must support image input; the default gpt-4.1-mini does.
+Use Take photo for the rear camera on supported phones, or the file picker on devices without camera capture. Choose one JPEG, PNG or WebP image (up to 12 MB) on the home screen. The browser resizes it to at most 1600 pixels on its longest side and re-encodes it as JPEG before upload (under 2 MB). HEIC files need exporting to JPEG. The preview is kept only in page memory. Removing/changing a photo invalidates the previous estimate. Images are sent to OpenAI only on Estimate; they are not stored in the app's local storage or Supabase history. The model must support image input; gpt-4o-mini does.
 
 For labels, include how much you ate and photograph the serving size and energy information clearly. The prompt asks for clarification when portions or label values are missing. The calorie total and Save meal button appear first; ingredient fields are available under Adjust estimate.
 
