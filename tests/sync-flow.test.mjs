@@ -254,8 +254,9 @@ console.log('5K validation, dated workouts, history, edits, deletion and offline
 
 const enhanced=createDevice();
 await new Promise(resolve=>setImmediate(resolve));
-assert.match(vm.runInContext('TRAINING_PLAN[1].items.join("|")',enhanced.context),/3x4 at 110kg.*2x4 at 100kg.*3x6 at 90kg.*3x8 at 80kg.*3x12 at 70kg/);
-assert.match(vm.runInContext('TRAINING_PLAN[3].items.join("|")',enhanced.context),/x4 at 110kg.*2x4 at 100kg.*3x6 at 90kg.*3x8 at 80kg.*3x12 at 70kg/);
+assert.match(vm.runInContext('TRAINING_PLAN[1].items.join("|")',enhanced.context),/3x4 at 110kg.*2x4 at 100kg.*3x6 at 90kg.*3x8 at 80kg.*3x12 at 70kg.*3x6 at 70kg.*4x10 at 20kg.*4x12 at 14kg/);
+assert.match(vm.runInContext('TRAINING_PLAN[3].items.join("|")',enhanced.context),/4x4 at 105kg.*try 110kg.*2x4 at 100kg.*3x6 at 90kg.*3x8 at 80kg.*3x12 at 70kg.*3x10-12 at 24kg/);
+assert.match(vm.runInContext('TRAINING_PLAN[4].items.join("|")',enhanced.context),/5x5 at 72.5kg.*6x6 at 70kg.*before trying 80kg/);
 enhanced.context.selectTrainingDate('2026-08-21');
 assert.match(enhanced.element('main').innerHTML,/Round 6/);
 assert.match(enhanced.element('main').innerHTML,/Set 4/);
