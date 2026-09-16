@@ -300,11 +300,11 @@ function migrateWeightDates(source){
 const TRAINING_PLAN = {
   1:{name:'Monday',type:'Push + back + abs',items:[
     'Bench press wide grip : warm-up 50kg',
-    'Bench press wide grip : 3x4 at 100kg, 2/3min rest, try 110kg with a spotter',
-    'Bench press wide grip : 2x4 at 90kg, 2/3min rest',
-    'Bench press wide grip : 3x6 at 80kg',
-    'Bench press wide grip : 3x8 at 70kg',
-    'Bench press wide grip : 3x12 at 60kg',
+    'Bench press wide grip : 3x4 at 110kg, 2/3min rest, use a spotter',
+    'Bench press wide grip : 2x4 at 100kg, 2/3min rest',
+    'Bench press wide grip : 3x6 at 90kg',
+    'Bench press wide grip : 3x8 at 80kg',
+    'Bench press wide grip : 3x12 at 70kg',
     'Incline barbell press : 3x8 at 80kg',
     'Wide barbell row : 8x10 at 50kg',
     'Dumbbell shoulder press : 4x10 at 24kg per hand',
@@ -321,11 +321,11 @@ const TRAINING_PLAN = {
     'Crunch : 25x7 at 20kg',
     'Plank : 1m20',
     'Bench press close grip : warm-up 50kg',
-    'Bench press close grip : x4 at 100kg, 2/3min rest',
-    'Bench press close grip : 2x4 at 90kg, 2/3min rest',
-    'Bench press close grip : 3x6 at 80kg, 2/3min rest',
-    'Bench press close grip : 3x8 at 70kg, 2/3min rest',
-    'Bench press close grip : 3x12 at 60kg, 2/3min rest',
+    'Bench press close grip : x4 at 110kg, 2/3min rest',
+    'Bench press close grip : 2x4 at 100kg, 2/3min rest',
+    'Bench press close grip : 3x6 at 90kg, 2/3min rest',
+    'Bench press close grip : 3x8 at 80kg, 2/3min rest',
+    'Bench press close grip : 3x12 at 70kg, 2/3min rest',
     'Wide-grip lat pulldown : 4x8-10 at 80kg',
     'Dumbbell pull-over : 3x12 at 22kg',
     'Dumbbell skull crushers : 6x6 at 14kg per hand',
@@ -1213,10 +1213,11 @@ function renderTraining(){
     const on=!!(state.done&&state.done[i]);
     return `<div class="exercise-entry">
       <div class="exercise-row">
-        <input type="checkbox" aria-label="Complete ${escapeAttr(item)}" ${day===5&&i<3?'disabled title="Tracked using the six round checkboxes above"':''} ${on?'checked':''} onchange="toggleExercise(${i})">
+        <input type="checkbox" aria-label="Complete ${escapeAttr(item)}" ${on?'checked':''} onchange="toggleExercise(${i})">
         ${exerciseVideo(item)}
         <div class="exercise-text${on?' done-text':''}">${item}</div>
       </div>
+      ${day===5?fridayRoundTracker(state,i):''}
       ${[1,3,4,5].includes(day)&&!/(plank|stretch|warm-up)/i.test(item)?strengthFields(item,state):''}
       <input aria-label="Exercise notes" class="exercise-note" value="${escapeAttr(state.notes[i]||'')}" placeholder="Weight, reps, difficulty, how it felt..." onclick="event.stopPropagation()" onchange="setExerciseComment(${i},this.value)">
     </div>`;
@@ -1229,7 +1230,6 @@ function renderTraining(){
     ${date>today()?'<p class="training-meta">Future workout preview. Logging becomes available on the day.</p>':''}
     <fieldset ${date>today()?'disabled':''}>
     <div class="training-meta">${plan.type} · ${doneCount}/${plan.items.length} exercises · ${date}</div>
-    ${day===5?roundTracker(state):''}
     ${day===6?intervalTimerHTML():''}
     ${exerciseHTML}
     ${day===2?runForm(date):''}
@@ -1238,7 +1238,7 @@ function renderTraining(){
   <div class="training-day">
     <h3>📝 Workout notes</h3>
     <div class="training-meta">Record actual weights, how you felt, pain, energy, missed reps, or next targets.</div>
-    <textarea ${date>today()?'disabled':''} class="session-comment" placeholder="Example: Bench 100kg for 2 sets; last set was hard. Right shoulder felt sensitive. Stay at 100kg next time." onchange="setTrainingComment(this.value)">${escapeText(state.comment||'')}</textarea>
+    <textarea ${date>today()?'disabled':''} class="session-comment" placeholder="Example: Bench 110kg for 2 sets; last set was hard. Right shoulder felt sensitive. Stay at 110kg next time." onchange="setTrainingComment(this.value)">${escapeText(state.comment||'')}</textarea>
   </div>
   <div class="training-day">
     <h3>📆 Weekly plan</h3>
@@ -1575,7 +1575,8 @@ function renderHistory(){
       const checked=Object.entries(session.done||{}).filter(([,v])=>v).map(([i])=>Number(i));
       const exerciseNotes=Object.entries(session.notes||{}).filter(([,note])=>String(note||'').trim());
       const loggedExercises=Array.from(new Set([...checked,...exerciseNotes.map(([i])=>Number(i))])).sort((a,b)=>a-b);
-      if(loggedExercises.length||session.comment||session.runSeconds||Object.keys(session.strength||{}).length||Object.values(session.rounds||{}).some(Boolean)){
+      const hasFridayRounds=Object.values(session.fridayRounds||{}).some(rounds=>Object.values(rounds||{}).some(Boolean));
+      if(loggedExercises.length||session.comment||session.runSeconds||Object.keys(session.strength||{}).length||Object.values(session.rounds||{}).some(Boolean)||hasFridayRounds){
         trainingDays++;
         doneExercises+=checked.length;
         notesCount+=exerciseNotes.length+(session.comment?1:0);
@@ -1585,7 +1586,14 @@ function renderHistory(){
           return `<div class="history-line">Training · ${historyItems[i]||`Exercise ${i+1}`} · ${done?'Done':'With notes'}${note}</div>`;
         }).join('');
         const comment=session.comment?`<div class="history-line">Workout notes<span class="history-note">${escapeText(session.comment)}</span></div>`:'';
-        trainingLines=`<div class="history-line" style="font-weight:800;color:var(--text)">🏋️ ${plan.name} · ${checked.length}/${plan.items.length} exercises</div>${checkedLines}${comment}${Object.entries(session.strength||{}).map(([name,v])=>`<div class="history-line">${escapeText(name)} · ${v.sets??'—'} sets × ${v.reps??'—'} reps · ${v.kg??'—'} kg</div>`).join('')}${session.rounds?`<div class="history-line">Circuit: ${Object.values(session.rounds).filter(Boolean).length}/6 rounds complete</div>`:''}${session.runSeconds?`<div class="history-line">🏃 ${session.runDistanceKm||5} km Run · ${formatRunTime(session.runSeconds)} · ${runPace(session)}/km</div>`:''}`;
+        const fridayProgress=dayNum===5
+          ? plan.items.map((item,i)=>{
+              const count=fridayRoundCount(i);
+              const complete=Object.values(fridayExerciseRounds(session,i)).filter(Boolean).length;
+              return complete?`<div class="history-line">${escapeText(item)} · ${complete}/${count} ${i===3?'sets':'rounds'} complete</div>`:'';
+            }).join('')
+          : '';
+        trainingLines=`<div class="history-line" style="font-weight:800;color:var(--text)">🏋️ ${plan.name} · ${checked.length}/${plan.items.length} exercises</div>${checkedLines}${comment}${Object.entries(session.strength||{}).map(([name,v])=>`<div class="history-line">${escapeText(name)} · ${v.sets??'—'} sets × ${v.reps??'—'} reps · ${v.kg??'—'} kg</div>`).join('')}${fridayProgress}${session.runSeconds?`<div class="history-line">🏃 ${session.runDistanceKm||5} km Run · ${formatRunTime(session.runSeconds)} · ${runPace(session)}/km</div>`:''}`;
       }
     }
     if(!mealLines&&!trainingLines)return'';
@@ -1677,16 +1685,24 @@ function validCalendarDate(date){
 function shiftedDate(date,days){const d=new Date(`${date}T12:00:00Z`);d.setUTCDate(d.getUTCDate()+days);return d.toISOString().slice(0,10)}
 function moveTrainingDay(days){selectTrainingDate(shiftedDate(trainingDate,days))}
 function openWeekDay(day){const current=new Date(`${trainingDate}T12:00:00`).getDay();selectTrainingDate(shiftedDate(trainingDate,(day+6)%7-(current+6)%7))}
-function roundTracker(state){
-  const rounds=state.rounds||{};
-  return `<h3>Friday circuit · ${Object.values(rounds).filter(Boolean).length}/6 rounds complete</h3><p class="training-meta">Each round: 5 pull-ups → 50 push-ups → 10 dips. Finish all rounds before cable crunches.</p><div class="rounds">${Array.from({length:6},(_,i)=>`<label><input type="checkbox" ${rounds[i]?'checked':''} onchange="setRound(${i},this.checked)">Round ${i+1}</label>`).join('')}</div>`;
+function fridayRoundCount(exerciseIndex){return exerciseIndex===3?4:6}
+function fridayExerciseRounds(state,exerciseIndex){
+  return state.fridayRounds?.[exerciseIndex]||(exerciseIndex<3?state.rounds||{}:{});
 }
-function setRound(index,done){
+function fridayRoundTracker(state,exerciseIndex){
+  const rounds=fridayExerciseRounds(state,exerciseIndex);
+  const count=fridayRoundCount(exerciseIndex);
+  const complete=Array.from({length:count},(_,i)=>!!rounds[i]).filter(Boolean).length;
+  const unit=exerciseIndex===3?'Set':'Round';
+  return `<div class="rounds" aria-label="${unit}s completed"><span class="training-meta">${complete}/${count}</span>${Array.from({length:count},(_,i)=>`<label><input type="checkbox" ${rounds[i]?'checked':''} onchange="setFridayRound(${exerciseIndex},${i},this.checked)">${unit} ${i+1}</label>`).join('')}</div>`;
+}
+function setFridayRound(exerciseIndex,index,done){
   if(trainingDate>today())return;
   const all=training(),state=all[trainingDate]||{done:{},notes:{}};
-  state.rounds={...state.rounds,[index]:done};
-  const complete=Array.from({length:6},(_,i)=>state.rounds[i]).every(Boolean);
-  state.done={...state.done,0:complete,1:complete,2:complete};
+  const rounds={...fridayExerciseRounds(state,exerciseIndex),[index]:done};
+  state.fridayRounds={...state.fridayRounds,[exerciseIndex]:rounds};
+  const complete=Array.from({length:fridayRoundCount(exerciseIndex)},(_,i)=>rounds[i]).every(Boolean);
+  state.done={...state.done,[exerciseIndex]:complete};
   all[trainingDate]=state;saveTraining(all);render();
 }
 function strengthFields(item,state){

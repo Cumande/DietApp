@@ -254,10 +254,18 @@ console.log('5K validation, dated workouts, history, edits, deletion and offline
 
 const enhanced=createDevice();
 await new Promise(resolve=>setImmediate(resolve));
+assert.match(vm.runInContext('TRAINING_PLAN[1].items.join("|")',enhanced.context),/3x4 at 110kg.*2x4 at 100kg.*3x6 at 90kg.*3x8 at 80kg.*3x12 at 70kg/);
+assert.match(vm.runInContext('TRAINING_PLAN[3].items.join("|")',enhanced.context),/x4 at 110kg.*2x4 at 100kg.*3x6 at 90kg.*3x8 at 80kg.*3x12 at 70kg/);
 enhanced.context.selectTrainingDate('2026-08-21');
-for(let i=0;i<6;i++) enhanced.context.setRound(i,true);
+assert.match(enhanced.element('main').innerHTML,/Round 6/);
+assert.match(enhanced.element('main').innerHTML,/Set 4/);
+for(let exerciseIndex=0;exerciseIndex<3;exerciseIndex++){
+  for(let i=0;i<6;i++) enhanced.context.setFridayRound(exerciseIndex,i,true);
+}
+for(let i=0;i<4;i++) enhanced.context.setFridayRound(3,i,true);
 assert.equal(enhanced.context.training()['2026-08-21'].done[2],true);
-enhanced.context.setRound(2,false);
+assert.equal(enhanced.context.training()['2026-08-21'].done[3],true);
+enhanced.context.setFridayRound(2,2,false);
 assert.equal(enhanced.context.training()['2026-08-21'].done[2],false);
 const exercise=vm.runInContext('TRAINING_PLAN[5].items[3]',enhanced.context);
 enhanced.context.saveStrength(exercise,'sets','4');
@@ -269,7 +277,9 @@ await enhanced.context.saveAllChanges();
 const enhancedOther=createDevice();
 await new Promise(resolve=>setImmediate(resolve));
 assert.equal(enhancedOther.context.training()['2026-08-21'].strength[exercise].kg,30);
-assert.equal(Object.values(enhancedOther.context.training()['2026-08-21'].rounds).filter(Boolean).length,5);
+assert.equal(Object.values(enhancedOther.context.training()['2026-08-21'].fridayRounds[0]).filter(Boolean).length,6);
+assert.equal(Object.values(enhancedOther.context.training()['2026-08-21'].fridayRounds[2]).filter(Boolean).length,5);
+assert.equal(Object.values(enhancedOther.context.training()['2026-08-21'].fridayRounds[3]).filter(Boolean).length,4);
 enhancedOther.context.selectTrainingDate('2026-08-28');
 assert.match(enhancedOther.element('main').innerHTML,/Previous \(2026-08-21\): 4 sets × 12 reps at 30 kg/);
 assert.match(enhancedOther.element('main').innerHTML,/Future workout preview/);
