@@ -1,4 +1,3 @@
-import { requireOwner } from '../lib/auth.js';
 import { supabase } from '../lib/supabase.js';
 const scopes = new Set(['meals', 'weights', 'training', 'foods', 'favorites', 'mealPresets']);
 export function validateChanges(changes) {
@@ -14,7 +13,6 @@ export function validateChanges(changes) {
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'private, no-cache');
   try {
-    await requireOwner(req, res);
     if (req.method === 'GET') {
       const meta = await supabase('/rest/v1/nutrition_state?id=eq.diet_90_97&select=updated_at');
       if (!meta?.[0]) return res.status(503).json({ error: 'Your data is unavailable. No empty replacement has been created.' });
@@ -26,7 +24,7 @@ export default async function handler(req, res) {
     }
     if (req.method === 'POST') {
       const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
-      if (!body?.changes) return res.status(409).json({ error: 'Please reload the app to use the new secure sync.' });
+      if (!body?.changes) return res.status(409).json({ error: 'Please reload the app to use the updated sync.' });
       const result = await supabase('/rest/v1/rpc/diet_apply_changes', { method: 'POST', body: JSON.stringify({ changes: validateChanges(body.changes) }) });
       res.setHeader('ETag', `"${result.updated_at}"`);
       return res.status(200).json(result.data);

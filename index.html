@@ -229,8 +229,7 @@ body:not(.light) .weight-save-btn{background:#176842;color:white}body:not(.light
     <h1>Cee's Diet & Gym plan</h1>
     <div style="display:flex;gap:8px;align-items:center">
       <button class="icon-badge" aria-label="Switch color theme" id="themeToggle" onclick="toggleTheme()">🌙</button>
-      <button class="goal-badge sync-badge" id="cloudStatus" type="button" onclick="authRequired?showSignIn():syncNow()" title="Sync now">Connecting...</button>
-      <button class="icon-badge" id="signOut" hidden type="button" onclick="signOut()" aria-label="Sign out" title="Sign out">↪</button>
+      <button class="goal-badge sync-badge" id="cloudStatus" type="button" onclick="syncNow()" title="Sync now">Connecting...</button>
       <span class="goal-badge">🎯 97kg · 22 Oct</span>
     </div>
   </div>
@@ -246,12 +245,6 @@ body:not(.light) .weight-save-btn{background:#176842;color:white}body:not(.light
 <div class="main" id="main"></div>
 <div class="sync-notice" id="undoNotice" hidden role="status"></div>
 <div class="auth-panel" id="conflictPanel" hidden role="dialog" aria-modal="true" aria-label="Review conflicting changes"><div class="auth-dialog" style="max-height:85vh;overflow:auto"><h2>Review changes</h2><div id="conflictRows"></div><button class="small-command" onclick="applyConflictChoices()">Save choices</button><button class="small-command" onclick="document.getElementById('conflictPanel').hidden=true">Keep for later</button></div></div>
-<div class="auth-panel" id="authPanel" hidden><form class="auth-dialog" onsubmit="event.preventDefault();submitSignIn(document.getElementById('authVerify').hidden?'send':'verify')" aria-label="Sign in">
-<h2>Your private tracker</h2><label for="authEmail">Email</label><input type="email" id="authEmail" autocomplete="email" required>
-<button type="button" class="small-command" onclick="submitSignIn('send')">Send sign-in email</button>
-<div id="authVerify" hidden><label for="authCode">Email code</label><input id="authCode" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6,10}"><button class="weight-save-btn" type="submit">Sign in</button></div>
-<p id="authMessage" role="status"></p><button type="button" class="small-command" onclick="document.getElementById('authPanel').hidden=true">Continue offline</button>
-</form></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
@@ -468,9 +461,7 @@ const PENDING_CHANGES_KEY = `${STORAGE_PREFIX}_pending_sync`;
 let pendingChanges = ls(PENDING_CHANGES_KEY)||{};
 let confirmedState=ls(`${STORAGE_PREFIX}_confirmed`)||{};
 let cloudEtag='';
-let authRequired=false;
 let syncConflict=false;
-let signingIn=false;
 let renderNeeded=false;
 let lastSaved=ls(`${STORAGE_PREFIX}_last_saved`)||'';
 let conflictReview=null;
@@ -541,39 +532,8 @@ function updateSyncNotice(){
   if(!el)return;
   const count=Object.keys(pendingChanges).length;
   el.hidden=cloudStatus==='synced'&&!count;
-  el.innerHTML=authRequired?`<span>Sign in to sync across devices.</span><button onclick="showSignIn()">Sign in</button>`
-    :syncConflict?`<span>Another device changed this entry. Your edits are kept locally.</span><button onclick="resolveSyncConflict()">Review</button>`
+  el.innerHTML=syncConflict?`<span>Another device changed this entry. Your edits are kept locally.</span><button onclick="resolveSyncConflict()">Review</button>`
     :`<span>${escapeText(cloudError||(count?`${count} change(s) waiting to sync`:'Connecting...'))}</span>`;
-}
-function showSignIn(message=''){
-  document.getElementById('authPanel').hidden=false;
-  document.getElementById('authMessage').textContent=message;
-  document.getElementById('authEmail').focus?.();
-}
-async function submitSignIn(action){
-  if(signingIn)return;
-  signingIn=true;
-  const email=document.getElementById('authEmail').value.trim();
-  const code=document.getElementById('authCode').value.trim();
-  try{
-    const res=await fetch('/api/auth',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action,email,code})});
-    if(!res.ok)throw new Error(await responseError(res));
-    if(action==='send'){document.getElementById('authMessage').textContent='Check your email for your sign-in code.';document.getElementById('authVerify').hidden=false;return}
-    authRequired=false;document.getElementById('authPanel').hidden=true;
-    await syncNow();
-    if(Object.keys(pendingChanges).length)scheduleCloudSave();
-  }catch(error){document.getElementById('authMessage').textContent=error.message}
-  finally{signingIn=false}
-}
-async function signOut(){
-  if(!confirm('Sign out on this device? Saved cloud data will stay intact.'))return;
-  if(Object.keys(pendingChanges).length){showToast('Sync your pending changes before signing out.','warning');return}
-  try{
-    const res=await fetch('/api/auth',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'logout'})});
-    if(!res.ok)throw new Error(await responseError(res));
-    for(let i=localStorage.length-1;i>=0;i--){const key=localStorage.key(i);if(key?.startsWith(STORAGE_PREFIX)&&!key.endsWith('_theme'))localStorage.removeItem(key)}
-    location.reload();
-  }catch(error){showToast(error.message,'error')}
 }
 async function resolveSyncConflict(){
   try{
@@ -624,7 +584,7 @@ function setCloudStatus(status,message=''){
   cloudError=message;
   const el=document.getElementById('cloudStatus');
   if(el){
-    el.textContent=authRequired?'Sign in':syncConflict?'Review changes':status==='saving'?'Saving...':Object.keys(pendingChanges).length?'Changes pending':status==='synced'?(lastSaved?`Saved ${lastSaved}`:'Up to date'):status==='syncing'?'Connecting...':'Offline';
+    el.textContent=syncConflict?'Review changes':status==='saving'?'Saving...':Object.keys(pendingChanges).length?'Changes pending':status==='synced'?(lastSaved?`Saved ${lastSaved}`:'Up to date'):status==='syncing'?'Connecting...':'Offline';
     el.className=`goal-badge sync-badge status-${status}`;
     el.title=message||'Sync now';
     el.disabled=status==='saving'||status==='syncing';
@@ -685,15 +645,12 @@ async function syncNow({mergeLocal=false,quiet=false,skipSaveWait=false}={}){
       if(saveAllPromise&&!skipSaveWait)await saveAllPromise;
       const res=await fetch(CLOUD_ENDPOINT,{cache:'no-store',headers:cloudEtag?{'If-None-Match':cloudEtag}:{}});
       if(res.status===304){setCloudStatus('synced');if(renderNeeded)requestRender();return}
-      if(res.status===401){if(!authRequired)showSignIn();authRequired=true}
       if(!res.ok)throw new Error(await responseError(res));
       const incoming=await res.json();
       const changed=JSON.stringify(incoming)!==JSON.stringify(confirmedState);
       captureCloud(incoming);
       cloudState=cloneData(incoming);
       cloudEtag=res.headers?.get('ETag')||'';
-      authRequired=false;
-      document.getElementById('signOut').hidden=false;
       cloudState.meals=cloudState.meals||{};
       cloudState.weights=cloudState.weights||{};
       cloudState.training=cloudState.training||{};
@@ -716,7 +673,7 @@ async function syncNow({mergeLocal=false,quiet=false,skipSaveWait=false}={}){
 }
 async function saveAllChanges(){
   if(saveAllPromise)return saveAllPromise;
-  if(authRequired||syncConflict)return false;
+  if(syncConflict)return false;
   if(!Object.keys(pendingChanges).length)return true;
   clearTimeout(autoSaveTimer);
   autoSaveTimer=null;
@@ -734,7 +691,6 @@ async function saveAllChanges(){
       let verifiedState=cloneData(confirmedState);
       if(operations.length){
         const res=await fetch(CLOUD_ENDPOINT,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({changes:operations})});
-        if(res.status===401){authRequired=true;showSignIn()}
         if(res.status===409)syncConflict=true;
         if(!res.ok)throw new Error(await responseError(res));
         verifiedState=await res.json();

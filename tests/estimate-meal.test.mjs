@@ -5,16 +5,7 @@ let calls=0;
 const estimate={items:[{name:'Cooked rice',grams:200,kcalPer100g:130}],assumptions:'Cooked weight supplied.',question:''};
 globalThis.fetch=async (url,options)=>{calls++;const body=JSON.parse(options.body);assert.equal(body.model,'gpt-4o-mini');assert.equal(body.store,false);assert.equal(body.text.format.strict,true);return {ok:true,json:async()=>({status:'completed',output:[{content:[{type:'output_text',text:JSON.stringify(estimate)}]}]})}};
 async function request(method='POST',body={description:'200g cooked rice'}){
- process.env.SUPABASE_SERVICE_ROLE_KEY='test-secret';
- const upstream=globalThis.fetch;
- globalThis.fetch=async(url,options)=>{
-   if(url.includes('/auth/v1/user'))return {ok:true,json:async()=>({email:'owner@example.test',email_confirmed_at:'2026-01-01'})};
-   if(url.includes('/rest/v1/diet_owner'))return {ok:true,json:async()=>[{email:'owner@example.test'}]};
-   return upstream(url,options);
- };
- let status,data;
- try{await handler({method,body,headers:{cookie:'diet_access=test',host:'localhost'}},{setHeader(){},status(value){status=value;return this},json(value){data=value}})}finally{globalThis.fetch=upstream}
- return {status,data};
+ let status,data;await handler({method,body,headers:{}},{setHeader(){},status(value){status=value;return this},json(value){data=value}});return {status,data};
 }
 delete process.env.OPENAI_API_KEY;assert.equal((await request()).status,503);
 process.env.OPENAI_API_KEY='test-key';delete process.env.AI_ACCESS_CODE;
