@@ -1,45 +1,36 @@
-# Déploiement Vercel + Supabase
+# Deployment: UX update without sign-in
 
-## 1. Créer la table dans Supabase
+The owner requested publication of UX changes only, retaining existing no-login
+access. No email or PIN is required. Anyone who knows the API address can read
+or modify the shared tracker and call estimates. This release is not private.
 
-Dans Supabase, ouvre **SQL Editor**, colle le contenu de `supabase/schema.sql`, puis lance la requête.
+## Configuration
 
-## 2. Ajouter les variables dans Vercel
+Server-only Vercel variables: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,
+OPENAI_API_KEY (meal estimates). Never put secret keys in HTML or GitHub.
+Framework: Other. Build: npm run build. Output directory: .
 
-Dans ton projet Vercel :
+The additive supabase/secure-sync.sql migration was applied on 2026-10-02.
+The existing data row was not replaced. Its diet_apply_changes RPC provides
+atomic field updates and conflict detection. The unused diet_owner table
+has no effect on this release. For a NEW installation only, apply schema.sql
+followed by secure-sync.sql. Never reinitialize an existing state to fix sync.
 
-`Settings` > `Environment Variables`
+## Sync and UX
 
-Ajoute :
+- Edits save automatically; offline edits remain on the device until saved.
+- Refresh on returning, clicking sync, and every 90 visible seconds.
+- ETag/304 avoids downloading unchanged history.
+- Conflict review offers saved or local values per field, preserving other edits.
+- Meal, weight and run deletions can be undone on the same device.
+- Older pending changes without a baseline require explicit review.
+- Older open app versions must reload before saving with the updated API.
+- Food portions, recent foods, favorites, workout sets, direct performance
+  fields, expandable history and selectable chart points are available.
 
-```txt
-SUPABASE_URL=https://vkuxvwmnddlshvomyyvb.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=ta_cle_service_role_supabase
-```
+## Checks
 
-La clé `SUPABASE_SERVICE_ROLE_KEY` se trouve dans Supabase :
-
-`Project Settings` > `API Keys` > `service_role`
-
-Ne la mets jamais dans `index.html` ou GitHub.
-
-## 3. Réglages Vercel
-
-Pour ce projet :
-
-```txt
-Framework Preset: Other
-Build Command: npm run build
-Output Directory: .
-Install Command: laisser vide
-```
-
-## 4. Redéployer
-
-Après avoir poussé ces fichiers sur GitHub, lance un nouveau déploiement Vercel.
-
-Le chargement depuis Supabase est automatique et ne demande aucun PIN. Les repas et l'entraînement sont enregistrés automatiquement après chaque modification. Le bouton `Sauvegarder` du poids enregistre directement la mesure. En cas de coupure réseau, les changements restent sur l'appareil et sont renvoyés automatiquement au retour de la connexion.
-
-Le badge `Sync` indique l'état de la connexion et permet de relire manuellement les données des autres appareils. Il n'est pas nécessaire de cliquer dessus pour enregistrer.
-
-Si le badge affiche `Réessayer`, clique dessus pour voir le détail de l'erreur au survol. Vérifie surtout que `SUPABASE_SERVICE_ROLE_KEY` est bien définie pour l'environnement `Production`, puis redéploie le projet.
+npm test covers no-login API access, field validation, conflict response handling,
+offline reload, meals, weights, workouts and AI.
+npm run build prepares the static app; it is not a compilation check.
+Browser checks use fixtures. Do not insert test meals into production.

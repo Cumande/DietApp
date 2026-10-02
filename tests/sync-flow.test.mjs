@@ -10,12 +10,12 @@ const serverState = { meals: {}, weights: {}, training: {}, foods: {}, favorites
 let postCount = 0;
 const clone = value => JSON.parse(JSON.stringify(value));
 
-function createDevice({ delayInitialLoad = false } = {}) {
+function createDevice({ delayInitialLoad = false, storedValues = [], startOffline = false } = {}) {
   const elements = new Map();
-  const values = new Map();
+  const values = new Map(storedValues);
   let initialResolved = !delayInitialLoad;
   let resolveInitialLoad;
-  let offline = false;
+  let offline = startOffline;
   let nextPromptValue;
   let timerId = 0;
   const timers = new Map();
@@ -50,10 +50,21 @@ function createDevice({ delayInitialLoad = false } = {}) {
       return { ok: true, json: async () => clone(serverState) };
     }
 
-    const { mutation } = JSON.parse(options.body || "{}");
-    assert.ok(mutation, "La sauvegarde doit envoyer une mutation");
-    if (mutation.value === null) delete serverState[mutation.scope][mutation.key];
-    else serverState[mutation.scope][mutation.key] = clone(mutation.value);
+    const { changes } = JSON.parse(options.body || "{}");
+    assert.ok(changes, "La sauvegarde doit envoyer des changements atomiques");
+    const updated=clone(serverState);
+    for(const change of changes){
+      let parent=updated;
+      for(const key of change.path.slice(0,change.parentDepth||0))parent=parent?.[key];
+      if(parent===undefined)return {ok:false,status:409,json:async()=>({error:'Concurrent parent deletion'})};
+      let cursor=updated;
+      for(const key of change.path.slice(0,-1))cursor=cursor[key]??=( {} );
+      const key=change.path.at(-1),previous=cursor[key];
+      if((change.remove&&previous===undefined)||(!change.remove&&JSON.stringify(previous)===JSON.stringify(change.value)))continue;
+      if((previous!==undefined)!==change.exists||(change.exists&&JSON.stringify(previous)!==JSON.stringify(change.before)))return {ok:false,status:409,json:async()=>({error:'Concurrent edit'})};
+      if(change.remove)delete cursor[key];else cursor[key]=clone(change.value);
+    }
+    Object.assign(serverState,updated);
     postCount++;
     return { ok: true, json: async () => clone(serverState) };
   };
@@ -205,7 +216,7 @@ await new Promise(resolve => setImmediate(resolve));
 offlineDevice.setOffline(true);
 offlineDevice.context.saveWeight("2026-08-25", 91.4);
 assert.equal(await offlineDevice.context.saveAllChanges(), false);
-assert.match(offlineDevice.element("toast").textContent, /saved locally/);
+assert.match(offlineDevice.element("toast").textContent, /kept on this device/);
 assert.equal(Object.keys(JSON.parse(offlineDevice.values.get("nut_90_97_pending_sync"))).length, 1);
 offlineDevice.setOffline(false);
 assert.equal(await offlineDevice.context.saveAllChanges(), true);
@@ -380,7 +391,8 @@ assert.ok(!html.includes('x-ai-access-code'));
 
 const simple=createDevice();await new Promise(resolve=>setImmediate(resolve));
 assert.match(simple.element('main').innerHTML,/What did you eat/);
-assert.doesNotMatch(simple.element('main').innerHTML,/Build this meal|Search foods|Suggested plan|Copy yesterday/);
+assert.doesNotMatch(simple.element('main').innerHTML,/Suggested plan|Copy yesterday/);
+assert.match(simple.element('main').innerHTML,/quickTarget|quickFood|Add favorite/);
 const existing=JSON.stringify(simple.context.todayMeals().m2);
 vm.runInContext("aiMeals[aiMealKey(today(),'quick')]={description:'Two eggs',result:{items:[{name:'Eggs',grams:100,kcalPer100g:155}],assumptions:'Estimated portion.',question:''}}",simple.context);
 simple.context.saveAiMeal('2026-08-25','quick');
@@ -407,3 +419,95 @@ assert.equal(revised.context.runPace({runDistanceKm:2.51,runSeconds:945,runDetai
 revised.context.switchTab(2);assert.doesNotMatch(revised.element('main').innerHTML,/7-day/);
 revised.context.switchTab(3);assert.doesNotMatch(revised.element('main').innerHTML,/7-day/);
 console.log('Wednesday remapping, video, mixed-distance runs and removed averages: OK');
+
+const concurrentA=createDevice(),concurrentB=createDevice();
+await new Promise(resolve=>setImmediate(resolve));
+concurrentA.context.selectTrainingDate('2026-08-24');
+concurrentB.context.selectTrainingDate('2026-08-24');
+concurrentA.context.setExerciseComment(1,'Device A note');
+concurrentB.context.setExerciseComment(2,'Device B note');
+assert.equal(await concurrentA.context.saveAllChanges(),true);
+assert.equal(await concurrentB.context.saveAllChanges(),true);
+assert.equal(serverState.training['2026-08-24'].notes[1],'Device A note');
+assert.equal(serverState.training['2026-08-24'].notes[2],'Device B note');
+await concurrentA.context.syncNow();
+concurrentA.context.setExerciseComment(1,'New A note');
+concurrentB.context.setExerciseComment(1,'Conflicting B note');
+assert.equal(await concurrentA.context.saveAllChanges(),true);
+assert.equal(await concurrentB.context.saveAllChanges(),false);
+assert.equal(serverState.training['2026-08-24'].notes[1],'New A note');
+assert.equal(concurrentB.context.training()['2026-08-24'].notes[1],'Conflicting B note');
+assert.ok(Object.keys(JSON.parse(concurrentB.values.get('nut_90_97_pending_sync'))).length);
+const offlineReload=createDevice({storedValues:[...concurrentA.values],startOffline:true});
+await new Promise(resolve=>setImmediate(resolve));
+assert.equal(offlineReload.context.training()['2026-08-24'].notes[1],'New A note');
+assert.equal(offlineReload.context.todayMeals().m2.items[0].qty,150);
+offlineReload.context.setTrainingComment('Offline cache change');
+assert.notEqual(vm.runInContext("confirmedState.training[today()]?.comment",offlineReload.context),'Offline cache change','Editing the cache cannot mutate the confirmed baseline');
+assert.equal(concurrentA.context.exerciseId('Bench press close grip : 3x4 at 100kg'),concurrentA.context.exerciseId('Bench press close grip : 4x4 at 110kg'));
+const earlier={strength:{'Bench press close grip : 3x4 at 100kg':{sets:3,reps:4,kg:100}}};
+assert.equal(concurrentA.context.matchingStrength(earlier,'Bench press close grip : 4x4 at 110kg').value.kg,100);
+assert.ok(concurrentA.context.sessionPlan('2026-08-19',earlier).items.includes('Bench press close grip : 3x4 at 100kg'));
+concurrentA.context.setHistoryFilter('runs');
+assert.doesNotMatch(concurrentA.element('main').innerHTML,/Device A note|New A note/);
+concurrentA.context.setHistoryFilter('strength');
+assert.match(concurrentA.element('main').innerHTML,/New A note/);
+assert.doesNotMatch(concurrentA.element('main').innerHTML,/km Run ·/);
+const corruptCache=createDevice({storedValues:[['nut_90_97_confirmed','{broken']]});
+await new Promise(resolve=>setImmediate(resolve));
+assert.equal(corruptCache.context.todayMeals().m2.items[0].qty,150);
+const deletedParent=createDevice();await new Promise(resolve=>setImmediate(resolve));
+deletedParent.context.selectTrainingDate('2026-08-24');
+delete serverState.training['2026-08-24'];
+deletedParent.context.setExerciseComment(4,'Stale addition');
+assert.equal(await deletedParent.context.saveAllChanges(),false);
+assert.equal(serverState.training['2026-08-24'],undefined,'A stale edit cannot recreate a session deleted elsewhere');
+console.log('Concurrent edits, conflict preservation, offline reload, stable strength lookup and history filters: OK');
+
+serverState.training['2026-08-25']={notes:{0:'initial',1:'old remote'},done:{},comment:''};
+const inFlight=createDevice();await new Promise(resolve=>setImmediate(resolve));
+serverState.training['2026-08-25'].notes[1]='NEW REMOTE VALUE';
+inFlight.context.setTrainingComment('first local edit');
+const originalRequest=inFlight.context.fetch;let releaseResponse;
+inFlight.context.fetch=async(url,options)=>{
+  const response=await originalRequest(url,options);
+  if(options?.method!=='POST')return response;
+  const data=await response.json();await new Promise(resolve=>releaseResponse=resolve);
+  return {...response,json:async()=>data};
+};
+const saving=inFlight.context.saveAllChanges();await new Promise(resolve=>setImmediate(resolve));
+inFlight.context.setExerciseComment(0,'second edit during save');
+releaseResponse();await saving;inFlight.context.fetch=originalRequest;
+assert.equal(await inFlight.context.saveAllChanges(),true);
+assert.equal(serverState.training['2026-08-25'].notes[1],'NEW REMOTE VALUE');
+assert.equal(serverState.training['2026-08-25'].notes[0],'second edit during save');
+
+inFlight.context.document.activeElement={matches:()=>true};
+serverState.meals['2026-08-25'].m1={status:'modified',kcal:777,items:[]};
+await inFlight.context.syncNow();
+assert.equal(vm.runInContext('renderNeeded',inFlight.context),true);
+inFlight.context.document.activeElement=null;await inFlight.context.syncNow();
+assert.equal(vm.runInContext('renderNeeded',inFlight.context),false);
+assert.match(inFlight.element('main').innerHTML,/777 kcal/);
+
+const conflictA=createDevice(),conflictB=createDevice();await new Promise(resolve=>setImmediate(resolve));
+conflictA.context.setTrainingComment('Saved comment');conflictB.context.setTrainingComment('Local comment');
+await conflictA.context.saveAllChanges();assert.equal(await conflictB.context.saveAllChanges(),false);
+await conflictB.context.resolveSyncConflict();
+assert.match(conflictB.element('conflictRows').innerHTML,/Saved comment/);
+vm.runInContext("conflictReview.entries.forEach(entry=>entry.choice='mine')",conflictB.context);
+await conflictB.context.applyConflictChoices();assert.equal(serverState.training['2026-08-25'].comment,'Local comment');
+
+conflictB.context.deleteHistoryMeal('2026-08-25','m1');await conflictB.context.saveAllChanges();
+assert.equal(serverState.meals['2026-08-25'].m1,undefined);
+conflictB.context.undoDelete();await conflictB.context.saveAllChanges();
+assert.equal(serverState.meals['2026-08-25'].m1.kcal,777);
+assert.equal(conflictB.context.exerciseId('Curl barre EZ : 6x10 at 20kg'),'ez bar curl');
+conflictB.context.selectTrainingDate('2026-08-24');
+const originalExercise=vm.runInContext('TRAINING_PLAN[1].items[6]',conflictB.context);
+conflictB.context.saveStrength(originalExercise,'kg','70');
+vm.runInContext("TRAINING_PLAN[1].items[6]='Renamed incline exercise : 3x8 at 75kg'",conflictB.context);
+assert.equal(conflictB.context.matchingStrength(conflictB.context.training()['2026-08-24'],'Renamed incline exercise : 3x8 at 75kg').value.kg,70);
+conflictB.context.setExerciseSet(6,0,3,true);
+assert.equal(conflictB.context.training()['2026-08-24'].setsDone['incline barbell press'][0],true);
+console.log('In-flight rebase, deferred display, conflict choices, undo, stable IDs and set tracking: OK');

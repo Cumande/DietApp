@@ -1,75 +1,32 @@
-import assert from "node:assert/strict";
-
-process.env.SUPABASE_SERVICE_ROLE_KEY = "test-secret";
-process.env.SUPABASE_URL = "https://example.supabase.co";
-
-let state = {
-  meals: {},
-  weights: { "2026-09-08": 92.3, "2026-09-15": 90.75 },
-  training: {},
-  foods: {},
-  favorites: {},
-  mealPresets: {}
+import assert from 'node:assert/strict';
+process.env.SUPABASE_SERVICE_ROLE_KEY='test-secret';
+process.env.SUPABASE_URL='https://example.supabase.co';
+const {default:handler,validateChanges}=await import('../api/nutrition-data.js');
+const originalFetch=globalThis.fetch;
+let calls=[],conflict=false;
+globalThis.fetch=async(url,options={})=>{
+  calls.push({url,options});
+  const json=url.includes('/rpc/')?{data:{weights:{'2026-10-01':92}},updated_at:'v2'}:[{data:{weights:{'2026-10-01':92}},updated_at:'v1'}];
+  return {ok:!(conflict&&url.includes('/rpc/')),json:async()=>conflict&&url.includes('/rpc/')?{code:'40001'}:json};
 };
-const originalFetch = globalThis.fetch;
-globalThis.fetch = async (_url, options = {}) => {
-  if ((options.method || "GET") === "GET") {
-    return { ok: true, status: 200, text: async () => JSON.stringify([{ data: state }]) };
-  }
-  state = JSON.parse(options.body).data;
-  return { ok: true, status: 200, text: async () => "" };
-};
-
-const { default: handler } = await import("../api/nutrition-data.js?test=food-scopes");
-
-async function getState() {
-  let statusCode = 0;
-  let responseBody;
-  const req = { method: "GET" };
-  const res = {
-    setHeader() {},
-    status(code) { statusCode = code; return this; },
-    json(body) { responseBody = body; return body; }
-  };
-  await handler(req, res);
-  assert.equal(statusCode, 200);
-  return responseBody;
+async function request(method,body,headers={}){
+  const result={headers:{}};
+  await handler({method,body,headers},{setHeader(k,v){result.headers[k]=v},status(code){result.status=code;return this},json(data){result.data=data},end(){}});
+  return result;
 }
-
-async function mutate(mutation) {
-  let statusCode = 0;
-  let responseBody;
-  const req = { method: "POST", body: { mutation } };
-  const res = {
-    setHeader() {},
-    status(code) { statusCode = code; return this; },
-    json(body) { responseBody = body; return body; }
-  };
-  await handler(req, res);
-  assert.equal(statusCode, 200);
-  return responseBody;
-}
-
-const food = { id: "custom-test", name: "Test", unit: "g", base: 100, kcal: 250, defaultQty: 100 };
-const migratedState = await getState();
-assert.equal(migratedState.weights["2026-08-15"], 90.5);
-assert.equal(state.weights["2026-08-15"], 90.5);
-await mutate({ scope: "foods", key: food.id, value: food });
-await mutate({ scope: "favorites", key: food.id, value: true });
-await mutate({ scope: "mealPresets", key: "preset-test", value: { id: "preset-test", name: "Breakfast habituel", items: [] } });
-
-assert.deepEqual(state.foods[food.id], food);
-assert.equal(state.favorites[food.id], true);
-assert.equal(state.mealPresets["preset-test"].name, "Breakfast habituel");
-assert.equal(state.weights["2026-08-09"], 92.3);
-assert.equal(state.weights["2026-08-15"], 90.5);
-assert.equal(state.weights["2026-09-08"], undefined);
-assert.equal(state.weights["2026-09-15"], undefined);
-
-await mutate({ scope: "weights", key: "2026-08-27", value: 91.5 });
-assert.equal(state.weights["2026-08-27"], 91.5);
-await mutate({ scope: "weights", key: "2026-08-27", value: null });
-assert.equal(state.weights["2026-08-27"], undefined);
-
-globalThis.fetch = originalFetch;
-console.log("API food scopes: OK");
+assert.equal((await request('GET')).data.weights['2026-10-01'],92,'Existing no-login access remains available');
+assert.ok(calls.every(c=>!c.url.includes('/auth/')));
+assert.equal((await request('GET',null,{'if-none-match':'"v1"'})).status,304);
+const change={path:['weights','2026-10-01'],exists:false,before:null,remove:false,value:92};
+assert.equal((await request('POST',{changes:[change]})).status,200);
+assert.equal(calls.at(-1).url.endsWith('/rpc/diet_apply_changes'),true);
+assert.equal((await request('POST',{mutation:{scope:'weights',key:'date',value:1}})).status,409);
+assert.throws(()=>validateChanges([{...change,path:['__proto__','x']}]));
+assert.throws(()=>validateChanges([{...change,path:['training','x','constructor']}]));
+assert.throws(()=>validateChanges([null]));
+assert.throws(()=>validateChanges([{...change,parentDepth:5}]));
+conflict=true;
+assert.equal((await request('POST',{changes:[change]})).status,409);
+assert.equal((await request('DELETE')).status,405);
+globalThis.fetch=originalFetch;
+console.log('No-login API, cache, patch validation and conflicts: OK');
