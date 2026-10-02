@@ -14,8 +14,10 @@ export function validPhoto(value){
   if(bytes.length<12||bytes.length>2000000)return false;
   return match[1]==='jpeg'?bytes[0]===255&&bytes[1]===216&&bytes[2]===255:match[1]==='png'?bytes.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])):bytes.toString('ascii',0,4)==='RIFF'&&bytes.toString('ascii',8,12)==='WEBP';
 }
+import { requireOwner } from '../lib/auth.js';
 export default async function handler(req,res){
   res.setHeader('Cache-Control','no-store');
+  try { await requireOwner(req,res); } catch(error) { return res.status(error.status||503).json({error:error.message}); }
   if(req.method!=='POST'){res.setHeader('Allow','POST');return res.status(405).json({error:'Method not allowed'});}
   const key=process.env.OPENAI_API_KEY;
   if(!key)return res.status(503).json({error:'AI estimates are not configured yet. The app owner needs to finish setup.'});

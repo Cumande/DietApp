@@ -194,6 +194,30 @@ fieldset{border:0;min-width:0}fieldset:disabled{opacity:.65}
 @media(max-width:520px){.food-row{grid-template-columns:minmax(0,1fr) 80px 44px 44px}.food-name{grid-column:1/-1}.food-kcal{grid-column:1}.header-top{flex-wrap:wrap;gap:10px}.field-grid{grid-template-columns:1fr}.weight-input-row{flex-wrap:wrap}.weight-input{min-width:0;width:100%}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
+<style>
+body.light{--bg:#f5f6f8;--card:#fff;--surface:#f0f2f4;--surface2:#fafbfc;--text:#19232b;--muted:#596773;--soft:#425260;--border:#dce2e6;--accent:#16824f;--blue:#2869be;--orange:#ae561d}
+body{font-size:14px;letter-spacing:0}button,input,textarea,select{font-family:inherit}button{cursor:pointer}
+.header{padding:16px 24px}.header-top,.tabs{max-width:1040px;margin-left:auto;margin-right:auto}.header h1{font-size:20px}.main{max-width:1040px;padding:24px;margin:auto}
+.goal-badge{background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:6px}.sync-badge.status-local{background:#fff0e8;color:#9a3412;border-color:#e7a47c}.sync-badge.status-synced{background:#e4f5ec;color:#11653d}.sync-badge.status-saving,.sync-badge.status-syncing{background:#eaf1fc;color:#214f92}
+.sync-notice{max-width:992px;margin:12px auto 0;padding:12px 16px;background:var(--surface);border-left:3px solid var(--orange);display:flex;align-items:center;justify-content:space-between;gap:12px;color:var(--text)}[hidden]{display:none!important}
+.tabs{gap:6px}.tab{border-radius:6px;font-size:13px}.tab.active{background:var(--accent);color:white}.icon-badge{border-radius:6px}
+.training-day,.chart-card,.weight-input-card,.history-card{border-radius:0;border:0;border-bottom:1px solid var(--border);background:transparent;padding:20px 0;margin:0 0 12px}
+.training-day h3,.history-card h3{font-size:18px}.training-meta,.exercise-text,.history-line{font-size:14px;line-height:1.55}.training-meta{margin-top:6px}.history-note,.week-exercise{font-size:13px}
+.exercise-note,.field-grid input,.field-grid select{width:100%;margin:4px 0 0;min-width:0}.field-grid label{min-width:0;display:block}.field-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.exercise-entry{margin:0;border-bottom:1px solid var(--border);padding:16px 0}.exercise-row{gap:12px;align-items:flex-start}.exercise-row>input{flex-shrink:0;margin-top:3px}.exercise-text{min-width:0;flex:1}.exercise-text strong{display:block;font-size:15px}.exercise-target{display:block;color:var(--muted);margin-top:4px;font-size:13px}.exercise-details{margin-top:10px}.exercise-details summary{cursor:pointer;color:var(--blue);font-size:13px;min-height:36px;display:flex;align-items:center}.exercise-details[open]{padding-bottom:8px}.exercise-details .exercise-video{margin:10px 0}.exercise-entry.is-done .exercise-text{opacity:.65}
+.exercise-video{border-radius:6px;width:120px;height:72px}.exercise-video img{width:100%;height:100%;object-fit:cover}.session-comment{border-radius:6px}.small-command{font-size:12px}.rounds label{border:1px solid var(--border);border-radius:6px;padding:8px;font-size:13px}.rounds{align-items:center}
+.chart-wrap{overflow:visible}.chart-wrap svg{display:block;width:100%;max-width:100%;min-width:0!important;height:auto}.chart-card h4{font-size:15px}.period-tabs{display:flex;gap:6px;margin:12px 0}.period-tabs button{border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:6px;min-width:56px;padding:8px 12px}.period-tabs button[aria-pressed=true]{background:var(--accent);color:#fff}.filter-row{display:flex;gap:12px;flex-wrap:wrap;align-items:end;margin:12px 0}.filter-row label{display:grid;gap:6px}.filter-row select{padding:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:6px}
+.history-card .history-summary{gap:12px}.history-stat{border:0;border-radius:0;background:transparent;border-left:2px solid var(--border)}.weight-table{font-size:13px}.weight-table th{letter-spacing:0}.weight-table td,.weight-table th{padding:10px 4px}.table-wrap{overflow-x:auto}.week-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.week-day{border-radius:6px}.week-exercise{padding:6px 0}.sec-lbl{letter-spacing:0}
+.auth-panel{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:120;display:grid;place-items:center;padding:20px}.auth-dialog{background:var(--card);color:var(--text);width:min(420px,100%);padding:24px;border-radius:8px}.auth-dialog label{display:block;margin:16px 0 8px}.auth-dialog input{width:100%;padding:12px;border:1px solid var(--border);border-radius:6px}.auth-dialog button{margin-top:12px;padding:10px 14px}.auth-dialog p{margin-top:12px;line-height:1.5}
+@media(max-width:600px){.header{padding:12px 16px;position:relative}.header h1{font-size:18px}.header-top{align-items:flex-start}.main{padding:8px 16px 100px}.tabs{position:fixed;bottom:0;left:0;right:0;z-index:80;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));padding:8px 8px calc(8px + env(safe-area-inset-bottom));margin:0;border-top:1px solid var(--border);background:var(--card);gap:3px}.tab{min-width:0;white-space:normal;font-size:11px;padding:8px 2px;line-height:1.5}.field-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.field-grid label{font-size:11px}.field-grid input{padding:10px 6px}.week-grid{grid-template-columns:1fr}.sync-notice{margin:0 16px;padding:10px;font-size:12px}.training-day h3{font-size:17px}.toast{bottom:90px}.weight-actions{gap:2px}.weight-action{min-width:36px}.training-day,.chart-card,.history-card{padding:16px 0}.timer-clock{font-size:32px}.history-summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style>
+<style>
+.chart-wrap svg{display:block;max-width:620px;margin:auto}
+body:not(.light){--blue:#8bb8ff;--muted:#b8c1c7;--border:#32383c}
+body:not(.light) .tab.active,body:not(.light) .period-tabs button[aria-pressed=true]{background:#176842}
+@media(min-width:601px){.history-summary{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:600px){.header{backdrop-filter:none;-webkit-backdrop-filter:none}}
+</style>
 </head>
 <body>
 <div class="header">
@@ -201,7 +225,8 @@ fieldset{border:0;min-width:0}fieldset:disabled{opacity:.65}
     <h1>Cee's Diet & Gym plan</h1>
     <div style="display:flex;gap:8px;align-items:center">
       <button class="icon-badge" aria-label="Switch color theme" id="themeToggle" onclick="toggleTheme()">🌙</button>
-      <button class="goal-badge sync-badge" id="cloudStatus" type="button" onclick="syncNow()" title="Sync now">☁️ Sync</button>
+      <button class="goal-badge sync-badge" id="cloudStatus" type="button" onclick="authRequired?showSignIn():syncNow()" title="Sync now">Connecting...</button>
+      <button class="icon-badge" id="signOut" hidden type="button" onclick="signOut()" aria-label="Sign out" title="Sign out">↪</button>
       <span class="goal-badge">🎯 97kg · 22 Oct</span>
     </div>
   </div>
@@ -213,7 +238,14 @@ fieldset{border:0;min-width:0}fieldset:disabled{opacity:.65}
     <button class="tab" id="tab4" onclick="switchTab(4)">🏃 Runs</button>
   </div>
 </div>
+<div class="sync-notice" id="syncNotice" role="status" hidden></div>
 <div class="main" id="main"></div>
+<div class="auth-panel" id="authPanel" hidden><form class="auth-dialog" onsubmit="event.preventDefault();submitSignIn(document.getElementById('authVerify').hidden?'send':'verify')" aria-label="Sign in">
+<h2>Your private tracker</h2><label for="authEmail">Email</label><input type="email" id="authEmail" autocomplete="email" required>
+<button type="button" class="small-command" onclick="submitSignIn('send')">Send sign-in email</button>
+<div id="authVerify" hidden><label for="authCode">Email code</label><input id="authCode" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6,10}"><button class="weight-save-btn" type="submit">Sign in</button></div>
+<p id="authMessage" role="status"></p><button type="button" class="small-command" onclick="document.getElementById('authPanel').hidden=true">Continue offline</button>
+</form></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
@@ -403,7 +435,7 @@ const YOUTUBE_VIDEOS = {
 // ═══════════════════════════════════════════════════════
 // STORAGE
 // ═══════════════════════════════════════════════════════
-function ls(k){return JSON.parse(localStorage.getItem(k)||'null')}
+function ls(k){try{return JSON.parse(localStorage.getItem(k)||'null')}catch{return null}}
 function ss(k,v){localStorage.setItem(k,JSON.stringify(v))}
 function today(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
 const CLOUD_ENDPOINT = '/api/nutrition-data';
@@ -417,6 +449,83 @@ let autoSaveTimer = null;
 let toastTimer = null;
 const PENDING_CHANGES_KEY = `${STORAGE_PREFIX}_pending_sync`;
 let pendingChanges = ls(PENDING_CHANGES_KEY)||{};
+let confirmedState=ls(`${STORAGE_PREFIX}_confirmed`)||{};
+let cloudEtag='';
+let authRequired=false;
+let syncConflict=false;
+let signingIn=false;
+function cloneData(value){return value===undefined?undefined:JSON.parse(JSON.stringify(value))}
+function readScope(scope,legacy={}){
+  if(cloudReady)return cloudState[scope]||{};
+  const data=cloneData(confirmedState[scope]??(typeof legacy==='function'?legacy():legacy));
+  for(const mutation of Object.values(pendingChanges)){
+    if(mutation.scope!==scope)continue;
+    if(mutation.value===null)delete data[mutation.key];else data[mutation.key]=cloneData(mutation.value);
+  }
+  return data;
+}
+function captureCloud(state){
+  confirmedState=cloneData(state);
+  ss(`${STORAGE_PREFIX}_confirmed`,confirmedState);
+}
+function diffChanges(before,after,path=[],parentDepth=0){
+  if(JSON.stringify(before)===JSON.stringify(after))return [];
+  const object=value=>value&&typeof value==='object'&&!Array.isArray(value);
+  if(object(after)&&(before===undefined||object(before))){
+    return [...new Set([...Object.keys(before||{}),...Object.keys(after)])].flatMap(key=>diffChanges(before?.[key],after[key],[...path,key],object(before)?path.length:parentDepth));
+  }
+  return [{path,parentDepth,exists:before!==undefined,before:before===undefined?null:before,remove:after===undefined,...(after===undefined?{}:{value:after})}];
+}
+function updateSyncNotice(){
+  const el=document.getElementById('syncNotice');
+  if(!el)return;
+  const count=Object.keys(pendingChanges).length;
+  el.hidden=cloudStatus==='synced'&&!count;
+  el.innerHTML=authRequired?`<span>Sign in to sync across devices.</span><button onclick="showSignIn()">Sign in</button>`
+    :syncConflict?`<span>Another device changed this entry. Your edits are kept locally.</span><button onclick="resolveSyncConflict()">Review</button>`
+    :`<span>${escapeText(cloudError||(count?`${count} change(s) waiting to sync`:'Connecting...'))}</span>`;
+}
+function showSignIn(message=''){
+  document.getElementById('authPanel').hidden=false;
+  document.getElementById('authMessage').textContent=message;
+}
+async function submitSignIn(action){
+  if(signingIn)return;
+  signingIn=true;
+  const email=document.getElementById('authEmail').value.trim();
+  const code=document.getElementById('authCode').value.trim();
+  try{
+    const res=await fetch('/api/auth',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action,email,code})});
+    if(!res.ok)throw new Error(await responseError(res));
+    if(action==='send'){document.getElementById('authMessage').textContent='Check your email for your sign-in code.';document.getElementById('authVerify').hidden=false;return}
+    authRequired=false;document.getElementById('authPanel').hidden=true;
+    await syncNow();
+    if(Object.keys(pendingChanges).length)scheduleCloudSave();
+  }catch(error){document.getElementById('authMessage').textContent=error.message}
+  finally{signingIn=false}
+}
+async function signOut(){
+  if(!confirm('Sign out on this device? Saved cloud data will stay intact.'))return;
+  if(Object.keys(pendingChanges).length){showToast('Sync your pending changes before signing out.','warning');return}
+  try{
+    const res=await fetch('/api/auth',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'logout'})});
+    if(!res.ok)throw new Error(await responseError(res));
+    for(let i=localStorage.length-1;i>=0;i--){const key=localStorage.key(i);if(key?.startsWith(STORAGE_PREFIX)&&!key.endsWith('_theme'))localStorage.removeItem(key)}
+    location.reload();
+  }catch(error){showToast(error.message,'error')}
+}
+async function resolveSyncConflict(){
+  if(!confirm('Use the saved cloud version? Your unsent edits will be downloaded as a recovery file first.'))return;
+  ss(`${STORAGE_PREFIX}_conflict_backup`,{at:today(),pending:pendingChanges});
+  const file=new Blob([JSON.stringify({at:today(),pending:pendingChanges},null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(file),link=document.createElement('a');
+  link.href=url;link.download=`diet-unsent-${today()}.json`;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  const res=await fetch(CLOUD_ENDPOINT,{cache:'no-store'}).catch(()=>null);
+  if(!res?.ok){showToast('Unable to load the cloud version. Your edits are still pending.','warning');return}
+  captureCloud(await res.json());cloudState=cloneData(confirmedState);cloudReady=true;
+  pendingChanges={};ss(PENDING_CHANGES_KEY,pendingChanges);syncConflict=false;cloudEtag='';
+  setCloudStatus('synced');render();
+}
 
 function applyTheme(theme){
   document.body.classList.toggle('light',theme==='light');
@@ -435,10 +544,12 @@ function setCloudStatus(status,message=''){
   cloudError=message;
   const el=document.getElementById('cloudStatus');
   if(el){
-    el.textContent=status==='synced'?'☁️ Sync':status==='saving'?'☁️ Saving...':status==='syncing'?'☁️ Sync...':'⚠️ Retry';
+    el.textContent=authRequired?'Sign in':syncConflict?'Conflict':status==='synced'?'Synced':status==='saving'?'Saving...':status==='syncing'?'Connecting...':'Offline';
+    el.className=`goal-badge sync-badge status-${status}`;
     el.title=message||'Sync now';
     el.disabled=status==='saving'||status==='syncing';
   }
+  updateSyncNotice();
 }
 function mutationId(mutation){
   return `${mutation.scope}:${mutation.key}`;
@@ -464,9 +575,12 @@ function applyMutationLocally(mutation){
   else cloudState[mutation.scope][mutation.key]=mutation.value;
 }
 function stageCloudChange(mutation){
-  pendingChanges[mutationId(mutation)]=mutation;
+  const id=mutationId(mutation);
+  const existing=pendingChanges[id];
+  pendingChanges[id]={...mutation,value:cloneData(mutation.value),base:existing&&Object.hasOwn(existing,'base')?existing.base:cloneData(confirmedState[mutation.scope]?.[mutation.key]),baseKnown:true};
   ss(PENDING_CHANGES_KEY,pendingChanges);
   if(cloudReady)applyMutationLocally(mutation);
+  updateSyncNotice();
   scheduleCloudSave();
 }
 function applyPendingChanges(){
@@ -486,9 +600,17 @@ async function syncNow({mergeLocal=false,quiet=false,skipSaveWait=false}={}){
     try{
       if(!quiet)setCloudStatus('syncing');
       if(saveAllPromise&&!skipSaveWait)await saveAllPromise;
-      const res=await fetch(CLOUD_ENDPOINT,{cache:'no-store'});
+      const res=await fetch(CLOUD_ENDPOINT,{cache:'no-store',headers:cloudEtag?{'If-None-Match':cloudEtag}:{}});
+      if(res.status===304){setCloudStatus('synced');return}
+      if(res.status===401){if(!authRequired)showSignIn();authRequired=true}
       if(!res.ok)throw new Error(await responseError(res));
-      cloudState=await res.json();
+      const incoming=await res.json();
+      const changed=JSON.stringify(incoming)!==JSON.stringify(confirmedState);
+      captureCloud(incoming);
+      cloudState=cloneData(incoming);
+      cloudEtag=res.headers?.get('ETag')||'';
+      authRequired=false;
+      document.getElementById('signOut').hidden=false;
       cloudState.meals=cloudState.meals||{};
       cloudState.weights=cloudState.weights||{};
       cloudState.training=cloudState.training||{};
@@ -497,9 +619,9 @@ async function syncNow({mergeLocal=false,quiet=false,skipSaveWait=false}={}){
       cloudState.mealPresets=cloudState.mealPresets||{};
       cloudReady=true;
       applyPendingChanges();
-      if(mergeLocal)mergeLocalIntoCloud();
+      if(mergeLocal&&Object.keys(pendingChanges).length)updateSyncNotice();
       setCloudStatus('synced');
-      if(!document.activeElement?.matches('input, textarea, select'))render();
+      if(changed&&!document.activeElement?.matches('input, textarea, select'))render();
     }catch(e){
       console.warn('Supabase sync unavailable:',e);
       setCloudStatus('local',e.message||'Sync unavailable');
@@ -511,6 +633,7 @@ async function syncNow({mergeLocal=false,quiet=false,skipSaveWait=false}={}){
 }
 async function saveAllChanges(){
   if(saveAllPromise)return saveAllPromise;
+  if(authRequired||syncConflict)return false;
   if(!Object.keys(pendingChanges).length)return true;
   clearTimeout(autoSaveTimer);
   autoSaveTimer=null;
@@ -520,31 +643,25 @@ async function saveAllChanges(){
       if(!cloudReady)await syncNow({mergeLocal:true,quiet:true,skipSaveWait:true});
       if(!cloudReady)throw new Error(cloudError||'Sync unavailable');
 
-      const changes=Object.entries(pendingChanges);
-      for(const [id,mutation] of changes){
-        const res=await fetch(CLOUD_ENDPOINT,{
-          method:'POST',
-          headers:{'content-type':'application/json'},
-          body:JSON.stringify({mutation})
-        });
+      const changes=Object.entries(pendingChanges).map(([id,m])=>[id,cloneData(m)]);
+      if(changes.some(([,m])=>!m.baseKnown)){
+        syncConflict=true;throw new Error('Older unsent changes need review before syncing.');
+      }
+      const operations=changes.flatMap(([,m])=>diffChanges(m.base,m.value===null?undefined:m.value,[m.scope,m.key]));
+      let verifiedState=cloneData(confirmedState);
+      if(operations.length){
+        const res=await fetch(CLOUD_ENDPOINT,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({changes:operations})});
+        if(res.status===401){authRequired=true;showSignIn()}
+        if(res.status===409)syncConflict=true;
         if(!res.ok)throw new Error(await responseError(res));
+        verifiedState=await res.json();
+        cloudEtag=res.headers?.get('ETag')||'';
       }
-
-      const verifyRes=await fetch(CLOUD_ENDPOINT,{cache:'no-store'});
-      if(!verifyRes.ok)throw new Error(await responseError(verifyRes));
-      const verifiedState=await verifyRes.json();
-      for(const [,mutation] of changes){
-        const savedValue=verifiedState?.[mutation.scope]?.[mutation.key];
-        const confirmed=mutation.value===null
-          ? savedValue===undefined
-          : JSON.stringify(savedValue)===JSON.stringify(mutation.value);
-        if(!confirmed){
-          throw new Error('Supabase did not confirm all changes');
-        }
-      }
+      captureCloud(verifiedState);
 
       for(const [id,mutation] of changes){
         if(JSON.stringify(pendingChanges[id])===JSON.stringify(mutation))delete pendingChanges[id];
+        else if(pendingChanges[id])pendingChanges[id].base=cloneData(verifiedState[mutation.scope]?.[mutation.key]);
       }
       ss(PENDING_CHANGES_KEY,pendingChanges);
       cloudState={
@@ -563,10 +680,11 @@ async function saveAllChanges(){
     }catch(e){
       console.warn('Supabase save failed:',e);
       setCloudStatus('local',e.message||'Unable to save');
-      showToast('Offline: changes saved locally','warning');
+      showToast(syncConflict?'Sync conflict: edits kept on this device':'Changes kept on this device','warning');
       return false;
     }finally{
       saveAllPromise=null;
+      if(Object.keys(pendingChanges).length&&cloudStatus==='synced')scheduleCloudSave();
     }
   })();
   return saveAllPromise;
@@ -643,7 +761,7 @@ function mergeLocalIntoCloud(){
   mutations.forEach(stageCloudChange);
 }
 function mealsForDate(date){
-  return cloudReady?(cloudState.meals[date]||{}):(ls(`${STORAGE_PREFIX}_meals_${date}`)||{});
+  return readScope('meals',collectLocalMeals)[date]||{};
 }
 function todayMeals(){return mealsForDate(today())}
 function saveMealsForDate(date,d){
@@ -651,11 +769,11 @@ function saveMealsForDate(date,d){
   stageCloudChange({scope:'meals',key:date,value:d});
 }
 function saveMeals(d){saveMealsForDate(today(),d)}
-function customFoods(){return cloudReady?(cloudState.foods||{}):(ls(`${STORAGE_PREFIX}_foods`)||{})}
-function foodFavorites(){return cloudReady?(cloudState.favorites||{}):(ls(`${STORAGE_PREFIX}_favorites`)||{})}
-function mealPresets(){return cloudReady?(cloudState.mealPresets||{}):(ls(`${STORAGE_PREFIX}_meal_presets`)||{})}
+function customFoods(){return readScope('foods',ls(`${STORAGE_PREFIX}_foods`)||{})}
+function foodFavorites(){return readScope('favorites',ls(`${STORAGE_PREFIX}_favorites`)||{})}
+function mealPresets(){return readScope('mealPresets',ls(`${STORAGE_PREFIX}_meal_presets`)||{})}
 function recentFoodIds(limit=8){
-  const source=cloudReady?(cloudState.meals||{}):collectLocalMeals();
+  const source=readScope('meals',collectLocalMeals);
   const seen=[];
   Object.keys(source).sort().reverse().forEach(date=>{
     Object.values(source[date]||{}).reverse().forEach(rawEntry=>{
@@ -851,11 +969,7 @@ function resumeMeal(date,mealId){
   switchTab(0);
 }
 function weights(){
-  const w=migrateWeightDates(cloudReady?(cloudState.weights||{}):(ls(`${STORAGE_PREFIX}_weights`)||{}));
-  Object.entries(INITIAL_WEIGHTS).forEach(([date,val])=>{
-    if(!w[date])w[date]=val;
-  });
-  return w;
+  return readScope('weights',ls(`${STORAGE_PREFIX}_weights`)||{});
 }
 function saveWeight(date,val){
   const w=weights();
@@ -864,7 +978,7 @@ function saveWeight(date,val){
   stageCloudChange({scope:'weights',key:date,value:val});
 }
 function training(){
-  const all=cloudReady?(cloudState.training||{}):(ls(`${STORAGE_PREFIX}_training`)||{});
+  const all=readScope('training',ls(`${STORAGE_PREFIX}_training`)||{});
   for(const [date,state] of Object.entries(all)){
     if(new Date(`${date}T12:00:00`).getDay()!==3||state.wednesdayOrder==='core-first')continue;
     for(const field of ['done','notes'])state[field]=Object.fromEntries(Object.entries(state[field]||{}).map(([i,v])=>[Number(i)>=13?Number(i)-13:Number(i)+3,v]));
@@ -873,6 +987,7 @@ function training(){
   return all;
 }
 function saveTraining(t,date=trainingDate){
+  if(t[date]&&!t[date].planSnapshot)t[date].planSnapshot=cloneData(sessionPlan(date,t[date]));
   if(t[date]&&new Date(`${date}T12:00:00`).getDay()===3)t[date].wednesdayOrder='core-first';
   ss(`${STORAGE_PREFIX}_training`,t);
   stageCloudChange({scope:'training',key:date,value:t[date]});
@@ -883,12 +998,51 @@ function saveTraining(t,date=trainingDate){
 let activeTab=0;
 let trainingDate=today();
 let historyEditKey='';
+let historyFilter='all';
+let historyPeriod=0;
+let historyLimit=20;
+let weightPeriod=0;
+let runPeriod=0;
+function setRunPeriod(value){runPeriod=value;renderRuns()}
+const openExercises=new Set();
+function setHistoryFilter(value){historyFilter=value;historyLimit=20;renderHistory()}
+function setHistoryPeriod(value){historyPeriod=Number(value);historyLimit=20;renderHistory()}
+function inPeriod(date,days){return !days||date>=shiftedDate(today(),-days)}
+function periodButtons(value,handler){return `<div class="period-tabs" aria-label="Period">${[[30,'1 month'],[90,'3 months'],[0,'All']].map(([days,label])=>`<button aria-pressed="${value===days}" onclick="${handler}(${days})">${label}</button>`).join('')}</div>`}
+function setWeightPeriod(value){weightPeriod=value;renderWeight()}
+function exerciseId(item){
+  const name=item.split(':')[0].trim().toLowerCase();
+  if(!name.startsWith('bench press'))return name;
+  if(/warm-up/.test(item))return `${name}:warmup`;
+  const block=item.match(/:\s*(\d*)x(\d+)/);
+  if(!block)return name;
+  return `${name}:${block[2]==='4'?(block[1]==='2'?'backoff':'top'):`reps-${block[2]}`}`;
+}
+function matchingStrength(state,item){
+  const id=exerciseId(item);
+  const match=Object.entries(state.strength||{}).find(([key])=>exerciseId(key)===id);
+  return match?{name:match[0],value:match[1]}:null;
+}
+function sessionPlan(date,state={}){
+  if(state.planSnapshot)return state.planSnapshot;
+  const day=new Date(`${date}T12:00:00`).getDay();
+  const plan=TRAINING_PLAN[day]||TRAINING_PLAN[0];
+  if(date>=today())return plan;
+  // Older logs did not store their plan: retain recorded labels and omit unknown targets.
+  return {...plan,items:plan.items.map(item=>{
+    const recorded=matchingStrength(state,item)?.name;
+    if(recorded)return recorded;
+    const block=item.match(/:\s*(\d*x\d+)/)?.[1];
+    return item.split(':')[0].trim()+(block?` : ${block} (target not recorded)`:/warm-up/.test(item)?' : warm-up (target not recorded)':'');
+  })};
+}
 function switchTab(i){
   activeTab=i;
   [0,1,2,3,4].forEach(j=>{
     document.getElementById(`tab${j}`).classList.toggle('active',j===i);
   });
   render();
+  window.scrollTo?.({top:0,behavior:'instant'});
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1020,7 +1174,7 @@ function renderWeight(){
   const w=weights();
   const todayStr=today();
   const weightRows=Object.entries(w)
-    .filter(([,val])=>val)
+    .filter(([date,val])=>val&&inPeriod(date,weightPeriod))
     .sort((a,b)=>a[0]>b[0]?1:-1);
   const tableRows=weightRows.map(([date,val],i)=>{
     const week=WEEKS.find(wk=>wk.date===date)?.week||'Log';
@@ -1045,7 +1199,7 @@ function renderWeight(){
     </tr>`;
   }).join('');
   // chart
-  const chartData=Object.entries(w).filter(([,val])=>val).map(([date,val])=>({date,val}));
+  const chartData=weightRows.map(([date,val])=>({date,val}));
   const chartHTML=buildWeightChart(chartData,w);
   // milestone statuses
   const lastW=Object.entries(w).sort((a,b)=>a[0]>b[0]?1:-1).filter(([d,v])=>v).pop()?.[1]||WEIGHT_START;
@@ -1077,13 +1231,14 @@ function renderWeight(){
   </div>
   <div class="chart-card">
     <h4>Weight progress towards ${WEIGHT_GOAL}kg</h4>
+    ${periodButtons(weightPeriod,'setWeightPeriod')}
     ${chartHTML}
   </div>
   <div class="chart-card">
     <h4>2-month milestones</h4>
     ${mHTML}
   </div>
-  <div class="chart-card" style="padding:0 16px 4px">
+  <div class="chart-card table-wrap">
     <table class="weight-table">
       <thead><tr><th>Week</th><th>Date</th><th>Weight</th><th>Δ</th><th></th></tr></thead>
       <tbody>${tableRows}</tbody>
@@ -1127,13 +1282,14 @@ async function deleteWeight(date){
 
 function buildWeightChart(pts,w){
   if(pts.length<1)return`<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px">No weights recorded</div>`;
-  const allDates=Array.from(new Set([...WEEKS.map(wk=>wk.date),...Object.keys(w).filter(d=>w[d])])).sort();
+  w=Object.fromEntries(pts.map(({date,val})=>[date,val]));
+  const allDates=Object.keys(w).sort();
   const values=Object.values(w).filter(Boolean);
   const minW=Math.floor(Math.min(88,WEIGHT_START,...values))-1;
   const maxW=Math.ceil(Math.max(98,WEIGHT_GOAL,...values))+1;
-  const svgW=Math.max(560,allDates.length*58);
+  const svgW=360;
   const svgH=280;
-  const pad={l:50,r:30,t:32,b:48};
+  const pad={l:36,r:28,t:32,b:48};
   const cw=svgW-pad.l-pad.r;
   const ch=svgH-pad.t-pad.b;
   function px(i){return dateChartX(allDates[i],allDates,pad.l,cw)}
@@ -1141,9 +1297,9 @@ function buildWeightChart(pts,w){
   // target line
   const tStart=py(WEIGHT_START);
   const tEnd=py(WEIGHT_GOAL);
-  const targetLine=`<line x1="${dateChartX(START_DATE,allDates,pad.l,cw)}" y1="${tStart}" x2="${dateChartX(GOAL_DATE,allDates,pad.l,cw)}" y2="${tEnd}" stroke="#f97316" stroke-width="2" stroke-dasharray="6,6" opacity=".65"/>`;
+  const targetLine=`<line x1="${pad.l}" y1="${tEnd}" x2="${pad.l+cw}" y2="${tEnd}" stroke="var(--orange)" stroke-width="1" stroke-dasharray="6,6" opacity=".65"/>`;
   // milestone lines
-  const mLines=MILESTONES.map(m=>{
+  const mLines=MILESTONES.filter(m=>m.date>=allDates[0]&&m.date<=allDates.at(-1)).map(m=>{
     const mi=allDates.findIndex(d=>d>=m.date);
     if(mi<0)return'';
     const x=px(mi),y=py(m.target);
@@ -1156,17 +1312,16 @@ function buildWeightChart(pts,w){
   if(dataPoints.length>1){
     linePath=`<polyline points="${dataPoints.map(p=>`${px(p.i)},${py(p.v)}`).join(' ')}" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`;
   }
-  dotHTML=dataPoints.map(p=>`<circle cx="${px(p.i)}" cy="${py(p.v)}" r="6" fill="var(--accent)" stroke="var(--card)" stroke-width="2"/>
-  <text x="${px(p.i)}" y="${py(p.v)-12}" text-anchor="middle" font-size="11" fill="var(--accent)" font-weight="800">${p.v}</text>`).join('');
+  dotHTML=dataPoints.map((p,i)=>`<circle cx="${px(p.i)}" cy="${py(p.v)}" r="4" fill="var(--accent)"><title>${allDates[p.i]}: ${p.v} kg</title></circle>${i===dataPoints.length-1?`<text x="${px(p.i)}" y="${py(p.v)-12}" text-anchor="end" font-size="12" fill="var(--accent)">${p.v}</text>`:''}`).join('');
   // y axis
   const yStep=Math.max(1,Math.ceil((maxW-minW)/5));
   const yValues=[];
   for(let v=minW;v<=maxW;v+=yStep)yValues.push(v);
   if(!yValues.includes(WEIGHT_GOAL))yValues.push(WEIGHT_GOAL);
   const yLabels=yValues.sort((a,b)=>a-b).map(v=>`<text x="${pad.l-8}" y="${py(v)+4}" text-anchor="end" font-size="10" fill="var(--muted)">${v}</text><line x1="${pad.l}" y1="${py(v)}" x2="${pad.l+cw}" y2="${py(v)}" stroke="var(--border)" stroke-width="1"/>`).join('');
-  const xLabels=allDates.filter((_,i)=>i%2===0||i===allDates.length-1).map(d=>{const i=allDates.indexOf(d);return`<text x="${px(i)}" y="${svgH-16}" text-anchor="middle" font-size="11" fill="var(--muted)">${d.slice(5)}</text>`}).join('');
+  const xLabels=allDates.filter((_,i)=>i===0||i===allDates.length-1).map(d=>{const i=allDates.indexOf(d);return`<text x="${px(i)}" y="${svgH-16}" text-anchor="${i===0?'start':'end'}" font-size="12" fill="var(--muted)">${d.slice(8)}/${d.slice(5,7)}</text>`}).join('');
   return`<div class="chart-wrap">
-  <svg viewBox="0 0 ${svgW} ${svgH}" width="${svgW}" height="${svgH}" xmlns="http://www.w3.org/2000/svg" style="min-width:${svgW}px">
+  <svg role="img" aria-label="Weight history in kilograms" viewBox="0 0 ${svgW} ${svgH}" xmlns="http://www.w3.org/2000/svg">
     ${yLabels}${xLabels}${targetLine}${mLines}${linePath}${dotHTML}
     <line x1="${pad.l}" y1="${pad.t}" x2="${pad.l}" y2="${pad.t+ch}" stroke="var(--border)" stroke-width="1"/>
     <line x1="${pad.l}" y1="${pad.t+ch}" x2="${pad.l+cw}" y2="${pad.t+ch}" stroke="var(--border)" stroke-width="1"/>
@@ -1174,7 +1329,7 @@ function buildWeightChart(pts,w){
   </svg>
   <div style="font-size:11px;color:var(--muted);margin-top:8px;display:flex;gap:16px;flex-wrap:wrap">
     <span style="color:var(--accent)">● Actual weight</span>
-    <span style="color:var(--orange)">- - Target trajectory</span>
+    <span style="color:var(--orange)">- - Goal</span>
     <span style="color:var(--orange)">● Milestones</span>
   </div>
   </div>`;
@@ -1183,10 +1338,10 @@ function buildWeightChart(pts,w){
 // ── TRAINING ─────────────────────────────────────────
 function renderTraining(){
   const day=new Date(`${trainingDate}T12:00:00`).getDay();
-  const plan=TRAINING_PLAN[day]||TRAINING_PLAN[0];
   const date=trainingDate;
   const all=training();
   const state=all[date]||{done:{},notes:{},comment:''};
+  const plan=sessionPlan(date,state);
   state.notes=state.notes||{};
   const doneCount=plan.items.filter((_,i)=>state.done&&state.done[i]).length;
   const weekHTML=[1,2,3,4,5,6,0].map(dayNum=>{
@@ -1195,7 +1350,6 @@ function renderTraining(){
     const doneForToday=isToday?doneCount:null;
     const progress=isToday?`${doneForToday}/${p.items.length}`:`${p.items.length} blocks`;
     const details=p.items.map(item=>`<div class="week-exercise">
-      ${exerciseVideo(item)}
       <div>${item}</div>
     </div>`).join('');
     return `<details class="week-day${isToday?' today':''}" ${isToday?'open':''}>
@@ -1211,15 +1365,19 @@ function renderTraining(){
   }).join('');
   const exerciseHTML=plan.items.map((item,i)=>{
     const on=!!(state.done&&state.done[i]);
-    return `<div class="exercise-entry">
+    const [name,...target]=item.split(':');
+    const key=`${date}:${i}`;
+    const recorded=matchingStrength(state,item)?.value;
+    return `<div class="exercise-entry${on?' is-done':''}">
       <div class="exercise-row">
         <input type="checkbox" aria-label="Complete ${escapeAttr(item)}" ${on?'checked':''} onchange="toggleExercise(${i})">
-        ${exerciseVideo(item)}
-        <div class="exercise-text${on?' done-text':''}">${item}</div>
+        <div class="exercise-text"><strong>${escapeText(name)}</strong><span class="exercise-target">${escapeText(target.join(':'))}</span>${recorded?`<span class="exercise-target">Logged: ${recorded.sets??'—'} × ${recorded.reps??'—'} · ${recorded.kg??'—'} kg</span>`:''}</div>
       </div>
       ${day===5?fridayRoundTracker(state,i):''}
+      <details class="exercise-details" ${openExercises.has(key)?'open':''} ontoggle="this.open?openExercises.add('${key}'):openExercises.delete('${key}')"><summary>Performance, notes & video</summary>
       ${[1,3,4,5].includes(day)&&!/(plank|stretch|warm-up)/i.test(item)?strengthFields(item,state):''}
       <input aria-label="Exercise notes" class="exercise-note" value="${escapeAttr(state.notes[i]||'')}" placeholder="Weight, reps, difficulty, how it felt..." onclick="event.stopPropagation()" onchange="setExerciseComment(${i},this.value)">
+      ${exerciseVideo(item)}</details>
     </div>`;
   }).join('');
   document.getElementById('main').innerHTML=`
@@ -1250,7 +1408,7 @@ function renderTraining(){
 function exerciseVideo(item){
   const id=exerciseVideoId(item);
   if(!id)return `<button class="exercise-video no-video" disabled aria-label="No video">No video yet</button>`;
-  return `<button class="exercise-video" data-exercise="${escapeAttr(item)}" onclick="openExerciseVideo(event,this.dataset.exercise)" aria-label="Watch exercise video"><img src="https://img.youtube.com/vi/${id}/mqdefault.jpg" alt=""></button>`;
+  return `<button class="exercise-video" data-exercise="${escapeAttr(item)}" onclick="openExerciseVideo(event,this.dataset.exercise)" aria-label="Watch exercise video"><img loading="lazy" decoding="async" width="120" height="72" src="https://img.youtube.com/vi/${id}/mqdefault.jpg" alt=""></button>`;
 }
 
 function exerciseVideoId(item){
@@ -1334,6 +1492,9 @@ function toggleExercise(idx){
   const state=all[date]||{done:{},notes:{},comment:''};
   state.done=state.done||{};
   state.done[idx]=!state.done[idx];
+  if(new Date(`${date}T12:00:00`).getDay()===5&&idx<4){
+    state.fridayRounds={...state.fridayRounds,[idx]:Object.fromEntries(Array.from({length:fridayRoundCount(idx)},(_,i)=>[i,state.done[idx]]))};
+  }
   all[date]=state;
   saveTraining(all);
   render();
@@ -1425,7 +1586,7 @@ function editRunTime(date){
 function isFiveK(run){return Math.abs((run.runDistanceKm||5)-5)<=0.05}
 function runPace(run){return run.runDetails?.recordedPace||formatRunTime(Math.round(run.runSeconds/(run.runDistanceKm||5)))}
 function renderRuns(){
-  const allRuns=Object.entries(training()).filter(([,v])=>Number.isInteger(v?.runSeconds)&&v.runSeconds>0).sort(([a],[b])=>a.localeCompare(b));
+  const allRuns=Object.entries(training()).filter(([date,v])=>inPeriod(date,runPeriod)&&Number.isInteger(v?.runSeconds)&&v.runSeconds>0).sort(([a],[b])=>a.localeCompare(b));
   const runs=allRuns.filter(([,run])=>isFiveK(run));
   const best=runs.length?Math.min(...runs.map(([,v])=>v.runSeconds)):null;
   const latest=runs.at(-1)?.[1].runSeconds;
@@ -1436,7 +1597,7 @@ function renderRuns(){
     return `<tr><td>${date}<small style="display:block">${escapeText([run.runDetails?.time,run.runDetails?.route,run.runDetails?.surface,run.runDetails?.effort,run.runDetails?.calories!=null?`${run.runDetails.calories} kcal`:null].filter(Boolean).join(' · '))}</small></td><td>${run.runDistanceKm||5} km</td><td><b>${formatRunTime(run.runSeconds)}</b>${isFiveK(run)&&run.runSeconds===best?' ★':''}</td><td>${runPace(run)}/km</td><td>${delta===null?'—':delta===0?'Same':`${formatRunTime(Math.abs(delta))} ${delta<0?'faster':'slower'}`}</td><td><button class="weight-action" onclick="editRunTime('${date}')" aria-label="Edit run for ${date}">✎</button><button class="weight-action" onclick="deleteRunTime('${date}')" aria-label="Delete run for ${date}">×</button></td></tr>`;
   }).reverse().join('');
   document.getElementById('main').innerHTML=`<div class="training-day"><h3>🏃 Runs</h3><p class="training-meta">Log your finish times and follow your progress.</p>${runForm(today(),true)}</div>
-    <div class="history-card"><h3>Your 5K progress</h3><div class="history-summary">
+    <div class="history-card"><h3>Your 5K progress</h3>${periodButtons(runPeriod,'setRunPeriod')}<div class="history-summary">
     <div class="history-stat"><strong>${runs.length}</strong><span>5K runs logged</span></div>
     <div class="history-stat"><strong>${best===null?'—':formatRunTime(best)}</strong><span>Personal best</span></div>
     <div class="history-stat"><strong>${latest?formatRunTime(latest):'—'}</strong><span>Latest time</span></div>
@@ -1447,47 +1608,23 @@ function renderRuns(){
 
 // ── HISTORY ──────────────────────────────────────────
 function buildCaloriesChart(points){
-  if(!points.length)return`<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px">No calories recorded yet</div>`;
-  const sorted=[...points].sort((a,b)=>a.date>b.date?1:-1);
-  const maxKcal=Math.max(TOTAL_KCAL, ...sorted.map(p=>p.kcal), 1000);
-  const svgW=Math.max(560,sorted.length*64);
-  const svgH=250;
-  const pad={l:50,r:24,t:26,b:48};
-  const cw=svgW-pad.l-pad.r;
-  const ch=svgH-pad.t-pad.b;
-  const barW=Math.max(18,Math.min(34,cw/sorted.length*.48));
-  function px(i){return sorted.length===1?pad.l+cw/2:pad.l+i*(cw/(sorted.length-1))}
-  function py(v){return pad.t+ch-(v/maxKcal)*ch}
-  const yValues=[0,Math.round(maxKcal*.25),Math.round(maxKcal*.5),Math.round(maxKcal*.75),Math.round(maxKcal)];
-  const yLabels=yValues.map(v=>`<text x="${pad.l-8}" y="${py(v)+4}" text-anchor="end" font-size="10" fill="var(--muted)">${v}</text><line x1="${pad.l}" y1="${py(v)}" x2="${pad.l+cw}" y2="${py(v)}" stroke="var(--border)" stroke-width="1"/>`).join('');
-  const bars=sorted.map((p,i)=>{
-    const x=px(i)-barW/2;
-    const y=py(p.kcal);
-    const h=pad.t+ch-y;
-    const ok=p.kcal>=TOTAL_KCAL;
-    return `<rect x="${x}" y="${y}" width="${barW}" height="${h}" rx="6" fill="${ok?'var(--accent)':'var(--orange)'}" opacity=".72"/>
-    <circle cx="${px(i)}" cy="${y}" r="4" fill="${ok?'var(--accent)':'var(--orange)'}"/>
-    <text x="${px(i)}" y="${Math.max(12,y-8)}" text-anchor="middle" font-size="10" fill="${ok?'var(--accent)':'var(--orange)'}" font-weight="800">${p.kcal}</text>`;
-  }).join('');
-  const line=sorted.length>1
-    ? `<polyline points="${sorted.map((p,i)=>`${px(i)},${py(p.kcal)}`).join(' ')}" fill="none" stroke="var(--text)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity=".45"/>`
-    : '';
-  const targetY=py(TOTAL_KCAL);
-  const targetLine=`<line x1="${pad.l}" y1="${targetY}" x2="${pad.l+cw}" y2="${targetY}" stroke="var(--blue)" stroke-width="2" stroke-dasharray="6,6" opacity=".75"/>
-  <text x="${pad.l+cw}" y="${Math.max(12,targetY-8)}" text-anchor="end" font-size="10" fill="var(--blue)" font-weight="800">${TOTAL_KCAL} kcal goal</text>`;
-  const xLabels=sorted.map((p,i)=>`<text x="${px(i)}" y="${svgH-18}" text-anchor="middle" font-size="11" fill="var(--muted)">${p.date.slice(5)}</text>`).join('');
-  return`<div class="chart-wrap">
-  <svg viewBox="0 0 ${svgW} ${svgH}" width="${svgW}" height="${svgH}" xmlns="http://www.w3.org/2000/svg" style="min-width:${svgW}px">
-    ${yLabels}${targetLine}${bars}${line}${xLabels}
-    <line x1="${pad.l}" y1="${pad.t}" x2="${pad.l}" y2="${pad.t+ch}" stroke="var(--border)" stroke-width="1"/>
-    <line x1="${pad.l}" y1="${pad.t+ch}" x2="${pad.l+cw}" y2="${pad.t+ch}" stroke="var(--border)" stroke-width="1"/>
-  </svg>
-  <div style="font-size:11px;color:var(--muted);margin-top:8px;display:flex;gap:16px;flex-wrap:wrap">
-    <span style="color:var(--accent)">● Goal reached</span>
-    <span style="color:var(--orange)">● Below goal</span>
-    <span style="color:var(--blue)">- - Daily goal</span>
-  </div>
-  </div>`;
+  return trendChart(points.map(p=>({date:p.date,value:p.kcal})), 'Daily calories', TOTAL_KCAL);
+}
+function trendChart(points,label,goal=null){
+  const rows=points.slice().sort((a,b)=>a.date.localeCompare(b.date));
+  if(!rows.length)return '<p class="training-meta">No entries in this period.</p>';
+  const W=360,H=240,left=42,right=24,top=25,bottom=35;
+  const dates=rows.map(p=>p.date),max=Math.ceil(Math.max(goal||0,...rows.map(p=>p.value))*1.12/1000)*1000||1000;
+  const x=date=>dateChartX(date,dates,left,W-left-right);
+  const y=value=>H-bottom-value/max*(H-top-bottom);
+  const ticks=[0,max/2,max].map(value=>`<line x1="${left}" x2="${W-right}" y1="${y(value)}" y2="${y(value)}" stroke="var(--border)"/><text x="${left-6}" y="${y(value)+4}" text-anchor="end" fill="var(--muted)" font-size="11">${Math.round(value)}</text>`).join('');
+  return `<div class="chart-wrap"><svg role="img" aria-label="${escapeAttr(label)}" viewBox="0 0 ${W} ${H}">${ticks}
+  ${goal!==null?`<line x1="${left}" x2="${W-right}" y1="${y(goal)}" y2="${y(goal)}" stroke="var(--blue)" stroke-dasharray="4 4"/><text x="${W-right}" y="${y(goal)-7}" text-anchor="end" fill="var(--blue)" font-size="10">Goal ${goal}</text>`:''}
+  <polyline fill="none" stroke="var(--accent)" stroke-width="2.5" points="${rows.map(p=>`${x(p.date)},${y(p.value)}`).join(' ')}"/>
+  ${rows.map(p=>`<circle cx="${x(p.date)}" cy="${y(p.value)}" r="3" fill="var(--accent)"><title>${p.date}: ${p.value}</title></circle>`).join('')}
+  <text x="${left}" y="${H-8}" fill="var(--muted)" font-size="12">${dates[0].slice(8)}/${dates[0].slice(5,7)}</text>
+  <text x="${W-right}" y="${H-8}" text-anchor="end" fill="var(--muted)" font-size="12">${dates.at(-1).slice(8)}/${dates.at(-1).slice(5,7)}</text>
+  </svg></div>`;
 }
 
 function sevenDayCalorieStats(allMeals){
@@ -1518,7 +1655,7 @@ function sevenDayCalorieStats(allMeals){
 }
 
 function renderHistory(){
-  const allMeals=cloudReady?(cloudState.meals||{}):collectLocalMeals();
+  const allMeals=readScope('meals',collectLocalMeals);
   const allTraining=training();
   const weekly=sevenDayCalorieStats(allMeals);
   const weeklyPct=weekly.tracked?Math.min(100,Math.round(weekly.average/TOTAL_KCAL*100)):0;
@@ -1527,11 +1664,11 @@ function renderHistory(){
     : Math.abs(weekly.delta)<=200
       ? 'Within target range'
       : `${Math.abs(weekly.delta)} kcal ${weekly.delta<0?'below':'above'} the goal`;
-  const dates=Array.from(new Set([...Object.keys(allMeals),...Object.keys(allTraining)])).sort().reverse();
+  const dates=Array.from(new Set([...Object.keys(allMeals),...Object.keys(allTraining)])).filter(date=>inPeriod(date,historyPeriod)).sort().reverse();
   let totalKcal=0,doneMeals=0,skippedMeals=0,modifiedMeals=0,notesCount=0,trainingDays=0,doneExercises=0,trackedDays=0;
   const calorieChartData=[];
   const daysHTML=dates.map(date=>{
-    const dayMeals=allMeals[date]||{};
+    const dayMeals=(historyFilter==='all'||historyFilter==='meals')?(allMeals[date]||{}):{};
     let dayKcal=0,dayDone=0,daySkipped=0,dayModified=0;
     const mealLines=mealDefinitions(dayMeals).map(meal=>{
       const entry=mealEntry(dayMeals[meal.id]);
@@ -1566,11 +1703,12 @@ function renderHistory(){
           <button class="small-command" onclick="deleteHistoryMeal('${date}','${meal.id}')">Delete</button>
         </div>${editor}</div>`;
     }).join('');
-    const session=allTraining[date];
+    const candidate=allTraining[date];
+    const session=historyFilter==='meals'?null:historyFilter==='runs'?(candidate?.runSeconds?{runSeconds:candidate.runSeconds,runDistanceKm:candidate.runDistanceKm,runDetails:candidate.runDetails}:null):historyFilter==='strength'?(candidate?{...candidate,runSeconds:undefined}:null):candidate;
     let trainingLines='';
     if(session){
       const dayNum=new Date(`${date}T12:00:00`).getDay();
-      const plan=TRAINING_PLAN[dayNum]||TRAINING_PLAN[0];
+      const plan=sessionPlan(date,session);
       const historyItems=dayNum===2?['5K Run','Abs (previous plan)','Mobility stretching (previous plan)']:plan.items;
       const checked=Object.entries(session.done||{}).filter(([,v])=>v).map(([i])=>Number(i));
       const exerciseNotes=Object.entries(session.notes||{}).filter(([,note])=>String(note||'').trim());
@@ -1583,7 +1721,7 @@ function renderHistory(){
         const checkedLines=loggedExercises.map(i=>{
           const done=checked.includes(i);
           const note=session.notes?.[i]?`<span class="history-note">${escapeText(session.notes[i])}</span>`:'';
-          return `<div class="history-line">Training · ${historyItems[i]||`Exercise ${i+1}`} · ${done?'Done':'With notes'}${note}</div>`;
+          return `<div class="history-line">Training · ${escapeText(historyItems[i]||`Exercise ${i+1}`)} · ${done?'Done':'With notes'}${note}</div>`;
         }).join('');
         const comment=session.comment?`<div class="history-line">Workout notes<span class="history-note">${escapeText(session.comment)}</span></div>`:'';
         const fridayProgress=dayNum===5
@@ -1609,11 +1747,12 @@ function renderHistory(){
       ${mealLines}
       ${trainingLines}
     </div>`;
-  }).join('');
+  }).filter(Boolean);
   document.getElementById('main').innerHTML=`
   <div class="history-card">
-    <h3>📊 Full history</h3>
-    <div class="training-meta">All meals recorded since you started tracking.</div>
+    <h3>History</h3>
+    <div class="filter-row"><label>Activity<select onchange="setHistoryFilter(this.value)">${[['all','All activities'],['meals','Meals'],['strength','Strength'],['runs','Runs']].map(([value,label])=>`<option value="${value}" ${value===historyFilter?'selected':''}>${label}</option>`).join('')}</select></label></div>
+    ${periodButtons(historyPeriod,'setHistoryPeriod')}
     <div class="history-summary">
       <div class="history-stat"><strong>${totalKcal}</strong><span>kcal eaten</span></div>
       <div class="history-stat"><strong>${doneMeals}</strong><span>meals eaten</span></div>
@@ -1625,12 +1764,13 @@ function renderHistory(){
       <div class="history-stat"><strong>${doneExercises}</strong><span>exercises completed</span></div>
     </div>
   </div>
-  <div class="history-card">
+  ${historyFilter==='all'||historyFilter==='meals'?`<div class="history-card">
     <h3>📈 Calories over time</h3>
     <div class="training-meta">Daily calorie intake compared with your plan target.</div>
     ${buildCaloriesChart(calorieChartData)}
-  </div>
-  ${daysHTML||'<div class="history-card"><div class="training-meta">No history recorded yet.</div></div>'}`;
+  </div>`:''}
+  ${daysHTML.slice(0,historyLimit).join('')||'<div class="history-card"><div class="training-meta">No entries in this period.</div></div>'}
+  ${daysHTML.length>historyLimit?'<button class="small-command" onclick="historyLimit+=20;renderHistory()">Show older entries</button>':''}`;
 }
 
 function toggleHistoryEdit(date,mealId){
@@ -1706,8 +1846,9 @@ function setFridayRound(exerciseIndex,index,done){
   all[trainingDate]=state;saveTraining(all);render();
 }
 function strengthFields(item,state){
-  const value=state.strength?.[item]||{};
-  const previous=Object.entries(training()).filter(([date,s])=>date<trainingDate&&s.strength?.[item]).sort(([a],[b])=>b.localeCompare(a))[0];
+  const value=matchingStrength(state,item)?.value||{};
+  const previous=Object.entries(training()).filter(([date,s])=>date<trainingDate&&matchingStrength(s,item)).sort(([a],[b])=>b.localeCompare(a))[0];
+  if(previous)previous[1]={strength:{[item]:matchingStrength(previous[1],item).value}};
   return `<div class="field-grid">${[['sets','Sets'],['reps','Reps per set'],['kg','Weight (kg)']].map(([key,label])=>`<label>${label}<input class="exercise-note" type="number" min="0" step="${key==='kg'?'0.25':'1'}" value="${value[key]??''}" data-exercise="${escapeAttr(item)}" onchange="saveStrength(this.dataset.exercise,'${key}',this.value)"></label>`).join('')}</div><p class="training-meta">${previous?`Previous (${previous[0]}): ${previous[1].strength[item].sets??'—'} sets × ${previous[1].strength[item].reps??'—'} reps at ${previous[1].strength[item].kg??'—'} kg`:'No earlier strength entry for this exercise.'}</p>`;
 }
 function saveStrength(item,key,value){
@@ -1715,6 +1856,8 @@ function saveStrength(item,key,value){
   const number=Number(value);
   if(value!==''&&(!Number.isFinite(number)||number<0||(key!=='kg'&&!Number.isInteger(number)))){showToast('Enter a valid non-negative number.','error');return}
   const all=training(),state=all[trainingDate]||{done:{},notes:{}};
+  const oldName=matchingStrength(state,item)?.name;
+  if(oldName)item=oldName;
   state.strength=state.strength||{};state.strength[item]={...state.strength[item]};
   if(value==='')delete state.strength[item][key];else state.strength[item][key]=number;
   all[trainingDate]=state;saveTraining(all);
@@ -1731,8 +1874,12 @@ function runChart(runs){
   if(!runs.length)return '<p class="training-meta">Add your first run to start the chart.</p>';
   const dates=runs.map(([d])=>d),times=runs.map(([,v])=>v.runSeconds),min=Math.min(...times),max=Math.max(...times);
   const bottom=Math.max(0,min-30),top=max+30;
-  const x=d=>dateChartX(d,dates,65,590),y=v=>210-(v-bottom)/(top-bottom)*160;
-  return `<div class="chart-wrap"><svg role="img" aria-label="5K finish times by date; exact times are in the table below" viewBox="0 0 720 260" style="width:100%;min-width:480px"><line x1="65" y1="210" x2="655" y2="210" stroke="var(--border)"/>${[bottom,(bottom+top)/2,top].map(v=>`<text x="5" y="${y(v)}" fill="var(--muted)" font-size="12">${formatRunTime(Math.round(v))}</text><line x1="65" y1="${y(v)}" x2="655" y2="${y(v)}" stroke="var(--border)"/>`).join('')}<polyline fill="none" stroke="var(--accent)" stroke-width="3" points="${runs.map(([d,v])=>`${x(d)},${y(v.runSeconds)}`).join(' ')}"/>${runs.map(([d,v],i)=>`<circle cx="${x(d)}" cy="${y(v.runSeconds)}" r="5" fill="${v.runSeconds===min?'var(--orange)':'var(--accent)'}"><title>${d}: ${formatRunTime(v.runSeconds)}</title></circle>${v.runSeconds===min?`<text x="${x(d)}" y="${y(v.runSeconds)-12}" text-anchor="middle" fill="var(--orange)">★</text>`:''}${i===0||i===runs.length-1?`<text x="${x(d)}" y="240" text-anchor="middle" fill="var(--muted)" font-size="12">${d}</text>`:''}`).join('')}</svg></div>`;
+  const x=d=>dateChartX(d,dates,48,284),y=v=>205-(v-bottom)/(top-bottom)*170;
+  return `<div class="chart-wrap"><svg role="img" aria-label="5K finish times by date; exact times are in the table below" viewBox="0 0 360 245">
+    ${[bottom,(bottom+top)/2,top].map(v=>`<text x="3" y="${y(v)+4}" fill="var(--muted)" font-size="11">${formatRunTime(Math.round(v))}</text><line x1="48" y1="${y(v)}" x2="332" y2="${y(v)}" stroke="var(--border)"/>`).join('')}
+    <polyline fill="none" stroke="var(--accent)" stroke-width="2.5" points="${runs.map(([d,v])=>`${x(d)},${y(v.runSeconds)}`).join(' ')}"/>
+    ${runs.map(([d,v],i)=>`<circle cx="${x(d)}" cy="${y(v.runSeconds)}" r="3.5" fill="${v.runSeconds===min?'var(--orange)':'var(--accent)'}"><title>${d}: ${formatRunTime(v.runSeconds)}</title></circle>${i===0||i===runs.length-1?`<text x="${x(d)}" y="232" text-anchor="middle" fill="var(--muted)" font-size="11">${d.slice(8)}/${d.slice(5,7)}</text>`:''}`).join('')}
+    </svg></div>`;
 }
 function filterFoods(query,date,meal){
   const select=document.getElementById(`food-select-${date}-${meal}`);
@@ -1854,7 +2001,7 @@ setInterval(()=>{
   if(document.visibilityState!=='visible'||editing)return;
   if(hasPending)saveAllChanges();
   else syncNow({quiet:true});
-},30000);
+},90000);
 </script>
 </body>
 </html>

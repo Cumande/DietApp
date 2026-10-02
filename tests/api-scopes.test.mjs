@@ -1,75 +1,58 @@
-import assert from "node:assert/strict";
-
-process.env.SUPABASE_SERVICE_ROLE_KEY = "test-secret";
-process.env.SUPABASE_URL = "https://example.supabase.co";
-
-let state = {
-  meals: {},
-  weights: { "2026-09-08": 92.3, "2026-09-15": 90.75 },
-  training: {},
-  foods: {},
-  favorites: {},
-  mealPresets: {}
+import assert from 'node:assert/strict';
+process.env.SUPABASE_SERVICE_ROLE_KEY='test-secret';
+process.env.SUPABASE_URL='https://example.supabase.co';
+const {default:handler,validateChanges}=await import('../api/nutrition-data.js');
+const {default:auth}=await import('../api/auth.js');
+const originalFetch=globalThis.fetch;
+let calls=[],email='owner@example.test',conflict=false;
+globalThis.fetch=async(url,options={})=>{
+  calls.push({url,options});
+  const json=url.includes('/auth/v1/user')?{email,email_confirmed_at:'2026-01-01'}:url.includes('diet_owner')?[{email:'owner@example.test'}]:url.includes('/rpc/')?{data:{weights:{'2026-10-01':92}},updated_at:'v2'}:[{data:{weights:{'2026-10-01':92}},updated_at:'v1'}];
+  return {ok:!(conflict&&url.includes('/rpc/')),json:async()=>conflict&&url.includes('/rpc/')?{code:'40001'}:json};
 };
-const originalFetch = globalThis.fetch;
-globalThis.fetch = async (_url, options = {}) => {
-  if ((options.method || "GET") === "GET") {
-    return { ok: true, status: 200, text: async () => JSON.stringify([{ data: state }]) };
-  }
-  state = JSON.parse(options.body).data;
-  return { ok: true, status: 200, text: async () => "" };
+async function request(method,body,headers={cookie:'diet_access=test',host:'localhost'},fn=handler){
+  const result={headers:{}};
+  await fn({method,body,headers},{setHeader(k,v){result.headers[k]=v},status(code){result.status=code;return this},json(data){result.data=data},end(){}});
+  return result;
+}
+assert.equal((await request('GET',null,{})).status,401);
+assert.equal(calls.length,0,'Unauthenticated requests cannot reach the database');
+assert.equal((await request('GET',null,{cookie:'diet_access=test',host:'localhost',origin:'https://evil.test'})).status,403);
+email='someone@example.test';
+assert.equal((await request('GET')).status,403);
+email='owner@example.test';
+assert.equal((await request('GET')).data.weights['2026-10-01'],92);
+const cached=await request('GET',null,{cookie:'diet_access=test',host:'localhost','if-none-match':'"v1"'});
+assert.equal(cached.status,304);
+const change={path:['weights','2026-10-01'],exists:false,before:null,remove:false,value:92};
+assert.equal((await request('POST',{changes:[change]})).status,200);
+assert.equal(calls.at(-1).url.endsWith('/rpc/diet_apply_changes'),true);
+assert.equal((await request('POST',{mutation:{scope:'weights',key:'date',value:1}})).status,409);
+assert.throws(()=>validateChanges([{...change,path:['__proto__','x']}]));
+assert.throws(()=>validateChanges([{...change,path:['training','x','constructor']}]));
+assert.throws(()=>validateChanges([null]));
+assert.throws(()=>validateChanges([{...change,parentDepth:5}]));
+conflict=true;
+assert.equal((await request('POST',{changes:[change]})).status,409);
+conflict=false;
+const logout=await request('POST',{action:'logout'},{host:'localhost'},auth);
+assert.equal(logout.status,200);
+assert.ok(logout.headers['Set-Cookie'].every(c=>c.includes('Max-Age=0')&&c.includes('HttpOnly')&&c.includes('Secure')));
+const session={access_token:'new-access',refresh_token:'new-refresh',expires_in:3600,user:{email:'owner@example.test',email_confirmed_at:'2026-01-01'}};
+const baseFetch=globalThis.fetch;
+globalThis.fetch=async(url,options={})=>{
+  if(url.includes('grant_type=refresh_token')||url.endsWith('/verify'))return {ok:true,json:async()=>session};
+  if(url.endsWith('/otp'))return {ok:true,json:async()=>({})};
+  return baseFetch(url,options);
 };
-
-const { default: handler } = await import("../api/nutrition-data.js?test=food-scopes");
-
-async function getState() {
-  let statusCode = 0;
-  let responseBody;
-  const req = { method: "GET" };
-  const res = {
-    setHeader() {},
-    status(code) { statusCode = code; return this; },
-    json(body) { responseBody = body; return body; }
-  };
-  await handler(req, res);
-  assert.equal(statusCode, 200);
-  return responseBody;
-}
-
-async function mutate(mutation) {
-  let statusCode = 0;
-  let responseBody;
-  const req = { method: "POST", body: { mutation } };
-  const res = {
-    setHeader() {},
-    status(code) { statusCode = code; return this; },
-    json(body) { responseBody = body; return body; }
-  };
-  await handler(req, res);
-  assert.equal(statusCode, 200);
-  return responseBody;
-}
-
-const food = { id: "custom-test", name: "Test", unit: "g", base: 100, kcal: 250, defaultQty: 100 };
-const migratedState = await getState();
-assert.equal(migratedState.weights["2026-08-15"], 90.5);
-assert.equal(state.weights["2026-08-15"], 90.5);
-await mutate({ scope: "foods", key: food.id, value: food });
-await mutate({ scope: "favorites", key: food.id, value: true });
-await mutate({ scope: "mealPresets", key: "preset-test", value: { id: "preset-test", name: "Breakfast habituel", items: [] } });
-
-assert.deepEqual(state.foods[food.id], food);
-assert.equal(state.favorites[food.id], true);
-assert.equal(state.mealPresets["preset-test"].name, "Breakfast habituel");
-assert.equal(state.weights["2026-08-09"], 92.3);
-assert.equal(state.weights["2026-08-15"], 90.5);
-assert.equal(state.weights["2026-09-08"], undefined);
-assert.equal(state.weights["2026-09-15"], undefined);
-
-await mutate({ scope: "weights", key: "2026-08-27", value: 91.5 });
-assert.equal(state.weights["2026-08-27"], 91.5);
-await mutate({ scope: "weights", key: "2026-08-27", value: null });
-assert.equal(state.weights["2026-08-27"], undefined);
-
-globalThis.fetch = originalFetch;
-console.log("API food scopes: OK");
+const refreshed=await request('GET',null,{host:'localhost',cookie:'diet_refresh=old-refresh'});
+assert.equal(refreshed.status,200);
+assert.ok(refreshed.headers['Set-Cookie'].some(c=>c.includes('diet_access=new-access')));
+assert.equal((await request('POST',{action:'send',email:'owner@example.test'},{host:'localhost'},auth)).status,200);
+assert.equal((await request('POST',{action:'send',email:'other@example.test'},{host:'localhost'},auth)).status,403);
+assert.equal((await request('POST',{action:'verify',email:'owner@example.test',code:'123456'},{host:'localhost'},auth)).status,200);
+assert.equal((await request('POST',{action:'verify',email:'owner@example.test',code:'wrong'},{host:'localhost'},auth)).status,400);
+session.user.email_confirmed_at=null;
+assert.equal((await request('POST',{action:'verify',email:'owner@example.test',code:'123456'},{host:'localhost'},auth)).status,403);
+globalThis.fetch=originalFetch;
+console.log('API authentication, owner authorization, CSRF, cache, patch validation and conflicts: OK');

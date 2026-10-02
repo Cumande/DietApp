@@ -1,31 +1,56 @@
 # Déploiement Vercel + Supabase
 
-## 1. Créer la table dans Supabase
+## Etat de cette mise a jour
 
-Dans Supabase, ouvre **SQL Editor**, colle le contenu de `supabase/schema.sql`, puis lance la requête.
+Cette version utilise une connexion privee par code email, sans PIN quotidien.
+Ne pas la promouvoir en production avant d'avoir configure et teste l'email
+proprietaire. La version publique precedente reste accessible entre-temps.
 
-## 2. Ajouter les variables dans Vercel
+Le 2 octobre 2026, `supabase/secure-sync.sql` a ete applique au projet existant.
+La ligne `diet_90_97` n'a pas ete remplacee. Les tests SQL de fusion, conflit,
+suppression et atomicite ont ete executes dans des transactions annulees.
 
-Dans ton projet Vercel :
+## Configuration initiale
 
-`Settings` > `Environment Variables`
+Pour un nouveau projet uniquement, executer `supabase/schema.sql`, puis
+`supabase/secure-sync.sql`. Ne jamais reinitialiser la ligne existante pour
+resoudre une panne de synchronisation.
 
-Ajoute :
+Variables Vercel, dans les environnements utilises :
 
 ```txt
 SUPABASE_URL=https://vkuxvwmnddlshvomyyvb.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=ta_cle_service_role_supabase
+SUPABASE_SERVICE_ROLE_KEY=cle_secrete_cote_serveur
+OPENAI_API_KEY=cle_secrete_pour_estimer_les_repas
 ```
 
-La clé `SUPABASE_SERVICE_ROLE_KEY` se trouve dans Supabase :
+Aucune cle secrete dans `index.html` ni dans GitHub.
 
-`Project Settings` > `API Keys` > `service_role`
+## Activer la connexion privee
 
-Ne la mets jamais dans `index.html` ou GitHub.
+1. Confirmer avec Cee l'adresse email autorisee.
+2. Inserer cette adresse dans `public.diet_owner` (singleton=true).
+   Utiliser une requete parametree ou le Table Editor, pas une adresse supposee.
+3. Dans Supabase Authentication, activer le fournisseur Email. Dans le modele
+   Magic Link, afficher `{{ .Token }}` pour envoyer le code OTP attendu par
+   l'application. Le modele par defaut envoie un lien, pas ce code.
+4. Verifier l'envoi reel. Le service email par defaut peut restreindre les
+   destinataires aux membres de l'organisation. Configurer un SMTP autorise
+   si necessaire, sans souscrire automatiquement une offre payante.
+5. Tester sur un deploiement Preview avec les variables serveur configurees :
+   connexion, actualisation, renouvellement de session, puis un deuxieme
+   navigateur. Les cookies sont HttpOnly/Secure ; le refresh token est conserve
+   jusqu'a 30 jours sur l'appareil.
+6. Promouvoir seulement apres validation. Proteger ou supprimer les anciens
+   deploiements Vercel publics : leur ancienne API peut encore acceder a la
+   meme base. S'il faut renouveler une cle serveur, mettre a jour et tester la
+   production avant de revoquer l'ancienne cle.
 
-## 3. Réglages Vercel
+Les tables de donnees et du proprietaire ont RLS active sans acces public.
+L'avis Supabase `rls_enabled_no_policy` est intentionnel ici : seul le serveur
+avec la cle service_role accede a ces tables.
 
-Pour ce projet :
+## Reglages Vercel
 
 ```txt
 Framework Preset: Other
@@ -34,12 +59,33 @@ Output Directory: .
 Install Command: laisser vide
 ```
 
-## 4. Redéployer
+Un push sur la branche de production declenche normalement le deploiement.
+Utiliser une branche separee tant que la connexion email n'a pas ete testee.
 
-Après avoir poussé ces fichiers sur GitHub, lance un nouveau déploiement Vercel.
+## Synchronisation
 
-Le chargement depuis Supabase est automatique et ne demande aucun PIN. Les repas et l'entraînement sont enregistrés automatiquement après chaque modification. Le bouton `Sauvegarder` du poids enregistre directement la mesure. En cas de coupure réseau, les changements restent sur l'appareil et sont renvoyés automatiquement au retour de la connexion.
+- Sauvegarde automatique apres modification ; les changements non envoyes
+  restent dans le navigateur en cas de coupure.
+- Relecture au retour dans l'application, sur clic Synced et toutes les
+  90 secondes si la page est visible et qu'aucun champ n'est en cours de saisie.
+- Les reponses inchangees utilisent ETag/304, sans transferer tout l'historique.
+- Chaque sauvegarde envoie seulement les champs modifies. Supabase applique
+  tout le lot dans une transaction avec verrouillage et comparaison de la
+  valeur precedente. Un autre champ peut changer sans etre ecrase.
+- En cas de conflit, les modifications locales restent en attente. Review
+  propose de telecharger une copie puis de prendre la version du serveur.
+  Cette copie JSON n'est pas automatiquement reimportee.
+- Les anciennes modifications en attente sans valeur de reference doivent
+  etre revues explicitement, jamais envoyees comme remplacement complet.
+- Les donnees deja recues restent consultables hors ligne. Sign out efface
+  les copies locales de cet appareil apres confirmation, pas les donnees cloud.
 
-Le badge `Sync` indique l'état de la connexion et permet de relire manuellement les données des autres appareils. Il n'est pas nécessaire de cliquer dessus pour enregistrer.
+## Verification avant publication
 
-Si le badge affiche `Réessayer`, clique dessus pour voir le détail de l'erreur au survol. Vérifie surtout que `SUPABASE_SERVICE_ROLE_KEY` est bien définie pour l'environnement `Production`, puis redéploie le projet.
+`npm test` couvre les repas, poids, seances, conflits entre appareils,
+rechargement hors ligne, historique des charges, authentification et API IA.
+`npm run build` valide la preparation statique.
+
+Le controle visuel local utilise des donnees fictives, pas les vraies entrees.
+La livraison effective de l'email et le parcours prive sur Vercel restent a
+verifier apres configuration du proprietaire.
