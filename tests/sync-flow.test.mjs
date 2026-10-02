@@ -391,7 +391,8 @@ assert.ok(!html.includes('x-ai-access-code'));
 
 const simple=createDevice();await new Promise(resolve=>setImmediate(resolve));
 assert.match(simple.element('main').innerHTML,/What did you eat/);
-assert.doesNotMatch(simple.element('main').innerHTML,/Build this meal|Search foods|Suggested plan|Copy yesterday/);
+assert.doesNotMatch(simple.element('main').innerHTML,/Suggested plan|Copy yesterday/);
+assert.match(simple.element('main').innerHTML,/quickTarget|quickFood|Add favorite/);
 const existing=JSON.stringify(simple.context.todayMeals().m2);
 vm.runInContext("aiMeals[aiMealKey(today(),'quick')]={description:'Two eggs',result:{items:[{name:'Eggs',grams:100,kcalPer100g:155}],assumptions:'Estimated portion.',question:''}}",simple.context);
 simple.context.saveAiMeal('2026-08-25','quick');
@@ -462,3 +463,51 @@ deletedParent.context.setExerciseComment(4,'Stale addition');
 assert.equal(await deletedParent.context.saveAllChanges(),false);
 assert.equal(serverState.training['2026-08-24'],undefined,'A stale edit cannot recreate a session deleted elsewhere');
 console.log('Concurrent edits, conflict preservation, offline reload, stable strength lookup and history filters: OK');
+
+serverState.training['2026-08-25']={notes:{0:'initial',1:'old remote'},done:{},comment:''};
+const inFlight=createDevice();await new Promise(resolve=>setImmediate(resolve));
+serverState.training['2026-08-25'].notes[1]='NEW REMOTE VALUE';
+inFlight.context.setTrainingComment('first local edit');
+const originalRequest=inFlight.context.fetch;let releaseResponse;
+inFlight.context.fetch=async(url,options)=>{
+  const response=await originalRequest(url,options);
+  if(options?.method!=='POST')return response;
+  const data=await response.json();await new Promise(resolve=>releaseResponse=resolve);
+  return {...response,json:async()=>data};
+};
+const saving=inFlight.context.saveAllChanges();await new Promise(resolve=>setImmediate(resolve));
+inFlight.context.setExerciseComment(0,'second edit during save');
+releaseResponse();await saving;inFlight.context.fetch=originalRequest;
+assert.equal(await inFlight.context.saveAllChanges(),true);
+assert.equal(serverState.training['2026-08-25'].notes[1],'NEW REMOTE VALUE');
+assert.equal(serverState.training['2026-08-25'].notes[0],'second edit during save');
+
+inFlight.context.document.activeElement={matches:()=>true};
+serverState.meals['2026-08-25'].m1={status:'modified',kcal:777,items:[]};
+await inFlight.context.syncNow();
+assert.equal(vm.runInContext('renderNeeded',inFlight.context),true);
+inFlight.context.document.activeElement=null;await inFlight.context.syncNow();
+assert.equal(vm.runInContext('renderNeeded',inFlight.context),false);
+assert.match(inFlight.element('main').innerHTML,/777 kcal/);
+
+const conflictA=createDevice(),conflictB=createDevice();await new Promise(resolve=>setImmediate(resolve));
+conflictA.context.setTrainingComment('Saved comment');conflictB.context.setTrainingComment('Local comment');
+await conflictA.context.saveAllChanges();assert.equal(await conflictB.context.saveAllChanges(),false);
+await conflictB.context.resolveSyncConflict();
+assert.match(conflictB.element('conflictRows').innerHTML,/Saved comment/);
+vm.runInContext("conflictReview.entries.forEach(entry=>entry.choice='mine')",conflictB.context);
+await conflictB.context.applyConflictChoices();assert.equal(serverState.training['2026-08-25'].comment,'Local comment');
+
+conflictB.context.deleteHistoryMeal('2026-08-25','m1');await conflictB.context.saveAllChanges();
+assert.equal(serverState.meals['2026-08-25'].m1,undefined);
+conflictB.context.undoDelete();await conflictB.context.saveAllChanges();
+assert.equal(serverState.meals['2026-08-25'].m1.kcal,777);
+assert.equal(conflictB.context.exerciseId('Curl barre EZ : 6x10 at 20kg'),'ez bar curl');
+conflictB.context.selectTrainingDate('2026-08-24');
+const originalExercise=vm.runInContext('TRAINING_PLAN[1].items[6]',conflictB.context);
+conflictB.context.saveStrength(originalExercise,'kg','70');
+vm.runInContext("TRAINING_PLAN[1].items[6]='Renamed incline exercise : 3x8 at 75kg'",conflictB.context);
+assert.equal(conflictB.context.matchingStrength(conflictB.context.training()['2026-08-24'],'Renamed incline exercise : 3x8 at 75kg').value.kg,70);
+conflictB.context.setExerciseSet(6,0,3,true);
+assert.equal(conflictB.context.training()['2026-08-24'].setsDone['incline barbell press'][0],true);
+console.log('In-flight rebase, deferred display, conflict choices, undo, stable IDs and set tracking: OK');

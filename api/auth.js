@@ -11,7 +11,7 @@ export default async function handler(req, res) {
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
     if (body?.action === 'logout') {
       const token = cookies(req).diet_access;
-      if (token) await authRequest('logout', {}, token).catch(() => {});
+      if (token) await authRequest('logout?scope=local', {}, token).catch(() => {});
       clearSession(res);
       return res.status(200).json({ signedIn: false });
     }

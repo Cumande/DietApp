@@ -213,8 +213,12 @@ body{font-size:14px;letter-spacing:0}button,input,textarea,select{font-family:in
 </style>
 <style>
 .chart-wrap svg{display:block;max-width:620px;margin:auto}
+.quick-entry{display:grid;grid-template-columns:minmax(0,1fr) 110px auto;gap:10px;align-items:end;margin-top:12px}.quick-entry label{min-width:0}.quick-entry input{width:100%}.quick-preset{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:end;margin-top:12px}
+@media(max-width:600px){.quick-entry{grid-template-columns:minmax(0,1fr) auto}.quick-entry>label:first-child{grid-column:1/-1}}
 body:not(.light){--blue:#8bb8ff;--muted:#b8c1c7;--border:#32383c}
 body:not(.light) .tab.active,body:not(.light) .period-tabs button[aria-pressed=true]{background:#176842}
+body:not(.light) .weight-save-btn{background:#176842;color:white}body:not(.light) input[type=date]{color-scheme:dark}
+.quick-foods{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}.meal-entry,.history-day{border-bottom:1px solid var(--border);padding:14px 0}.meal-entry>summary,.history-day>summary{cursor:pointer;line-height:1.6;min-height:44px}.history-day>summary small{display:block;color:var(--muted)}.conflict-row{border-bottom:1px solid var(--border);padding:12px 0}.conflict-row h3{font-size:14px;overflow-wrap:anywhere}.conflict-row pre{font:12px/1.5 monospace;white-space:pre-wrap;overflow-wrap:anywhere;max-height:150px;overflow:auto}.conflict-row input{width:auto}.chart-readout{display:block;text-align:center;min-height:28px;padding:8px;color:var(--text)}.chart-wrap [role=button]{cursor:pointer}.chart-wrap [role=button]:focus{outline:2px solid var(--blue)}#undoNotice{position:fixed;bottom:80px;left:16px;right:16px;z-index:95;box-shadow:0 2px 12px #0002}.auth-dialog button{min-height:44px}.auth-dialog input{background:var(--surface);color:var(--text)}
 @media(min-width:601px){.history-summary{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media(max-width:600px){.header{backdrop-filter:none;-webkit-backdrop-filter:none}}
 </style>
@@ -240,6 +244,8 @@ body:not(.light) .tab.active,body:not(.light) .period-tabs button[aria-pressed=t
 </div>
 <div class="sync-notice" id="syncNotice" role="status" hidden></div>
 <div class="main" id="main"></div>
+<div class="sync-notice" id="undoNotice" hidden role="status"></div>
+<div class="auth-panel" id="conflictPanel" hidden role="dialog" aria-modal="true" aria-label="Review conflicting changes"><div class="auth-dialog" style="max-height:85vh;overflow:auto"><h2>Review changes</h2><div id="conflictRows"></div><button class="small-command" onclick="applyConflictChoices()">Save choices</button><button class="small-command" onclick="document.getElementById('conflictPanel').hidden=true">Keep for later</button></div></div>
 <div class="auth-panel" id="authPanel" hidden><form class="auth-dialog" onsubmit="event.preventDefault();submitSignIn(document.getElementById('authVerify').hidden?'send':'verify')" aria-label="Sign in">
 <h2>Your private tracker</h2><label for="authEmail">Email</label><input type="email" id="authEmail" autocomplete="email" required>
 <button type="button" class="small-command" onclick="submitSignIn('send')">Send sign-in email</button>
@@ -395,6 +401,17 @@ const TRAINING_PLAN = {
   ]}
 };
 
+// Keep these identifiers when changing labels, loads or the order of the plan.
+const PLAN_ITEM_IDS={
+  1:['bench press wide grip:warmup','bench press wide grip:top','bench press wide grip:backoff','bench press wide grip:reps-6','bench press wide grip:reps-8','bench press wide grip:reps-12','incline barbell press','wide barbell row','dumbbell shoulder press','lateral raises','cable crunch','crunch','plank','lateral planks','lateral crunch'],
+  2:['5k run'],
+  3:['cable crunch','crunch','plank','bench press close grip:warmup','bench press close grip:top','bench press close grip:backoff','bench press close grip:reps-6','bench press close grip:reps-8','bench press close grip:reps-12','wide-grip lat pulldown','dumbbell pull-over','dumbbell skull crushers','ez bar curl','lateral raises drop set','dumbbell shrugs','alternating dumbbell curl'],
+  4:['leg and hip warm-up before leg day','back squat','romanian deadlift','leg press','leg curl','steps with dumbbell','standing calf raises','hanging leg raises','cable crunch','crunch','plank','lateral planks','stretching'],
+  5:['circuit — pull-ups','circuit — push-ups','circuit — dips','after all 6 rounds — cable crunch'],
+  6:['warm-up','intervals','cool-down'],0:['rest or swimming']
+};
+for(const [day,ids] of Object.entries(PLAN_ITEM_IDS))TRAINING_PLAN[day].itemIds=ids;
+const EXERCISE_ALIASES={'curl barre ez':'ez bar curl','poulie abdos':'cable crunch','rowing barre large':'wide barbell row','développé épaules haltères':'dumbbell shoulder press','mollets debout':'standing calf raises','mollets debouts':'standing calf raises','soulevé de terre roumain':'romanian deadlift','élévations latérales':'lateral raises','dumbell shrugs':'dumbbell shrugs'};
 const YOUTUBE_VIDEOS = {
   bench:'Zw6qCAFsV0w',
   incline:'Zw6qCAFsV0w',
@@ -454,6 +471,49 @@ let cloudEtag='';
 let authRequired=false;
 let syncConflict=false;
 let signingIn=false;
+let renderNeeded=false;
+let lastSaved=ls(`${STORAGE_PREFIX}_last_saved`)||'';
+let conflictReview=null;
+let undoItems=ls(`${STORAGE_PREFIX}_undo`)||[];
+function pathValue(value,path){return path.reduce((node,key)=>node?.[key],value)}
+function sameValue(a,b){return JSON.stringify(a)===JSON.stringify(b)}
+function conflictLabel(path){
+  const scopes={training:'Workout',meals:'Meal',weights:'Weight',foods:'Food',favorites:'Favorite',mealPresets:'Favorite meal'};
+  const fields={notes:'Exercise note',comment:'Workout note',done:'Completed exercise',items:'Foods',kcal:'Calories',kg:'Weight',sets:'Sets',reps:'Repetitions',runSeconds:'Run time',planSnapshot:'Workout plan'};
+  return [scopes[path[0]]||'Entry',path[1],...path.slice(2).map(key=>fields[key]||key)].join(' · ');
+}
+function rememberUndo(scope,key,before,after,label){
+  undoItems.push({scope,key,before:cloneData(before),after:cloneData(after),label});undoItems=undoItems.slice(-5);
+  ss(`${STORAGE_PREFIX}_undo`,undoItems);renderUndo();
+}
+function renderUndo(){
+  const el=document.getElementById('undoNotice');if(!el)return;
+  el.hidden=!undoItems.length;
+  el.innerHTML=undoItems.length?`<span>${escapeText(undoItems.at(-1).label)} deleted</span><button class="small-command" onclick="undoDelete()">Undo</button>`:'';
+}
+function undoDelete(){
+  const undo=undoItems.at(-1);if(!undo)return;
+  const current=readScope(undo.scope)[undo.key],ops=diffChanges(undo.after,undo.before);
+  if(ops.some(op=>!sameValue(pathValue(current,op.path),op.exists?op.before:undefined))){showToast('This entry changed since deletion. Review the current entry first.','warning');return}
+  const restored=patchValue(current,ops);
+  stageCloudChange({scope:undo.scope,key:undo.key,value:restored===undefined?null:restored});
+  undoItems.pop();ss(`${STORAGE_PREFIX}_undo`,undoItems);renderUndo();render();
+}
+function patchValue(value,operations){
+  let result=cloneData(value);
+  for(const operation of operations){
+    if(!operation.path.length){result=operation.remove?undefined:cloneData(operation.value);continue}
+    result=result&&typeof result==='object'?result:{};
+    let parent=result;
+    for(const key of operation.path.slice(0,-1))parent=parent[key]&&typeof parent[key]==='object'?parent[key]:(parent[key]={});
+    if(operation.remove)delete parent[operation.path.at(-1)];else parent[operation.path.at(-1)]=cloneData(operation.value);
+  }
+  return result;
+}
+function requestRender(){
+  if(document.activeElement?.matches('input, textarea, select')){renderNeeded=true;return}
+  render();
+}
 function cloneData(value){return value===undefined?undefined:JSON.parse(JSON.stringify(value))}
 function readScope(scope,legacy={}){
   if(cloudReady)return cloudState[scope]||{};
@@ -488,6 +548,7 @@ function updateSyncNotice(){
 function showSignIn(message=''){
   document.getElementById('authPanel').hidden=false;
   document.getElementById('authMessage').textContent=message;
+  document.getElementById('authEmail').focus?.();
 }
 async function submitSignIn(action){
   if(signingIn)return;
@@ -515,16 +576,35 @@ async function signOut(){
   }catch(error){showToast(error.message,'error')}
 }
 async function resolveSyncConflict(){
-  if(!confirm('Use the saved cloud version? Your unsent edits will be downloaded as a recovery file first.'))return;
+  try{
+    const res=await fetch(CLOUD_ENDPOINT,{cache:'no-store'});if(!res.ok)throw new Error(await responseError(res));
+    const latest=await res.json(),entries=[];
+    for(const m of Object.values(pendingChanges)){
+      const ops=m.baseKnown?diffChanges(m.base,m.value===null?undefined:m.value,[m.scope,m.key]):[{path:[m.scope,m.key],remove:m.value===null,value:m.value}];
+      for(const op of ops){
+        const saved=pathValue(latest,op.path),mine=op.remove?undefined:op.value;
+        if(sameValue(saved,mine))continue;
+        const conflict=!m.baseKnown||(op.parentDepth>0&&pathValue(latest,op.path.slice(0,op.parentDepth))===undefined)||!sameValue(saved,op.exists?op.before:undefined);
+        entries.push({op,saved,conflict,choice:conflict?'saved':'mine'});
+      }
+    }
+    conflictReview={latest,entries,snapshot:JSON.stringify(pendingChanges)};
+    document.getElementById('conflictRows').innerHTML=entries.map((entry,i)=>entry.conflict?`<section class="conflict-row"><h3>${escapeText(conflictLabel(entry.op.path))}</h3><label><input type="radio" name="conflict-${i}" checked onchange="conflictReview.entries[${i}].choice='saved'"> Saved version<pre>${escapeText(typeof entry.saved==='string'?entry.saved:JSON.stringify(entry.saved??'Deleted',null,2))}</pre></label><label><input type="radio" name="conflict-${i}" onchange="conflictReview.entries[${i}].choice='mine'"> On this device<pre>${escapeText(entry.op.remove?'Deleted':typeof entry.op.value==='string'?entry.op.value:JSON.stringify(entry.op.value,null,2))}</pre></label></section>`:'').join('')||'<p>Your changes can be merged.</p>';
+    document.getElementById('conflictPanel').hidden=false;
+    document.getElementById('conflictPanel').querySelector?.('input,button')?.focus();
+  }catch(error){showToast(error.message,'warning')}
+}
+async function applyConflictChoices(){
+  if(!conflictReview)return;
+  if(JSON.stringify(pendingChanges)!==conflictReview.snapshot){showToast('Your edits changed. Review them again.','warning');return}
+  const review=conflictReview;
   ss(`${STORAGE_PREFIX}_conflict_backup`,{at:today(),pending:pendingChanges});
-  const file=new Blob([JSON.stringify({at:today(),pending:pendingChanges},null,2)],{type:'application/json'});
-  const url=URL.createObjectURL(file),link=document.createElement('a');
-  link.href=url;link.download=`diet-unsent-${today()}.json`;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
-  const res=await fetch(CLOUD_ENDPOINT,{cache:'no-store'}).catch(()=>null);
-  if(!res?.ok){showToast('Unable to load the cloud version. Your edits are still pending.','warning');return}
-  captureCloud(await res.json());cloudState=cloneData(confirmedState);cloudReady=true;
-  pendingChanges={};ss(PENDING_CHANGES_KEY,pendingChanges);syncConflict=false;cloudEtag='';
-  setCloudStatus('synced');render();
+  const selected=patchValue(review.latest,review.entries.filter(e=>e.choice==='mine').map(e=>e.op));
+  const keys=Object.values(pendingChanges).map(m=>({scope:m.scope,key:m.key}));
+  pendingChanges={};ss(PENDING_CHANGES_KEY,pendingChanges);captureCloud(review.latest);cloudState=cloneData(review.latest);cloudReady=true;syncConflict=false;cloudEtag='';
+  for(const {scope,key} of keys)if(!sameValue(review.latest[scope]?.[key],selected[scope]?.[key]))stageCloudChange({scope,key,value:selected[scope]?.[key]??null});
+  document.getElementById('conflictPanel').hidden=true;conflictReview=null;render();
+  if(Object.keys(pendingChanges).length)await saveAllChanges();else setCloudStatus('synced');
 }
 
 function applyTheme(theme){
@@ -544,7 +624,7 @@ function setCloudStatus(status,message=''){
   cloudError=message;
   const el=document.getElementById('cloudStatus');
   if(el){
-    el.textContent=authRequired?'Sign in':syncConflict?'Conflict':status==='synced'?'Synced':status==='saving'?'Saving...':status==='syncing'?'Connecting...':'Offline';
+    el.textContent=authRequired?'Sign in':syncConflict?'Review changes':status==='saving'?'Saving...':Object.keys(pendingChanges).length?'Changes pending':status==='synced'?(lastSaved?`Saved ${lastSaved}`:'Up to date'):status==='syncing'?'Connecting...':'Offline';
     el.className=`goal-badge sync-badge status-${status}`;
     el.title=message||'Sync now';
     el.disabled=status==='saving'||status==='syncing';
@@ -577,14 +657,17 @@ function applyMutationLocally(mutation){
 function stageCloudChange(mutation){
   const id=mutationId(mutation);
   const existing=pendingChanges[id];
-  pendingChanges[id]={...mutation,value:cloneData(mutation.value),base:existing&&Object.hasOwn(existing,'base')?existing.base:cloneData(confirmedState[mutation.scope]?.[mutation.key]),baseKnown:true};
+  pendingChanges[id]={...mutation,value:cloneData(mutation.value),base:existing?existing.base:cloneData(confirmedState[mutation.scope]?.[mutation.key]),baseKnown:existing?existing.baseKnown===true:true};
   ss(PENDING_CHANGES_KEY,pendingChanges);
   if(cloudReady)applyMutationLocally(mutation);
-  updateSyncNotice();
+  setCloudStatus(cloudStatus);
   scheduleCloudSave();
 }
 function applyPendingChanges(){
-  Object.values(pendingChanges).forEach(applyMutationLocally);
+  for(const mutation of Object.values(pendingChanges)){
+    const value=mutation.baseKnown?patchValue(cloudState[mutation.scope]?.[mutation.key],diffChanges(mutation.base,mutation.value===null?undefined:mutation.value)):mutation.value;
+    applyMutationLocally({...mutation,value:value===undefined?null:value});
+  }
 }
 async function responseError(res){
   try{
@@ -601,7 +684,7 @@ async function syncNow({mergeLocal=false,quiet=false,skipSaveWait=false}={}){
       if(!quiet)setCloudStatus('syncing');
       if(saveAllPromise&&!skipSaveWait)await saveAllPromise;
       const res=await fetch(CLOUD_ENDPOINT,{cache:'no-store',headers:cloudEtag?{'If-None-Match':cloudEtag}:{}});
-      if(res.status===304){setCloudStatus('synced');return}
+      if(res.status===304){setCloudStatus('synced');if(renderNeeded)requestRender();return}
       if(res.status===401){if(!authRequired)showSignIn();authRequired=true}
       if(!res.ok)throw new Error(await responseError(res));
       const incoming=await res.json();
@@ -621,7 +704,7 @@ async function syncNow({mergeLocal=false,quiet=false,skipSaveWait=false}={}){
       applyPendingChanges();
       if(mergeLocal&&Object.keys(pendingChanges).length)updateSyncNotice();
       setCloudStatus('synced');
-      if(changed&&!document.activeElement?.matches('input, textarea, select'))render();
+      if(changed||renderNeeded)requestRender();
     }catch(e){
       console.warn('Supabase sync unavailable:',e);
       setCloudStatus('local',e.message||'Sync unavailable');
@@ -661,7 +744,13 @@ async function saveAllChanges(){
 
       for(const [id,mutation] of changes){
         if(JSON.stringify(pendingChanges[id])===JSON.stringify(mutation))delete pendingChanges[id];
-        else if(pendingChanges[id])pendingChanges[id].base=cloneData(verifiedState[mutation.scope]?.[mutation.key]);
+        else if(pendingChanges[id]){
+          const pending=pendingChanges[id],sent=mutation.value===null?undefined:mutation.value;
+          const delta=diffChanges(sent,pending.value===null?undefined:pending.value);
+          const saved=verifiedState[mutation.scope]?.[mutation.key];
+          pending.base=patchValue(saved,delta.map(op=>({...op,remove:!op.exists,value:op.before})));
+          const next=patchValue(saved,delta);pending.value=next===undefined?null:next;
+        }
       }
       ss(PENDING_CHANGES_KEY,pendingChanges);
       cloudState={
@@ -673,8 +762,9 @@ async function saveAllChanges(){
         mealPresets:verifiedState.mealPresets||{}
       };
       applyPendingChanges();
+      lastSaved=new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});ss(`${STORAGE_PREFIX}_last_saved`,lastSaved);
       setCloudStatus('synced');
-      if(!document.activeElement?.matches('input, textarea, select'))render();
+      requestRender();
       showToast('Changes saved','success');
       return true;
     }catch(e){
@@ -817,10 +907,10 @@ function mealDefinitions(dayMeals){
   }));
   return [...MEALS,...extras].sort((a,b)=>a.time.localeCompare(b.time));
 }
-function foodOptions(){
+function foodOptions(selected=''){
   const favorites=foodFavorites();
   const recent=new Set(recentFoodIds());
-  return allFoods().map(food=>`<option value="${food.id}">${favorites[food.id]?'★ ':recent.has(food.id)?'Recent · ':''}${escapeText(food.name)} · ${food.kcal} kcal/${food.base}${food.unit}</option>`).join('');
+  return allFoods().map(food=>`<option value="${escapeAttr(food.id)}" ${food.id===selected?'selected':''}>${favorites[food.id]?'★ ':recent.has(food.id)?'Recent · ':''}${escapeText(food.name)} · ${food.kcal} kcal/${food.base}${escapeText(food.unit)}</option>`).join('');
 }
 function mealPresetOptions(){
   return Object.values(mealPresets()).filter(Boolean).sort((a,b)=>a.name.localeCompare(b.name,'en')).map(preset=>`<option value="${preset.id}">${escapeText(preset.name)} · ${itemsCalories(preset)} kcal</option>`).join('');
@@ -867,7 +957,7 @@ function removeMealPreset(mealId,date=today()){
   stageCloudChange({scope:'mealPresets',key:id,value:null});
   render();
 }
-function addFoodToMeal(mealId,date=today(),forcedFoodId=''){
+function addFoodToMeal(mealId,date=today(),forcedFoodId='',forcedQty=null){
   const select=document.getElementById(`food-select-${date}-${mealId}`);
   const food=foodById(forcedFoodId||select?.value);
   if(!food)return;
@@ -880,7 +970,7 @@ function addFoodToMeal(mealId,date=today(),forcedFoodId=''){
     unit:food.unit,
     base:food.base,
     kcal:food.kcal,
-    qty:Number(document.getElementById(`portion-${date}-${mealId}`)?.value)>0?Number(document.getElementById(`portion-${date}-${mealId}`).value):food.defaultQty
+    qty:forcedQty>0?forcedQty:Number(document.getElementById(`portion-${date}-${mealId}`)?.value)>0?Number(document.getElementById(`portion-${date}-${mealId}`).value):food.defaultQty
   });
   entry.status='modified';
   day[mealId]=entry;
@@ -1005,13 +1095,16 @@ let weightPeriod=0;
 let runPeriod=0;
 function setRunPeriod(value){runPeriod=value;renderRuns()}
 const openExercises=new Set();
+const openHistory=new Set();
 function setHistoryFilter(value){historyFilter=value;historyLimit=20;renderHistory()}
 function setHistoryPeriod(value){historyPeriod=Number(value);historyLimit=20;renderHistory()}
 function inPeriod(date,days){return !days||date>=shiftedDate(today(),-days)}
 function periodButtons(value,handler){return `<div class="period-tabs" aria-label="Period">${[[30,'1 month'],[90,'3 months'],[0,'All']].map(([days,label])=>`<button aria-pressed="${value===days}" onclick="${handler}(${days})">${label}</button>`).join('')}</div>`}
 function setWeightPeriod(value){weightPeriod=value;renderWeight()}
 function exerciseId(item){
-  const name=item.split(':')[0].trim().toLowerCase();
+  for(const plan of Object.values(TRAINING_PLAN)){const index=plan.items.indexOf(item);if(index>=0)return plan.itemIds[index]}
+  const raw=item.split(':')[0].trim().toLowerCase();
+  const name=EXERCISE_ALIASES[raw]||raw;
   if(!name.startsWith('bench press'))return name;
   if(/warm-up/.test(item))return `${name}:warmup`;
   const block=item.match(/:\s*(\d*)x(\d+)/);
@@ -1019,7 +1112,10 @@ function exerciseId(item){
   return `${name}:${block[2]==='4'?(block[1]==='2'?'backoff':'top'):`reps-${block[2]}`}`;
 }
 function matchingStrength(state,item){
-  const id=exerciseId(item);
+  const snapshotIndex=state.planSnapshot?.items.indexOf(item)??-1;
+  const id=snapshotIndex>=0?(state.planSnapshot.itemIds?.[snapshotIndex]||exerciseId(item)):exerciseId(item);
+  const savedName=state.strengthIds?.[id];
+  if(savedName&&state.strength?.[savedName])return {name:savedName,value:state.strength[savedName]};
   const match=Object.entries(state.strength||{}).find(([key])=>exerciseId(key)===id);
   return match?{name:match[0],value:match[1]}:null;
 }
@@ -1049,6 +1145,7 @@ function switchTab(i){
 // RENDER
 // ═══════════════════════════════════════════════════════
 function render(){
+  renderNeeded=false;
   if(activeTab===0)renderToday();
   else if(activeTab===1)renderTraining();
   else if(activeTab===2)renderWeight();
@@ -1057,17 +1154,40 @@ function render(){
 }
 
 // ── TODAY ────────────────────────────────────────────
+let quickMealTarget='m1',quickFoodId='',quickQuantity=null;
+function updateQuickPortion(){
+  quickFoodId=document.getElementById('quickFood').value;
+  const food=foodById(quickFoodId);quickQuantity=food.defaultQty;
+  document.getElementById('quickQty').value=quickQuantity;document.getElementById('quickUnit').textContent=food.unit;
+}
 function renderToday(){
   const date=today(),day=todayMeals(),meals=mealDefinitions(day);
   const total=meals.reduce((sum,meal)=>sum+mealCalories(mealEntry(day[meal.id]),meal),0);
   const logged=meals.filter(meal=>{const entry=mealEntry(day[meal.id]);return entry.status!=='pending'||entry.items.length||entry.note});
+  const selectedFood=foodById(quickFoodId)||allFoods()[0];
   document.getElementById('main').innerHTML=`
     <div class="history-card"><h3>Calories today</h3><div class="timer-clock">${total} <span style="font-size:18px">/ ${TOTAL_KCAL} kcal</span></div>
       <p class="training-meta">Daily goal: ${TOTAL_KCAL} kcal · ${total<TOTAL_KCAL?`${TOTAL_KCAL-total} kcal remaining`:total===TOTAL_KCAL?'Goal reached':`${total-TOTAL_KCAL} kcal above goal`}</p>
       <progress aria-label="Daily calorie goal progress" value="${Math.min(total,TOTAL_KCAL)}" max="${TOTAL_KCAL}" style="width:100%;height:12px;accent-color:var(--accent)"></progress>
     </div>
+    <div class="training-day"><h3>Add food</h3><label>Meal<select class="food-select" id="quickTarget" onchange="quickMealTarget=this.value">${meals.map(m=>`<option value="${escapeAttr(m.id)}" ${quickMealTarget===m.id?'selected':''}>${escapeText(m.name)}</option>`).join('')}</select></label>
+    <div class="quick-foods">${recentFoodIds(6).map(id=>{const food=foodById(id);return food?`<button class="small-command" data-food="${escapeAttr(id)}" onclick="quickAddFood(this.dataset.food)">${escapeText(food.name)} · ${food.defaultQty} ${escapeText(food.unit)}</button>`:''}).join('')}</div>
+    <div class="quick-entry"><label>Food<select class="food-select" id="quickFood" onchange="updateQuickPortion()">${foodOptions(selectedFood.id)}</select></label><label>Portion (<span id="quickUnit">${escapeText(selectedFood.unit)}</span>)<input class="food-qty" id="quickQty" type="number" min="0.1" step="any" value="${quickQuantity??selectedFood.defaultQty}" oninput="quickQuantity=Number(this.value)"></label><button class="small-command" onclick="quickAddFood()">Add food</button></div>
+    ${mealPresetOptions()?`<div class="quick-preset"><label>Favorite meal<select class="food-select" id="quickPreset">${mealPresetOptions()}</select></label><button class="small-command" onclick="quickUsePreset()">Add favorite</button></div>`:''}</div>
     <div class="training-day"><h3>What did you eat?</h3>${aiMealPanel('quick',date)}</div>
-    ${logged.length?`<div class="history-card"><h3>Today’s meals</h3>${logged.map(meal=>{const entry=mealEntry(day[meal.id]);return `<div class="history-line"><strong>${escapeText(meal.name)}</strong> · ${mealCalories(entry,meal)} kcal${entry.items.length?`<span class="history-note">${entry.items.map(item=>escapeText(item.name)).join(' · ')}</span>`:''}</div>`}).join('')}</div>`:'<p class="training-meta">Your saved meals will appear here.</p>'}`;
+    ${logged.length?`<div class="history-card"><h3>Today’s meals</h3>${logged.map(meal=>{const entry=mealEntry(day[meal.id]);return `<details class="meal-entry"><summary><strong>${escapeText(meal.name)}</strong> · ${mealCalories(entry,meal)} kcal</summary>${renderHistoryMealEditor(date,meal,entry)}<button class="small-command" data-meal="${escapeAttr(meal.id)}" onclick="saveMealPreset(this.dataset.meal)">Save as favorite</button></details>`}).join('')}</div>`:'<p class="training-meta">Your saved meals will appear here.</p>'}`;
+}
+function quickAddFood(id=''){
+  const target=document.getElementById('quickTarget').value;
+  if(!id&&!(Number(document.getElementById('quickQty').value)>0)){showToast('Enter a portion greater than zero.','warning');return}
+  addFoodToMeal(target,today(),id||document.getElementById('quickFood').value,id?null:Number(document.getElementById('quickQty').value));
+}
+function quickUsePreset(){
+  const preset=mealPresets()[document.getElementById('quickPreset').value];if(!preset)return;
+  const target=document.getElementById('quickTarget').value,day=todayMeals(),entry=mealEntry(day[target]);
+  if((entry.items.length||entry.kcal)&&!confirm('Replace the existing foods in this meal?'))return;
+  day[target]={...entry,items:cloneData(preset.items||[]),kcal:preset.kcal||0,note:preset.note||'',status:'modified'};
+  saveMeals(day);render();
 }
 
 function renderMealCard(meal,day,date){
@@ -1272,7 +1392,9 @@ async function editWeight(date){
 async function deleteWeight(date){
   if(!confirm(`Delete weight for ${date.slice(8,10)}/${date.slice(5,7)} ?`))return;
   const w=weights();
+  const before=w[date];
   delete w[date];
+  rememberUndo('weights',date,before,undefined,'Weight');
   ss(`${STORAGE_PREFIX}_weights`,w);
   stageCloudChange({scope:'weights',key:date,value:null});
   render();
@@ -1312,7 +1434,7 @@ function buildWeightChart(pts,w){
   if(dataPoints.length>1){
     linePath=`<polyline points="${dataPoints.map(p=>`${px(p.i)},${py(p.v)}`).join(' ')}" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`;
   }
-  dotHTML=dataPoints.map((p,i)=>`<circle cx="${px(p.i)}" cy="${py(p.v)}" r="4" fill="var(--accent)"><title>${allDates[p.i]}: ${p.v} kg</title></circle>${i===dataPoints.length-1?`<text x="${px(p.i)}" y="${py(p.v)-12}" text-anchor="end" font-size="12" fill="var(--accent)">${p.v}</text>`:''}`).join('');
+  dotHTML=dataPoints.map((p,i)=>`${chartPoint(px(p.i),py(p.v),`${allDates[p.i]}: ${p.v} kg`)}${i===dataPoints.length-1?`<text x="${px(p.i)}" y="${py(p.v)-12}" text-anchor="end" font-size="12" fill="var(--accent)">${p.v}</text>`:''}`).join('');
   // y axis
   const yStep=Math.max(1,Math.ceil((maxW-minW)/5));
   const yValues=[];
@@ -1371,23 +1493,23 @@ function renderTraining(){
     return `<div class="exercise-entry${on?' is-done':''}">
       <div class="exercise-row">
         <input type="checkbox" aria-label="Complete ${escapeAttr(item)}" ${on?'checked':''} onchange="toggleExercise(${i})">
-        <div class="exercise-text"><strong>${escapeText(name)}</strong><span class="exercise-target">${escapeText(target.join(':'))}</span>${recorded?`<span class="exercise-target">Logged: ${recorded.sets??'—'} × ${recorded.reps??'—'} · ${recorded.kg??'—'} kg</span>`:''}</div>
+        <div class="exercise-text"><strong>${escapeText(name)}</strong><span class="exercise-target">${escapeText(target.join(':'))}</span>${recorded?`<span class="exercise-target">Logged: ${escapeText(recorded.sets??'—')} × ${escapeText(recorded.reps??'—')} · ${escapeText(recorded.kg??'—')} kg</span>`:''}</div>
       </div>
-      ${day===5?fridayRoundTracker(state,i):''}
-      <details class="exercise-details" ${openExercises.has(key)?'open':''} ontoggle="this.open?openExercises.add('${key}'):openExercises.delete('${key}')"><summary>Performance, notes & video</summary>
+      ${day===5?fridayRoundTracker(state,i):exerciseSets(item,state,i)}
       ${[1,3,4,5].includes(day)&&!/(plank|stretch|warm-up)/i.test(item)?strengthFields(item,state):''}
+      <details class="exercise-details" ${openExercises.has(key)?'open':''} ontoggle="this.open?openExercises.add('${key}'):openExercises.delete('${key}')"><summary>Notes & video</summary>
       <input aria-label="Exercise notes" class="exercise-note" value="${escapeAttr(state.notes[i]||'')}" placeholder="Weight, reps, difficulty, how it felt..." onclick="event.stopPropagation()" onchange="setExerciseComment(${i},this.value)">
       ${exerciseVideo(item)}</details>
     </div>`;
   }).join('');
   document.getElementById('main').innerHTML=`
   <div class="training-day">
-    <h3>🏋️ ${plan.name}</h3>
+    <h3>🏋️ ${escapeText(plan.name)}</h3>
     <label>Workout date <input class="exercise-note" type="date" value="${date}" onchange="selectTrainingDate(this.value)"></label>
     <div class="day-actions"><button class="small-command" onclick="moveTrainingDay(-1)">← Previous</button><button class="small-command" onclick="selectTrainingDate(today())">Back to today</button><button class="small-command" onclick="moveTrainingDay(1)">Next →</button></div>
     ${date>today()?'<p class="training-meta">Future workout preview. Logging becomes available on the day.</p>':''}
     <fieldset ${date>today()?'disabled':''}>
-    <div class="training-meta">${plan.type} · ${doneCount}/${plan.items.length} exercises · ${date}</div>
+    <div class="training-meta">${escapeText(plan.type)} · ${doneCount}/${plan.items.length} exercises · ${date}</div>
     ${day===6?intervalTimerHTML():''}
     ${exerciseHTML}
     ${day===2?runForm(date):''}
@@ -1494,6 +1616,10 @@ function toggleExercise(idx){
   state.done[idx]=!state.done[idx];
   if(new Date(`${date}T12:00:00`).getDay()===5&&idx<4){
     state.fridayRounds={...state.fridayRounds,[idx]:Object.fromEntries(Array.from({length:fridayRoundCount(idx)},(_,i)=>[i,state.done[idx]]))};
+  }else{
+    const item=sessionPlan(date,state).items[idx];
+    const count=Number(matchingStrength(state,item)?.value.sets||item.match(/:\s*(\d+)x/)?.[1]);
+    if(Number.isInteger(count)&&count>0&&count<=30)state.setsDone={...state.setsDone,[exerciseId(item)]:Object.fromEntries(Array.from({length:count},(_,i)=>[i,state.done[idx]]))};
   }
   all[date]=state;
   saveTraining(all);
@@ -1572,10 +1698,12 @@ function deleteRunTime(date){
   if(!confirm(`Delete the run for ${date}?`))return;
   const all=training();
   if(!all[date])return;
+  const before=cloneData(all[date]);
   delete all[date].runSeconds;
   delete all[date].runDistanceKm;
   delete all[date].runDetails;
   saveTraining(all,date);
+  rememberUndo('training',date,before,all[date],'Run');
   render();
 }
 function editRunTime(date){
@@ -1621,7 +1749,7 @@ function trendChart(points,label,goal=null){
   return `<div class="chart-wrap"><svg role="img" aria-label="${escapeAttr(label)}" viewBox="0 0 ${W} ${H}">${ticks}
   ${goal!==null?`<line x1="${left}" x2="${W-right}" y1="${y(goal)}" y2="${y(goal)}" stroke="var(--blue)" stroke-dasharray="4 4"/><text x="${W-right}" y="${y(goal)-7}" text-anchor="end" fill="var(--blue)" font-size="10">Goal ${goal}</text>`:''}
   <polyline fill="none" stroke="var(--accent)" stroke-width="2.5" points="${rows.map(p=>`${x(p.date)},${y(p.value)}`).join(' ')}"/>
-  ${rows.map(p=>`<circle cx="${x(p.date)}" cy="${y(p.value)}" r="3" fill="var(--accent)"><title>${p.date}: ${p.value}</title></circle>`).join('')}
+  ${rows.map(p=>chartPoint(x(p.date),y(p.value),`${p.date}: ${p.value} kcal`)).join('')}
   <text x="${left}" y="${H-8}" fill="var(--muted)" font-size="12">${dates[0].slice(8)}/${dates[0].slice(5,7)}</text>
   <text x="${W-right}" y="${H-8}" text-anchor="end" fill="var(--muted)" font-size="12">${dates.at(-1).slice(8)}/${dates.at(-1).slice(5,7)}</text>
   </svg></div>`;
@@ -1664,7 +1792,8 @@ function renderHistory(){
     : Math.abs(weekly.delta)<=200
       ? 'Within target range'
       : `${Math.abs(weekly.delta)} kcal ${weekly.delta<0?'below':'above'} the goal`;
-  const dates=Array.from(new Set([...Object.keys(allMeals),...Object.keys(allTraining)])).filter(date=>inPeriod(date,historyPeriod)).sort().reverse();
+  const loggedWeights=weights();
+  const dates=Array.from(new Set([...Object.keys(allMeals),...Object.keys(allTraining),...(historyFilter==='all'?Object.keys(loggedWeights):[])])).filter(date=>inPeriod(date,historyPeriod)).sort().reverse();
   let totalKcal=0,doneMeals=0,skippedMeals=0,modifiedMeals=0,notesCount=0,trainingDays=0,doneExercises=0,trackedDays=0;
   const calorieChartData=[];
   const daysHTML=dates.map(date=>{
@@ -1731,22 +1860,24 @@ function renderHistory(){
               return complete?`<div class="history-line">${escapeText(item)} · ${complete}/${count} ${i===3?'sets':'rounds'} complete</div>`:'';
             }).join('')
           : '';
-        trainingLines=`<div class="history-line" style="font-weight:800;color:var(--text)">🏋️ ${plan.name} · ${checked.length}/${plan.items.length} exercises</div>${checkedLines}${comment}${Object.entries(session.strength||{}).map(([name,v])=>`<div class="history-line">${escapeText(name)} · ${v.sets??'—'} sets × ${v.reps??'—'} reps · ${v.kg??'—'} kg</div>`).join('')}${fridayProgress}${session.runSeconds?`<div class="history-line">🏃 ${session.runDistanceKm||5} km Run · ${formatRunTime(session.runSeconds)} · ${runPace(session)}/km</div>`:''}`;
+        trainingLines=`<div class="history-line" style="font-weight:800;color:var(--text)">🏋️ ${escapeText(plan.name)} · ${checked.length}/${plan.items.length} exercises</div>${checkedLines}${comment}${Object.entries(session.strength||{}).map(([name,v])=>`<div class="history-line">${escapeText(name)} · ${escapeText(v.sets??'—')} sets × ${escapeText(v.reps??'—')} reps · ${escapeText(v.kg??'—')} kg</div>`).join('')}${fridayProgress}${session.runSeconds?`<div class="history-line">🏃 ${escapeText(session.runDistanceKm||5)} km Run · ${formatRunTime(session.runSeconds)} · ${runPace(session)}/km</div>`:''}`;
       }
     }
-    if(!mealLines&&!trainingLines)return'';
+    const weight=historyFilter==='all'?loggedWeights[date]:undefined;
+    if(!mealLines&&!trainingLines&&weight===undefined)return'';
     trackedDays++;
     if(mealLines)calorieChartData.push({date,kcal:dayKcal});
     const label=new Date(`${date}T12:00:00`).toLocaleDateString('en-GB',{weekday:'long',day:'2-digit',month:'short',year:'numeric'});
     const nutritionSummary=mealLines
       ? `<div class="history-line" style="font-weight:800;color:var(--text)">Nutrition · ${dayKcal} kcal · ${dayDone} eaten · ${dayModified} modified · ${daySkipped} skipped</div>`
       : '';
-    return `<div class="history-card">
-      <div class="history-date">${label}</div>
+    return `<details class="history-day" ${historyEditKey.startsWith(date+':')||openHistory.has(date)?'open':''} ontoggle="this.open?openHistory.add('${date}'):openHistory.delete('${date}')">
+      <summary><strong>${label}</strong><small>${[mealLines?`${dayKcal} kcal`:null,trainingLines?'Workout logged':null,weight!==undefined?`${weight} kg`:null].filter(Boolean).join(' · ')}</small></summary>
       ${nutritionSummary}
       ${mealLines}
       ${trainingLines}
-    </div>`;
+      ${weight!==undefined?`<p class="history-line">Weight: ${weight} kg</p>`:''}
+    </details>`;
   }).filter(Boolean);
   document.getElementById('main').innerHTML=`
   <div class="history-card">
@@ -1780,11 +1911,13 @@ function toggleHistoryEdit(date,mealId){
 }
 
 function deleteHistoryMeal(date,mealId){
-  if(!confirm('Permanently delete this meal from history?'))return;
+  if(!confirm('Delete this meal? You can undo this action.'))return;
   const day=mealsForDate(date);
+  const before=cloneData(day);
   delete day[mealId];
   historyEditKey='';
   saveMealsForDate(date,day);
+  rememberUndo('meals',date,before,day,'Meal');
   renderHistory();
 }
 
@@ -1849,16 +1982,39 @@ function strengthFields(item,state){
   const value=matchingStrength(state,item)?.value||{};
   const previous=Object.entries(training()).filter(([date,s])=>date<trainingDate&&matchingStrength(s,item)).sort(([a],[b])=>b.localeCompare(a))[0];
   if(previous)previous[1]={strength:{[item]:matchingStrength(previous[1],item).value}};
-  return `<div class="field-grid">${[['sets','Sets'],['reps','Reps per set'],['kg','Weight (kg)']].map(([key,label])=>`<label>${label}<input class="exercise-note" type="number" min="0" step="${key==='kg'?'0.25':'1'}" value="${value[key]??''}" data-exercise="${escapeAttr(item)}" onchange="saveStrength(this.dataset.exercise,'${key}',this.value)"></label>`).join('')}</div><p class="training-meta">${previous?`Previous (${previous[0]}): ${previous[1].strength[item].sets??'—'} sets × ${previous[1].strength[item].reps??'—'} reps at ${previous[1].strength[item].kg??'—'} kg`:'No earlier strength entry for this exercise.'}</p>`;
+  return `<div class="field-grid">${[['sets','Sets'],['reps','Reps per set'],['kg','Weight (kg)']].map(([key,label])=>`<label>${label}<input class="exercise-note" type="number" min="0" step="${key==='kg'?'0.25':'1'}" value="${escapeAttr(value[key]??'')}" data-exercise="${escapeAttr(item)}" onchange="saveStrength(this.dataset.exercise,'${key}',this.value)"></label>`).join('')}</div><p class="training-meta">${previous?`Previous (${escapeText(previous[0])}): ${escapeText(previous[1].strength[item].sets??'—')} sets × ${escapeText(previous[1].strength[item].reps??'—')} reps at ${escapeText(previous[1].strength[item].kg??'—')} kg`:'No earlier strength entry for this exercise.'}</p>`;
+}
+function exerciseSets(item,state,index){
+  const count=Number(matchingStrength(state,item)?.value.sets||item.match(/:\s*(\d+)x/)?.[1]);
+  if(!Number.isInteger(count)||count<1||count>30)return '';
+  const id=exerciseId(item),completed=state.setsDone?.[id]||{};
+  return `<div class="rounds" aria-label="Exercise sets">${Array.from({length:count},(_,set)=>`<label><input type="checkbox" ${completed[set]?'checked':''} onchange="setExerciseSet(${index},${set},${count},this.checked)">Set ${set+1}</label>`).join('')}</div>`;
+}
+function setExerciseSet(index,set,count,done){
+  if(trainingDate>today())return;
+  const all=training(),state=all[trainingDate]||{done:{},notes:{}};
+  const item=sessionPlan(trainingDate,state).items[index],id=exerciseId(item);
+  state.setsDone={...state.setsDone,[id]:{...state.setsDone?.[id],[set]:done}};
+  state.done={...state.done,[index]:Array.from({length:count},(_,i)=>state.setsDone[id][i]).every(Boolean)};
+  all[trainingDate]=state;saveTraining(all);render();
+}
+function chartPoint(x,y,label,color='var(--accent)'){
+  return `<g role="button" tabindex="0" aria-label="${escapeAttr(label)}" data-point="${escapeAttr(label)}" onclick="showChartPoint(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showChartPoint(this)}"><circle cx="${x}" cy="${y}" r="12" fill="transparent"/><circle cx="${x}" cy="${y}" r="3.5" fill="${color}"/><title>${escapeText(label)}</title></g>`;
+}
+function showChartPoint(el){
+  const wrap=el.closest('.chart-wrap');let output=wrap.querySelector('output');
+  if(!output){output=document.createElement('output');output.className='chart-readout';output.setAttribute('aria-live','polite');wrap.appendChild(output)}
+  output.textContent=el.dataset.point;
 }
 function saveStrength(item,key,value){
   if(trainingDate>today()||!['sets','reps','kg'].includes(key))return;
   const number=Number(value);
   if(value!==''&&(!Number.isFinite(number)||number<0||(key!=='kg'&&!Number.isInteger(number)))){showToast('Enter a valid non-negative number.','error');return}
   const all=training(),state=all[trainingDate]||{done:{},notes:{}};
-  const oldName=matchingStrength(state,item)?.name;
+  const id=exerciseId(item),oldName=matchingStrength(state,item)?.name;
   if(oldName)item=oldName;
   state.strength=state.strength||{};state.strength[item]={...state.strength[item]};
+  state.strengthIds={...state.strengthIds,[id]:item};
   if(value==='')delete state.strength[item][key];else state.strength[item][key]=number;
   all[trainingDate]=state;saveTraining(all);
 }
@@ -1878,7 +2034,7 @@ function runChart(runs){
   return `<div class="chart-wrap"><svg role="img" aria-label="5K finish times by date; exact times are in the table below" viewBox="0 0 360 245">
     ${[bottom,(bottom+top)/2,top].map(v=>`<text x="3" y="${y(v)+4}" fill="var(--muted)" font-size="11">${formatRunTime(Math.round(v))}</text><line x1="48" y1="${y(v)}" x2="332" y2="${y(v)}" stroke="var(--border)"/>`).join('')}
     <polyline fill="none" stroke="var(--accent)" stroke-width="2.5" points="${runs.map(([d,v])=>`${x(d)},${y(v.runSeconds)}`).join(' ')}"/>
-    ${runs.map(([d,v],i)=>`<circle cx="${x(d)}" cy="${y(v.runSeconds)}" r="3.5" fill="${v.runSeconds===min?'var(--orange)':'var(--accent)'}"><title>${d}: ${formatRunTime(v.runSeconds)}</title></circle>${i===0||i===runs.length-1?`<text x="${x(d)}" y="232" text-anchor="middle" fill="var(--muted)" font-size="11">${d.slice(8)}/${d.slice(5,7)}</text>`:''}`).join('')}
+    ${runs.map(([d,v],i)=>`${chartPoint(x(d),y(v.runSeconds),`${d}: ${formatRunTime(v.runSeconds)}`,v.runSeconds===min?'var(--orange)':'var(--accent)')}${i===0||i===runs.length-1?`<text x="${x(d)}" y="232" text-anchor="middle" fill="var(--muted)" font-size="11">${d.slice(8)}/${d.slice(5,7)}</text>`:''}`).join('')}
     </svg></div>`;
 }
 function filterFoods(query,date,meal){
@@ -1983,7 +2139,18 @@ function saveAiMeal(date,id){
 }
 
 // INIT
+document.addEventListener('keydown',event=>{
+  const panel=[...document.querySelectorAll('.auth-panel')].find(el=>!el.hidden);if(!panel)return;
+  if(event.key==='Escape'){panel.hidden=true;document.getElementById('cloudStatus').focus();return}
+  if(event.key!=='Tab')return;
+  const controls=[...panel.querySelectorAll('input,button,select,textarea')].filter(el=>!el.disabled&&el.offsetParent!==null);
+  const first=controls[0],last=controls.at(-1);
+  if(event.shiftKey&&document.activeElement===first){event.preventDefault();last?.focus()}
+  else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first?.focus()}
+});
+document.addEventListener('focusout',()=>setTimeout(()=>{if(renderNeeded)requestRender()},0));
 applyTheme(currentTheme());
+renderUndo();
 render();
 syncNow({mergeLocal:true});
 window.addEventListener('online',()=>{

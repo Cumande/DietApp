@@ -38,6 +38,9 @@ conflict=false;
 const logout=await request('POST',{action:'logout'},{host:'localhost'},auth);
 assert.equal(logout.status,200);
 assert.ok(logout.headers['Set-Cookie'].every(c=>c.includes('Max-Age=0')&&c.includes('HttpOnly')&&c.includes('Secure')));
+await request('POST',{action:'logout'},{host:'localhost',cookie:'diet_access=test'},auth);
+assert.ok(calls.at(-1).url.endsWith('/logout?scope=local'));
+assert.equal((await request('GET',null,{host:'localhost',cookie:'diet_access=%not-encoded'})).status,401);
 const session={access_token:'new-access',refresh_token:'new-refresh',expires_in:3600,user:{email:'owner@example.test',email_confirmed_at:'2026-01-01'}};
 const baseFetch=globalThis.fetch;
 globalThis.fetch=async(url,options={})=>{

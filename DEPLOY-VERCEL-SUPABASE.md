@@ -73,8 +73,10 @@ Utiliser une branche separee tant que la connexion email n'a pas ete testee.
   tout le lot dans une transaction avec verrouillage et comparaison de la
   valeur precedente. Un autre champ peut changer sans etre ecrase.
 - En cas de conflit, les modifications locales restent en attente. Review
-  propose de telecharger une copie puis de prendre la version du serveur.
-  Cette copie JSON n'est pas automatiquement reimportee.
+  permet de choisir, champ par champ, la version sauvegardee ou celle de
+  cet appareil. Les changements sans conflit sont conserves.
+- Les suppressions de repas, poids et courses peuvent etre annulees depuis
+  cet appareil ; la restauration suit la sauvegarde normale et ses controles.
 - Les anciennes modifications en attente sans valeur de reference doivent
   etre revues explicitement, jamais envoyees comme remplacement complet.
 - Les donnees deja recues restent consultables hors ligne. Sign out efface
