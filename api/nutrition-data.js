@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase.js';
-const scopes = new Set(['meals', 'weights', 'training', 'foods', 'favorites', 'mealPresets']);
+const scopes = new Set(['meals', 'weights', 'training', 'foods', 'favorites', 'mealPresets', 'profile']);
 export function validateChanges(changes) {
   if (!Array.isArray(changes) || !changes.length || changes.length > 500) throw Object.assign(new Error('Invalid changes.'), { status: 400 });
   for (const change of changes) {

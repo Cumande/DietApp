@@ -16,6 +16,11 @@ atomic field updates and conflict detection. The unused diet_owner table
 has no effect on this release. For a NEW installation only, apply schema.sql
 followed by secure-sync.sql. Never reinitialize an existing state to fix sync.
 
+The training and nutrition update stores editable targets under the `profile`
+sync scope. The existing project RPC was updated on 2026-10-09 to allow this
+scope without rewriting tracker data. For another existing project, run
+`supabase/profile-settings-scope.sql` in the Supabase SQL Editor before deploy.
+
 ## Sync and UX
 
 - Edits save automatically; offline edits remain on the device until saved.
@@ -27,6 +32,8 @@ followed by secure-sync.sql. Never reinitialize an existing state to fix sync.
 - Older open app versions must reload before saving with the updated API.
 - Food portions, recent foods, favorites, workout sets, direct performance
   fields, expandable history and selectable chart points are available.
+- The weekly schedule is four lifting days, Tuesday 5K, Thursday full rest,
+  and Sunday rest. Old dated workout records remain in the history.
 
 ## Checks
 

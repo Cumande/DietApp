@@ -1,10 +1,5 @@
--- Apply only after confirming the existing nutrition_state row is present.
-create table if not exists public.diet_owner (
-  singleton boolean primary key default true check (singleton), email text not null
-);
-alter table public.diet_owner enable row level security;
-revoke all on public.diet_owner from anon, authenticated;
-grant select on public.diet_owner to service_role;
+-- Add editable app settings to the existing conflict-safe sync RPC.
+-- This changes no nutrition_state rows and keeps the existing service_role-only grant.
 create or replace function public.diet_apply_changes(changes jsonb)
 returns jsonb language plpgsql security invoker set search_path = '' as $$
 declare
@@ -18,7 +13,6 @@ begin
     select array_agg(value order by position) into path from jsonb_array_elements_text(change->'path') with ordinality as parts(value,position);
     if array_length(path,1) < 2 or not (path[1] = any(array['meals','weights','training','foods','favorites','mealPresets','profile'])) then raise exception 'Invalid path'; end if;
     previous := current_data #> path;
-    -- Retries are idempotent; concurrent edits to a different leaf are preserved.
     if (change->>'remove')::boolean and previous is null then continue; end if;
     if not (change->>'remove')::boolean and previous = change->'value' then continue; end if;
     if coalesce((change->>'parentDepth')::integer,0) > 0 and current_data #> path[1:(change->>'parentDepth')::integer] is null then

@@ -48,7 +48,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;ba
 .kcal-fill{background:linear-gradient(90deg,var(--orange),#fbbf24)}
 /* MEAL CARDS */
 .sec-lbl{font-size:9px;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;color:var(--muted);margin:16px 0 8px}
-.meal-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:8px;display:flex;align-items:center;gap:14px;transition:all .2s;cursor:pointer}
+.meal-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:12px;display:block;transition:all .2s}
 .meal-card.checked{border-color:#14532d;background:var(--done-bg)}
 .meal-card.skipped{border-color:#4a1d1d;background:var(--skip-bg)}
 .meal-card.modified{border-color:#7c2d12;background:#fff7ed}
@@ -57,17 +57,20 @@ body:not(.light) .meal-card.modified{background:#1f1308}
 .meal-check.on{background:var(--accent);border-color:var(--accent)}
 .meal-check.skip{background:#ef4444;border-color:#ef4444;color:#fff}
 .meal-check.mod{background:#f97316;border-color:#f97316;color:#fff}
-.meal-body{flex:1;min-width:0}
+.meal-body{flex:1;min-width:0;width:100%}
+.meal-photo{width:100%;height:150px;object-fit:cover;border-radius:6px;display:block;margin-bottom:12px;background:var(--surface)}
 .meal-time{font-size:10px;color:var(--muted);font-weight:700;margin-bottom:3px}
 .meal-name{font-size:13px;font-weight:700;margin-bottom:4px;line-height:1.3}
 .meal-desc{font-size:11px;color:var(--soft);line-height:1.4}
 .meal-macros{display:flex;gap:8px;margin-top:6px}
+.meal-macros{flex-wrap:wrap}
 .meal-chip{padding:2px 7px;border-radius:6px;font-size:10px;font-weight:700}
 .mc-kcal{background:#2a1500;color:#fb923c}
 .meal-actions{display:flex;gap:8px;margin-top:10px}
 .meal-action{border:1px solid var(--border);background:var(--surface);color:var(--muted);border-radius:8px;padding:7px 9px;font-size:11px;font-weight:800;cursor:pointer}
 .meal-action.done.on{background:var(--accent);border-color:var(--accent);color:#000}
 .meal-action.skip.on{background:#ef4444;border-color:#ef4444;color:#fff}
+.meal-action{display:inline-flex;align-items:center;gap:8px;min-height:44px}.meal-action input{width:22px;height:22px;margin:0}
 .meal-action.mod.on{background:#f97316;border-color:#f97316;color:#fff}
 .meal-note{width:100%;margin-top:8px;padding:9px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px}
 .meal-note:focus{outline:none;border-color:var(--accent)}
@@ -222,6 +225,26 @@ body:not(.light) .weight-save-btn{background:#176842;color:white}body:not(.light
 @media(min-width:601px){.history-summary{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media(max-width:600px){.header{backdrop-filter:none;-webkit-backdrop-filter:none}}
 </style>
+<style>
+.quiet-panel{border-bottom:1px solid var(--border);padding:16px 0;margin:0}
+.quiet-panel>summary{cursor:pointer;font-size:14px;font-weight:600;min-height:32px;line-height:1.7}
+.quiet-panel[open]>summary{margin-bottom:14px}
+.compact-meal{display:grid;grid-template-columns:24px minmax(0,1fr);gap:14px;align-items:start;padding:16px;margin:10px 0;background:var(--card)}
+.completion-check,.exercise-row>input{width:24px;height:24px;accent-color:var(--accent);cursor:pointer}
+.completion-check{margin:18px 0 0}
+.meal-summary{display:flex;gap:12px;align-items:center;cursor:pointer;list-style:none;min-height:60px}
+.meal-summary::-webkit-details-marker{display:none}.meal-summary:after{content:'+';margin-left:auto;color:var(--muted);font-size:22px}
+.meal-body[open]>.meal-summary:after{content:'−'}
+.meal-thumb{width:52px;height:60px;object-fit:cover;border-radius:6px;flex-shrink:0}
+.meal-heading{display:grid;gap:4px;min-width:0}.meal-heading strong{font-size:14px;line-height:1.4;overflow-wrap:anywhere}.meal-time{font-size:12px;font-weight:400}
+.meal-expanded{padding-top:20px}.meal-expanded .meal-composer{border:0;padding:12px 0}.meal-expanded .meal-desc{font-size:13px;line-height:1.6}
+.macro-row{grid-template-columns:repeat(3,minmax(0,1fr));margin-top:12px}.macro-card{border:0;border-radius:0;padding:8px 0;background:transparent}.macro-card .mv{font-size:18px}
+.session-toolbar{display:flex;align-items:center;gap:8px;margin-bottom:24px}.session-toolbar input{width:auto;max-width:180px;margin:0;min-height:44px}.session-toolbar button{min-width:44px;min-height:44px}
+.training-day h3.session-title{font-size:24px;line-height:1.3;margin-bottom:12px}.session-progress{display:flex;align-items:center;gap:18px;font-size:13px;color:var(--muted);margin-bottom:16px}.session-progress progress{flex:1;max-width:240px;height:6px;accent-color:var(--accent)}
+.session-caption{font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:12px}.exercise-entry{padding:20px 0}.exercise-text strong{font-size:16px;font-weight:600}.exercise-target{font-size:13px}.exercise-details{margin-left:36px}.exercise-details>summary{font-size:12px;color:var(--muted)}.exercise-details[open]>summary{margin-bottom:12px}.exercise-entry.is-done .exercise-text{opacity:.55}
+.quiet-panel .training-day{padding:12px 0;border:0}.session-comment{min-height:90px}.week-day summary{min-height:44px}
+@media(max-width:600px){.compact-meal{padding:12px;gap:10px}.meal-thumb{width:44px;height:52px}.meal-summary{gap:10px}.meal-heading strong{font-size:13px}.meal-expanded{margin-left:-34px}.macro-card .mv{font-size:16px}.session-toolbar{flex-wrap:wrap}.training-day h3.session-title{font-size:22px}}
+</style>
 </head>
 <body>
 <div class="header">
@@ -230,7 +253,7 @@ body:not(.light) .weight-save-btn{background:#176842;color:white}body:not(.light
     <div style="display:flex;gap:8px;align-items:center">
       <button class="icon-badge" aria-label="Switch color theme" id="themeToggle" onclick="toggleTheme()">🌙</button>
       <button class="goal-badge sync-badge" id="cloudStatus" type="button" onclick="syncNow()" title="Sync now">Connecting...</button>
-      <span class="goal-badge">🎯 97kg · 22 Oct</span>
+      <span class="goal-badge" id="weightGoalBadge">🎯 97kg goal</span>
     </div>
   </div>
   <div class="tabs">
@@ -252,6 +275,17 @@ body:not(.light) .weight-save-btn{background:#176842;color:white}body:not(.light
 // DATA
 // ═══════════════════════════════════════════════════════
 const MEALS = [
+  {id:'m1',time:'07:15',emoji:'🍳',name:'Scrambled Eggs, Greek Yogurt & Oats',desc:'4 scrambled eggs · 80g oats · 200g Greek yogurt · 5g cooking oil · Coffee',image:'https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=900&q=80',kcal:0,plannedFoods:[['egg',4],['oats',80],['greek-yogurt',200],['cooking-oil',5]]},
+  {id:'m2',time:'09:30',emoji:'🥤',name:'Gainer 1',desc:'Mass gainer · water',image:'https://images.unsplash.com/photo-1579751626657-72bc17010498?auto=format&fit=crop&w=900&q=80',kcal:0,plannedFoods:[['gainer-powder','scoop']]},
+  {id:'m3',time:'12:30',emoji:'🍚',name:'Chicken & Rice',desc:'300g cooked rice · 200g cooked chicken · 15g olive oil or sauce',image:'https://images.unsplash.com/photo-1512058564366-18510be2db19?auto=format&fit=crop&w=900&q=80',kcal:0,plannedFoods:[['cooked-rice',300],['chicken',200],['olive-oil-g',15]]},
+  {id:'m4',time:'16:30',emoji:'🥤',name:'Homemade High-Calorie Smoothie',desc:'300ml whole milk · 60g oats · 1 banana · 20g peanut butter',image:'https://images.unsplash.com/photo-1505252585461-04db1eb84625?auto=format&fit=crop&w=900&q=80',kcal:0,plannedFoods:[['whole-milk',300],['oats',60],['banana',1],['peanut-butter',20]]},
+  {id:'m5',time:'18:00',emoji:'🍽️',name:'Dinner',desc:'Choose one dinner and adjust its portions',image:'https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=80',kcal:0,plannedFoods:[]},
+  {id:'m6',time:'22:00',emoji:'🥤',name:'Gainer 2',desc:'Mass gainer · water',image:'https://images.unsplash.com/photo-1579751626657-72bc17010498?auto=format&fit=crop&w=900&q=80',kcal:0,plannedFoods:[['gainer-powder','scoop']]},
+  {id:'m7',time:'20:30',emoji:'🥪',name:'Peanut Butter Sandwich (optional)',desc:'80g wholemeal bread · 30g peanut butter · 1 banana',image:'https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&w=900&q=80',kcal:0,optional:true,plannedFoods:[['wholemeal-bread-g',80],['peanut-butter',30],['banana',1]]}
+];
+const PLAN_EFFECTIVE_DATE='2026-10-09';
+const LEGACY_MEAL_KCAL={m1:1300,m2:390,m3:1150,m4:900,m5:1150,m6:390};
+const LEGACY_MEALS=[
   {id:'m1',time:'07:30',emoji:'🥣',name:'Breakfast',desc:'Greek yogurt/quark 300g · Oats 100g · Peanut butter 40g · 1 banana · Whole milk 300ml · 4 whole eggs',kcal:1300},
   {id:'m2',time:'10:00',emoji:'💪',name:'Gainer 1 — Hard Mass Harder',desc:'2 scoops (100g powder)',kcal:390},
   {id:'m3',time:'12:30',emoji:'🍚',name:'Lunch',desc:'Cooked rice 250g · Chicken 250g or lean beef · Vegetables · 1 tbsp olive oil',kcal:1150},
@@ -259,51 +293,71 @@ const MEALS = [
   {id:'m5',time:'18:30',emoji:'🍝',name:'Dinner',desc:'Cooked pasta or rice 250g · Chicken 250g or lean beef · Vegetables · 1 tbsp olive oil',kcal:1150},
   {id:'m6',time:'21:00',emoji:'💪',name:'Gainer 2 — Hard Mass Harder',desc:'2 scoops (100g powder)',kcal:390}
 ];
-const TOTAL_KCAL = MEALS.reduce((a,m)=>a+m.kcal,0); // 5500
+const DINNER_OPTIONS={
+  chickenRice:{name:'Chicken & Rice',foods:[['cooked-rice',300],['chicken',200],['olive-oil-g',15]]},
+  pastaEggs:{name:'Pasta & Eggs',foods:[['cooked-pasta',250],['egg',4],['cooking-oil',5]]},
+  friesChicken:{name:'Fries & Chicken thigh',foods:[['fries',220],['chicken-thigh',150]]}
+};
+const DEFAULT_PROFILE={weightReference:90.75,weightGoal:97,goalWeeks:8,calorieGoal:3900,proteinMin:180,proteinMax:200,gramsPerScoop:null,workoutOverrides:{}};
 
 const BASE_FOODS = [
-  {id:'egg',name:'Medium whole egg',unit:'piece',base:1,kcal:68,defaultQty:1},
-  {id:'oats',name:'Rolled oats',unit:'g',base:100,kcal:370,defaultQty:100},
-  {id:'greek-yogurt',name:'Greek yogurt',unit:'g',base:100,kcal:111,defaultQty:250},
-  {id:'peanut-butter',name:'Peanut butter',unit:'g',base:100,kcal:588,defaultQty:40},
-  {id:'banana',name:'Banana',unit:'piece',base:1,kcal:105,defaultQty:1},
-  {id:'apple',name:'Apple',unit:'piece',base:1,kcal:95,defaultQty:1},
-  {id:'whole-milk',name:'Whole milk',unit:'ml',base:100,kcal:64,defaultQty:300},
-  {id:'wholemeal-bread',name:'Wholemeal bread',unit:'slice',base:1,kcal:90,defaultQty:1},
-  {id:'cooked-rice',name:'Cooked rice',unit:'g',base:100,kcal:130,defaultQty:250},
-  {id:'cooked-pasta',name:'Cooked pasta',unit:'g',base:100,kcal:157,defaultQty:250},
-  {id:'chicken',name:'Cooked chicken breast',unit:'g',base:100,kcal:165,defaultQty:250},
-  {id:'lean-beef',name:'Cooked lean beef',unit:'g',base:100,kcal:200,defaultQty:250},
-  {id:'vegetables',name:'Vegetables',unit:'g',base:100,kcal:35,defaultQty:200},
-  {id:'olive-oil',name:'Olive oil',unit:'tbsp',base:1,kcal:119,defaultQty:1},
-  {id:'gainer',name:'Hard Mass Harder',unit:'scoop',base:1,kcal:195,defaultQty:2}
+  {id:'egg',name:'Medium whole egg',unit:'piece',base:1,kcal:68,protein:6.3,carbs:0.4,fat:4.8,defaultQty:1},
+  {id:'oats',name:'Rolled oats',unit:'g',base:100,kcal:370,protein:13.5,carbs:58.7,fat:7,defaultQty:80},
+  {id:'greek-yogurt',name:'Greek yogurt',unit:'g',base:100,kcal:111,protein:null,carbs:null,fat:8.6,defaultQty:200},
+  {id:'peanut-butter',name:'Peanut butter',unit:'g',base:100,kcal:588,protein:25,carbs:20,fat:50,defaultQty:20},
+  {id:'banana',name:'Banana',unit:'piece',base:1,kcal:105,protein:1.3,carbs:27,fat:0.4,defaultQty:1},
+  {id:'apple',name:'Apple',unit:'piece',base:1,kcal:95,protein:0.5,carbs:25,fat:0.3,defaultQty:1},
+  {id:'whole-milk',name:'Whole milk',unit:'ml',base:100,kcal:64,protein:3.3,carbs:4.8,fat:3.6,defaultQty:300},
+  {id:'wholemeal-bread-g',name:'Wholemeal bread',unit:'g',base:100,kcal:250,protein:9,carbs:43,fat:3.5,defaultQty:80},
+  {id:'wholemeal-bread',name:'Wholemeal bread slice',unit:'slice',base:1,kcal:90,protein:3.2,carbs:15,fat:1.2,defaultQty:1},
+  {id:'cooked-rice',name:'Cooked rice',unit:'g',base:100,kcal:130,protein:2.7,carbs:28.2,fat:0.3,defaultQty:300},
+  {id:'cooked-pasta',name:'Cooked pasta',unit:'g',base:100,kcal:157,protein:5.8,carbs:30.9,fat:0.9,defaultQty:250},
+  {id:'chicken',name:'Cooked chicken breast',unit:'g',base:100,kcal:165,protein:31,carbs:0,fat:3.6,defaultQty:200},
+  {id:'chicken-thigh',name:'Cooked chicken thigh',unit:'g',base:100,kcal:209,protein:26,carbs:0,fat:11,defaultQty:150},
+  {id:'lean-beef',name:'Cooked lean beef',unit:'g',base:100,kcal:200,protein:29,carbs:0,fat:9,defaultQty:200},
+  {id:'fries',name:'Fries (estimated)',unit:'g',base:100,kcal:312,protein:3.4,carbs:41,fat:15,defaultQty:220},
+  {id:'vegetables',name:'Vegetables',unit:'g',base:100,kcal:35,protein:2,carbs:7,fat:0.3,defaultQty:200},
+  {id:'olive-oil',name:'Olive oil',unit:'tbsp',base:1,kcal:119,protein:0,carbs:0,fat:13.5,defaultQty:1},
+  {id:'olive-oil-g',name:'Olive oil',unit:'g',base:100,kcal:884,protein:0,carbs:0,fat:100,defaultQty:15},
+  {id:'cooking-oil',name:'Cooking oil',unit:'g',base:100,kcal:884,protein:0,carbs:0,fat:100,defaultQty:5},
+  {id:'gainer-powder',name:'Mass gainer powder',unit:'g',base:100,kcal:387,protein:16,carbs:76,fat:1.9,defaultQty:100}
 ];
 
 const STORAGE_PREFIX = 'nut_90_97';
-const WEIGHT_START = 90;
-const WEIGHT_GOAL  = 97;
-const GOAL_DATE    = '2026-10-22';
-const START_DATE   = '2026-08-22';
+function weightReference(){return Number(profile().weightReference)||90.75}
+function weightGoal(){return Number(profile().weightGoal)||97}
 
-const WEEKS = [
-  {week:'W1',date:'2026-08-22',preset:90},
-  {week:'W2',date:'2026-08-29'},
-  {week:'W3',date:'2026-09-05'},
-  {week:'W4',date:'2026-09-12'},
-  {week:'W5',date:'2026-09-19'},
-  {week:'W6',date:'2026-09-26'},
-  {week:'W7',date:'2026-10-03'},
-  {week:'W8',date:'2026-10-10'},
-  {week:'W9',date:'2026-10-17'},
-  {week:'Goal',date:'2026-10-22'}
-];
+function weightMilestones(weights){
+  const entries=Object.entries(weights||{}).filter(([,v])=>Number.isFinite(v)).sort(([a],[b])=>a.localeCompare(b));
+  const startDate=entries.at(-1)?.[0]||today(),startWeight=entries.at(-1)?.[1]||weightReference(),end=new Date(`${startDate}T12:00:00`);
+  end.setDate(end.getDate()+7*profile().goalWeeks);
+  return Array.from({length:4},(_,i)=>{const progress=(i+1)/4,date=new Date(`${startDate}T12:00:00`);date.setDate(date.getDate()+Math.round(7*profile().goalWeeks*progress));return {date:date.toISOString().slice(0,10),target:Math.round((startWeight+(weightGoal()-startWeight)*progress)*10)/10,label:date.toLocaleDateString('en-GB',{day:'numeric',month:'short'})}});
+}
 
-const MILESTONES = [
-  {month:'23 September',target:92,date:'2026-09-23'},
-  {month:'7 October',target:94,date:'2026-10-07'},
-  {month:'21 October',target:96,date:'2026-10-21'},
-  {month:'22 October',target:97,date:'2026-10-22'}
-];
+function weightSummary(source){
+  const entries=Object.entries(source||{}).filter(([date,value])=>date<=today()&&Number.isFinite(Number(value))&&Number(value)>0).sort(([a],[b])=>a.localeCompare(b)).map(([date,value])=>({date,value:Number(value)}));
+  if(!entries.length)return {current:null,progress:null,sevenDay:null,weeklyChange:null,estimatedDate:null};
+  const latest=entries.at(-1),goal=weightGoal(),reference=weightReference();
+  const progress=goal===reference?(latest.value>=goal?100:0):Math.max(0,Math.min(100,Math.round((latest.value-reference)/(goal-reference)*100)));
+  const recent=entries.filter(item=>item.date>=shiftedDate(today(),-6));
+  const prior=entries.filter(item=>item.date>=shiftedDate(today(),-13)&&item.date<shiftedDate(today(),-6));
+  const average=list=>list.length?list.reduce((sum,item)=>sum+item.value,0)/list.length:null;
+  const sevenDay=average(recent);
+  let weeklyChange=recent.length&&prior.length?average(recent)-average(prior):null;
+  if(weeklyChange===null&&entries.length>=2&&latest.date>=shiftedDate(today(),-13)){
+    const old=entries.slice(0,-1).reverse().find(item=>item.date<=shiftedDate(latest.date,-5));
+    if(old){const days=(Date.parse(`${latest.date}T12:00:00`)-Date.parse(`${old.date}T12:00:00`))/86400000;weeklyChange=(latest.value-old.value)*7/days}
+  }
+  let estimatedDate=null;
+  const trend=entries.filter(item=>item.date>=shiftedDate(today(),-27));
+  if(trend.length>=3&&goal>latest.value){
+    const xs=trend.map(item=>(Date.parse(`${item.date}T12:00:00`)-Date.parse(`${trend[0].date}T12:00:00`))/86400000);
+    const meanX=xs.reduce((a,b)=>a+b,0)/xs.length,meanY=average(trend),denominator=xs.reduce((sum,x)=>sum+(x-meanX)**2,0);
+    const slope=denominator?xs.reduce((sum,x,i)=>sum+(x-meanX)*(trend[i].value-meanY),0)/denominator:0;
+    if(slope>0){const date=new Date(`${latest.date}T12:00:00`);date.setDate(date.getDate()+Math.ceil((goal-latest.value)/slope));estimatedDate=date.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}
+  }
+  return {current:latest.value,progress,sevenDay,weeklyChange,estimatedDate};
+}
 
 const INITIAL_WEIGHTS = {
   '2026-07-05':88.6,
@@ -328,7 +382,7 @@ function migrateWeightDates(source){
   return w;
 }
 
-const TRAINING_PLAN = {
+const LEGACY_TRAINING_PLAN = {
   1:{name:'Monday',type:'Push + back + abs',items:[
     'Bench press wide grip : warm-up 50kg',
     'Bench press wide grip : 3x4 at 110kg, 2/3min rest, use a spotter',
@@ -403,7 +457,26 @@ const PLAN_ITEM_IDS={
   5:['circuit — pull-ups','circuit — push-ups','circuit — dips','after all 6 rounds — cable crunch'],
   6:['warm-up','intervals','cool-down'],0:['rest or swimming']
 };
-for(const [day,ids] of Object.entries(PLAN_ITEM_IDS))TRAINING_PLAN[day].itemIds=ids;
+for(const [day,ids] of Object.entries(PLAN_ITEM_IDS))LEGACY_TRAINING_PLAN[day].itemIds=ids;
+const TRAINING_PLAN={
+  1:{name:'Monday — Upper A',type:'Upper body hypertrophy · 60–75 min · leave 2–3 reps in reserve',items:['Bench Press: 3x6-10','Lat Pulldown or Pull-ups: 3x8-12','Seated Cable Row: 3x8-12','Incline Dumbbell Press: 3x8-12','Lateral Raises: 3x12-15']},
+  2:{name:'Tuesday — 5K Run',type:'Easy to moderate · conversational pace · no intervals or sprints',items:['Easy 5K run']},
+  3:{name:'Wednesday — Lower A',type:'Controlled leg hypertrophy · limit lower-back fatigue · 50–65 min',items:['Leg Press: 3x8-12','Leg Curl: 3x10-15','Leg Extension: 3x10-15','Calf Raises: 3x12-20','Bird Dog: 2x10 per side']},
+  4:{name:'Thursday — Recovery Day',type:'Complete rest · sleep, recovery and enough food',items:[]},
+  5:{name:'Friday — Upper B',type:'Upper body hypertrophy · 60–75 min · leave 2–3 reps in reserve',items:['Assisted Pull-ups or Lat Pulldown: 3x8-12','Incline Chest Press: 3x8-12','Chest Supported Row: 3x8-12','Shoulder Lateral Raises: 3x12-15','Biceps Curl: 3x10-12','Triceps Pushdown: 3x10-12']},
+  6:{name:'Saturday — Lower B + Core',type:'Legs and core · controlled technique · 50–65 min',items:['Leg Press or Hack Squat: 3x10-12','Seated Leg Curl: 3x10-15','Glute Bridge or Hip Thrust: 3x10-12','Calf Raises: 3x12-20','Dead Bug: 3x10 per side','Plank: 3x30-45 sec']},
+  0:{name:'Sunday — Rest',type:'Rest or optional gentle mobility',items:[]}
+};
+const NEW_PLAN_ITEM_IDS={
+  1:['upper-a-bench','upper-a-pulldown','upper-a-row','upper-a-incline','upper-a-lateral'],
+  2:['tuesday-easy-5k'],
+  3:['lower-a-press','lower-a-curl','lower-a-extension','lower-a-calf','lower-a-bird-dog'],
+  4:[],
+  5:['upper-b-pull','upper-b-incline','upper-b-row','upper-b-lateral','upper-b-biceps','upper-b-triceps'],
+  6:['lower-b-press','lower-b-curl','lower-b-hip','lower-b-calf','lower-b-dead-bug','lower-b-plank'],
+  0:[]
+};
+for(const [day,ids] of Object.entries(NEW_PLAN_ITEM_IDS))TRAINING_PLAN[day].itemIds=ids;
 const EXERCISE_ALIASES={'curl barre ez':'ez bar curl','poulie abdos':'cable crunch','rowing barre large':'wide barbell row','développé épaules haltères':'dumbbell shoulder press','mollets debout':'standing calf raises','mollets debouts':'standing calf raises','soulevé de terre roumain':'romanian deadlift','élévations latérales':'lateral raises','dumbell shrugs':'dumbbell shrugs'};
 const YOUTUBE_VIDEOS = {
   bench:'Zw6qCAFsV0w',
@@ -452,7 +525,7 @@ const CLOUD_ENDPOINT = '/api/nutrition-data';
 let cloudReady = false;
 let cloudStatus = 'local';
 let cloudError = '';
-let cloudState = {meals:{},weights:null,training:{},foods:{},favorites:{},mealPresets:{}};
+let cloudState = {meals:{},weights:null,training:{},foods:{},favorites:{},mealPresets:{},profile:{}};
 let cloudSyncPromise = null;
 let saveAllPromise = null;
 let autoSaveTimer = null;
@@ -469,7 +542,7 @@ let undoItems=ls(`${STORAGE_PREFIX}_undo`)||[];
 function pathValue(value,path){return path.reduce((node,key)=>node?.[key],value)}
 function sameValue(a,b){return JSON.stringify(a)===JSON.stringify(b)}
 function conflictLabel(path){
-  const scopes={training:'Workout',meals:'Meal',weights:'Weight',foods:'Food',favorites:'Favorite',mealPresets:'Favorite meal'};
+  const scopes={training:'Workout',meals:'Meal',weights:'Weight',foods:'Food',favorites:'Favorite',mealPresets:'Favorite meal',profile:'Profile'};
   const fields={notes:'Exercise note',comment:'Workout note',done:'Completed exercise',items:'Foods',kcal:'Calories',kg:'Weight',sets:'Sets',reps:'Repetitions',runSeconds:'Run time',planSnapshot:'Workout plan'};
   return [scopes[path[0]]||'Entry',path[1],...path.slice(2).map(key=>fields[key]||key)].join(' · ');
 }
@@ -514,6 +587,21 @@ function readScope(scope,legacy={}){
     if(mutation.value===null)delete data[mutation.key];else data[mutation.key]=cloneData(mutation.value);
   }
   return data;
+}
+function profile(){return {...DEFAULT_PROFILE,...(readScope('profile').settings||ls(`${STORAGE_PREFIX}_profile`)||{})}}
+function caloriesGoal(){return Number(profile().calorieGoal)||3900}
+function saveProfile(patch){
+  const next={...profile(),...patch};
+  ss(`${STORAGE_PREFIX}_profile`,next);
+  stageCloudChange({scope:'profile',key:'settings',value:next});
+  return next;
+}
+function updateProfileField(field,value){
+  if(field==='gramsPerScoop'&&String(value).trim()===''){saveProfile({gramsPerScoop:null});render();return}
+  const n=Number(value),limits={calorieGoal:[1000,10000],weightReference:[40,250],weightGoal:[40,250],goalWeeks:[1,104],proteinMin:[0,500],proteinMax:[0,600],gramsPerScoop:[1,300]};
+  if(!limits[field]||!Number.isFinite(n)||n<limits[field][0]||n>limits[field][1]){showToast('Enter a value in the allowed range.','warning');render();return}
+  saveProfile({[field]:n});
+  render();
 }
 function captureCloud(state){
   confirmedState=cloneData(state);
@@ -657,6 +745,7 @@ async function syncNow({mergeLocal=false,quiet=false,skipSaveWait=false}={}){
       cloudState.foods=cloudState.foods||{};
       cloudState.favorites=cloudState.favorites||{};
       cloudState.mealPresets=cloudState.mealPresets||{};
+      cloudState.profile=cloudState.profile||{};
       cloudReady=true;
       applyPendingChanges();
       if(mergeLocal&&Object.keys(pendingChanges).length)updateSyncNotice();
@@ -715,7 +804,8 @@ async function saveAllChanges(){
         training:verifiedState.training||{},
         foods:verifiedState.foods||{},
         favorites:verifiedState.favorites||{},
-        mealPresets:verifiedState.mealPresets||{}
+        mealPresets:verifiedState.mealPresets||{},
+        profile:verifiedState.profile||{}
       };
       applyPendingChanges();
       lastSaved=new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});ss(`${STORAGE_PREFIX}_last_saved`,lastSaved);
@@ -744,10 +834,13 @@ function mealEntry(entry){
       items:Array.isArray(entry.items)?entry.items:[],
       extra:Boolean(entry.extra),
       name:entry.name||'',
-      time:entry.time||''
+      time:entry.time||'',
+      consumed:entry.consumed,
+      dinnerOption:entry.dinnerOption||'chickenRice',
+      included:Boolean(entry.included)
     };
   }
-  return {status:entry?'done':'pending',note:'',kcal:0,items:[],extra:false,name:'',time:''};
+  return {status:entry?'done':'pending',note:'',kcal:0,items:[],extra:false,name:'',time:'',consumed:entry?true:undefined,dinnerOption:'chickenRice',included:false};
 }
 function hasData(obj){
   return obj&&typeof obj==='object'&&Object.keys(obj).length>0;
@@ -845,13 +938,48 @@ function allFoods(){
 function foodById(id){return allFoods().find(food=>food.id===id)}
 function itemCalories(item){return Math.round((Math.max(0,Number(item.qty)||0)/Math.max(1,Number(item.base)||1))*(Number(item.kcal)||0))}
 function itemsCalories(entry){return (entry.items||[]).reduce((sum,item)=>sum+itemCalories(item),0)}
+function itemMacros(item){
+  const factor=Math.max(0,Number(item.qty)||0)/Math.max(1,Number(item.base)||1);
+  return ['protein','carbs','fat'].map(key=>item[key]===null||item[key]===undefined?null:Number(item[key])*factor);
+}
+function totalMacros(items){
+  const values=[0,0,0],missing=[false,false,false];
+  for(const item of items){const parts=itemMacros(item);parts.forEach((v,i)=>{if(v===null)missing[i]=true;else values[i]+=v})}
+  return values.map((v,i)=>missing[i]?null:Math.round(v));
+}
+function foodPortion(id,qty){
+  const food=BASE_FOODS.find(value=>value.id===id)||foodById(id);
+  if(!food)return null;
+  return {id:`plan-${id}`,foodId:food.id,name:food.name,unit:food.unit,base:food.base,kcal:food.kcal,protein:food.protein??null,carbs:food.carbs??null,fat:food.fat??null,qty};
+}
+function plannedMealItems(meal,entry){
+  const selected=meal.id==='m5'?(DINNER_OPTIONS[entry.dinnerOption]||DINNER_OPTIONS.chickenRice).foods:meal.plannedFoods||[];
+  return selected.flatMap(([foodId,qty])=>{
+    if(qty==='scoop'){
+      const grams=Number(profile().gramsPerScoop);
+      return Number.isFinite(grams)&&grams>0?[foodPortion(foodId,grams*2)]:[];
+    }
+    const item=foodPortion(foodId,qty);
+    return item?[item]:[];
+  });
+}
 function mealCalories(entry,plan){
-  if(entry.status==='skipped'||entry.status==='pending')return 0;
+  if(entry.status==='skipped'||entry.status==='pending'||entry.consumed===false)return 0;
   if(entry.items?.length)return itemsCalories(entry);
   if(entry.status==='modified')return Number(entry.kcal)||0;
-  return Number(plan?.kcal)||Number(entry.kcal)||0;
+  return Number(entry.kcal)||itemsCalories({items:plan?.plannedItems||[]})||Number(plan?.kcal)||0;
+}
+function mealCaloriesForDate(entry,plan,date){
+  if(date<PLAN_EFFECTIVE_DATE&&entry.status==='done'&&!entry.items?.length&&!(Number(entry.kcal)>0))return LEGACY_MEAL_KCAL[plan?.id]??mealCalories(entry,plan);
+  return mealCalories(entry,plan);
 }
 function mealDefinitions(dayMeals){
+  const definitions=MEALS.map(meal=>{
+    const entry=mealEntry(dayMeals?.[meal.id]);
+    const option=meal.id==='m5'?(DINNER_OPTIONS[entry.dinnerOption]||DINNER_OPTIONS.chickenRice):null;
+    const name=option?.name||meal.name;
+    return {...meal,...(option?{name,desc:option.name==='Chicken & Rice'?'Cooked rice, chicken, olive oil or sauce':option.name==='Pasta & Eggs'?'Cooked pasta, 4 scrambled eggs, cooking oil':'Fries, one chicken thigh',plannedFoods:option.foods}:{}),plannedItems:plannedMealItems(meal,entry),image:meal.image};
+  });
   const extras=Object.entries(dayMeals||{}).filter(([,value])=>value&&typeof value==='object'&&value.extra).map(([id,value])=>({
     id,
     time:value.time||'--:--',
@@ -861,7 +989,12 @@ function mealDefinitions(dayMeals){
     kcal:0,
     extra:true
   }));
-  return [...MEALS,...extras].sort((a,b)=>a.time.localeCompare(b.time));
+  return [...definitions,...extras].sort((a,b)=>a.time.localeCompare(b.time));
+}
+function mealDefinitionsForDate(dayMeals,date){
+  if(date>=PLAN_EFFECTIVE_DATE)return mealDefinitions(dayMeals);
+  const extras=mealDefinitions(dayMeals).filter(meal=>meal.extra);
+  return [...LEGACY_MEALS,...extras].sort((a,b)=>a.time.localeCompare(b.time));
 }
 function foodOptions(selected=''){
   const favorites=foodFavorites();
@@ -900,6 +1033,7 @@ function applyMealPreset(mealId,date=today()){
   entry.kcal=Number(preset.kcal)||0;
   entry.note=preset.note||'';
   entry.status='modified';
+  entry.consumed=false;
   day[mealId]=entry;
   saveMealsForDate(date,day);
   render();
@@ -926,9 +1060,13 @@ function addFoodToMeal(mealId,date=today(),forcedFoodId='',forcedQty=null){
     unit:food.unit,
     base:food.base,
     kcal:food.kcal,
+    protein:food.protein??null,
+    carbs:food.carbs??null,
+    fat:food.fat??null,
     qty:forcedQty>0?forcedQty:Number(document.getElementById(`portion-${date}-${mealId}`)?.value)>0?Number(document.getElementById(`portion-${date}-${mealId}`).value):food.defaultQty
   });
-  entry.status='modified';
+  if(entry.status!=='done')entry.status='pending';
+  entry.consumed=entry.status==='done';
   day[mealId]=entry;
   saveMealsForDate(date,day);
   render();
@@ -939,7 +1077,8 @@ function updateFoodQty(mealId,itemId,value,date=today()){
   const item=entry.items.find(value=>value.id===itemId);
   if(!item)return;
   item.qty=Math.max(0,Number(value)||0);
-  entry.status='modified';
+  if(entry.status!=='done')entry.status='pending';
+  entry.consumed=entry.status==='done';
   day[mealId]=entry;
   saveMealsForDate(date,day);
   render();
@@ -948,6 +1087,7 @@ function removeFoodItem(mealId,itemId,date=today()){
   const day=mealsForDate(date);
   const entry=mealEntry(day[mealId]);
   entry.items=entry.items.filter(item=>item.id!==itemId);
+  if(entry.status!=='done')entry.consumed=false;
   if(!entry.items.length&&!entry.note&&!entry.kcal)entry.status='pending';
   day[mealId]=entry;
   saveMealsForDate(date,day);
@@ -969,7 +1109,7 @@ function addCustomFood(mealId,date=today()){
   const kcal=Math.max(0,Number(prompt(`Calories per ${base} ${unit}`,''))||0);
   if(!kcal)return;
   const defaultQty=Math.max(0,Number(prompt(`Usual portion in ${unit}`,String(base)))||base);
-  const food={id:`custom-${Date.now()}`,name:name.trim(),unit,base,kcal,defaultQty};
+  const food={id:`custom-${Date.now()}`,name:name.trim(),unit,base,kcal,protein:null,carbs:null,fat:null,defaultQty};
   const foods={...customFoods(),[food.id]:food};
   ss(`${STORAGE_PREFIX}_foods`,foods);
   stageCloudChange({scope:'foods',key:food.id,value:food});
@@ -1051,6 +1191,8 @@ let weightPeriod=0;
 let runPeriod=0;
 function setRunPeriod(value){runPeriod=value;renderRuns()}
 const openExercises=new Set();
+const openPanels=new Set();
+function panelState(key,open){if(open)openPanels.add(key);else openPanels.delete(key)}
 const openHistory=new Set();
 function setHistoryFilter(value){historyFilter=value;historyLimit=20;renderHistory()}
 function setHistoryPeriod(value){historyPeriod=Number(value);historyLimit=20;renderHistory()}
@@ -1058,7 +1200,7 @@ function inPeriod(date,days){return !days||date>=shiftedDate(today(),-days)}
 function periodButtons(value,handler){return `<div class="period-tabs" aria-label="Period">${[[30,'1 month'],[90,'3 months'],[0,'All']].map(([days,label])=>`<button aria-pressed="${value===days}" onclick="${handler}(${days})">${label}</button>`).join('')}</div>`}
 function setWeightPeriod(value){weightPeriod=value;renderWeight()}
 function exerciseId(item){
-  for(const plan of Object.values(TRAINING_PLAN)){const index=plan.items.indexOf(item);if(index>=0)return plan.itemIds[index]}
+  for(const plan of [...Object.values(TRAINING_PLAN),...Object.values(LEGACY_TRAINING_PLAN)]){const index=plan.items.indexOf(item);if(index>=0)return plan.itemIds[index]}
   const raw=item.split(':')[0].trim().toLowerCase();
   const name=EXERCISE_ALIASES[raw]||raw;
   if(!name.startsWith('bench press'))return name;
@@ -1078,15 +1220,19 @@ function matchingStrength(state,item){
 function sessionPlan(date,state={}){
   if(state.planSnapshot)return state.planSnapshot;
   const day=new Date(`${date}T12:00:00`).getDay();
+  if(date<PLAN_EFFECTIVE_DATE){
+    const old=LEGACY_TRAINING_PLAN[day]||LEGACY_TRAINING_PLAN[0];
+    return {...old,items:old.items.map(item=>{
+      const recorded=matchingStrength(state,item)?.name;
+      if(recorded)return recorded;
+      const block=item.match(/:\s*(\d*x\d+)/)?.[1];
+      return item.split(':')[0].trim()+(block?` : ${block} (target not recorded)`:/warm-up/.test(item)?' : warm-up (target not recorded)':'');
+    })};
+  }
   const plan=TRAINING_PLAN[day]||TRAINING_PLAN[0];
-  if(date>=today())return plan;
-  // Older logs did not store their plan: retain recorded labels and omit unknown targets.
-  return {...plan,items:plan.items.map(item=>{
-    const recorded=matchingStrength(state,item)?.name;
-    if(recorded)return recorded;
-    const block=item.match(/:\s*(\d*x\d+)/)?.[1];
-    return item.split(':')[0].trim()+(block?` : ${block} (target not recorded)`:/warm-up/.test(item)?' : warm-up (target not recorded)':'');
-  })};
+  const saved=profile().workoutOverrides||{};
+  const items=plan.items.map((item,index)=>saved[plan.itemIds[index]]||item);
+  return {...plan,items};
 }
 function switchTab(i){
   activeTab=i;
@@ -1102,6 +1248,7 @@ function switchTab(i){
 // ═══════════════════════════════════════════════════════
 function render(){
   renderNeeded=false;
+  const goalBadge=document.getElementById('weightGoalBadge');if(goalBadge)goalBadge.textContent=`🎯 ${weightGoal()}kg goal`;
   if(activeTab===0)renderToday();
   else if(activeTab===1)renderTraining();
   else if(activeTab===2)renderWeight();
@@ -1117,21 +1264,46 @@ function updateQuickPortion(){
   document.getElementById('quickQty').value=quickQuantity;document.getElementById('quickUnit').textContent=food.unit;
 }
 function renderToday(){
-  const date=today(),day=todayMeals(),meals=mealDefinitions(day);
+  const date=today(),day=todayMeals(),allMeals=mealDefinitions(day),meals=allMeals.filter(meal=>!meal.optional||mealEntry(day[meal.id]).included);
+  const goal=caloriesGoal();
   const total=meals.reduce((sum,meal)=>sum+mealCalories(mealEntry(day[meal.id]),meal),0);
-  const logged=meals.filter(meal=>{const entry=mealEntry(day[meal.id]);return entry.status!=='pending'||entry.items.length||entry.note});
+  const planned=allMeals.filter(meal=>!meal.optional).reduce((sum,meal)=>sum+itemsCalories({items:meal.plannedItems}),0);
+  const consumed=meals.filter(meal=>{const entry=mealEntry(day[meal.id]);return entry.status==='done'||(entry.status==='modified'&&entry.consumed!==false)});
+  const macros=totalMacros(consumed.flatMap(meal=>{const entry=mealEntry(day[meal.id]);return entry.items.length?entry.items:meal.plannedItems}));
+  const todayDay=new Date(`${date}T12:00:00`).getDay(),workout=TRAINING_PLAN[todayDay];
+  const trainingState=training()[date]||{done:{}};
+  const workoutDone=workout.items.filter((_,i)=>trainingState.done?.[i]).length;
+  const nextMeal=meals.find(meal=>meal.time>=new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})&&mealEntry(day[meal.id]).status!=='done');
   const selectedFood=foodById(quickFoodId)||allFoods()[0];
+  const mealsHTML=`<section class="history-card"><h3>Your meals</h3>${meals.map(meal=>renderMealCard(meal,day,date)).join('')}<button class="small-command" onclick="includeOptionalMeal()">${mealEntry(day.m7).included?'Remove optional sandwich':'Add optional sandwich'}</button></section>`;
   document.getElementById('main').innerHTML=`
-    <div class="history-card"><h3>Calories today</h3><div class="timer-clock">${total} <span style="font-size:18px">/ ${TOTAL_KCAL} kcal</span></div>
-      <p class="training-meta">Daily goal: ${TOTAL_KCAL} kcal · ${total<TOTAL_KCAL?`${TOTAL_KCAL-total} kcal remaining`:total===TOTAL_KCAL?'Goal reached':`${total-TOTAL_KCAL} kcal above goal`}</p>
-      <progress aria-label="Daily calorie goal progress" value="${Math.min(total,TOTAL_KCAL)}" max="${TOTAL_KCAL}" style="width:100%;height:12px;accent-color:var(--accent)"></progress>
-    </div>
-    <div class="training-day"><h3>Add food</h3><label>Meal<select class="food-select" id="quickTarget" onchange="quickMealTarget=this.value">${meals.map(m=>`<option value="${escapeAttr(m.id)}" ${quickMealTarget===m.id?'selected':''}>${escapeText(m.name)}</option>`).join('')}</select></label>
+    <div class="history-card"><h3>Nutrition Today</h3><div class="timer-clock">${total} <span style="font-size:18px">/ ${goal} kcal</span></div>
+      <p class="training-meta">Consumed · ${total<goal?`${goal-total} kcal remaining`:total===goal?'Goal reached':`${total-goal} kcal above goal`} · Planned ${planned} kcal</p>
+      <progress aria-label="Calories consumed toward daily goal" value="${Math.min(total,goal)}" max="${goal}" style="width:100%;height:12px;accent-color:var(--accent)"></progress>
+      <details class="quiet-panel" ${openPanels.has('macros')?'open':''} ontoggle="panelState('macros',this.open)"><summary>Nutrient breakdown</summary><div class="macro-row">${[['Protein',macros[0],`${profile().proteinMin}–${profile().proteinMax} g`],['Carbs',macros[1],'consumed'],['Fat',macros[2],'consumed']].map(([label,value,target])=>`<div class="macro-card"><div class="ml">${label}</div><div class="mv">${value===null?'Incomplete':`${value} g`}</div><div class="ml">${target}</div></div>`).join('')}</div></details>
+      ${macros.includes(null)&&consumed.length?'<p class="training-meta">Some saved foods do not have complete macro data, so these totals are partial.</p>':''}
+      <p class="training-meta">${consumed.length}/${meals.filter(m=>!m.optional).length} planned meals consumed · Next: ${nextMeal?`${nextMeal.time} ${escapeText(nextMeal.name)}`:'No more planned meals today'}</p>
+    </div>${mealsHTML}
+    <div class="history-card"><h3>Training Today</h3><strong>${escapeText(workout.name)}</strong><p class="training-meta">${escapeText(workout.type)}</p>${workout.items.length?`<p class="training-meta">${workoutDone}/${workout.items.length} exercises complete</p><button class="small-command" onclick="switchTab(1)">Open training</button>`:`<p class="training-meta">Recovery day. Rest, sleep, and eat enough.</p>`}${todayDay===2?'<button class="small-command" onclick="switchTab(4)">Log Tuesday 5K</button>':''}</div>
+    <details class="history-card"><summary><strong>Nutrition targets</strong></summary><div class="field-grid">${[['calorieGoal','Daily calories (kcal)'],['weightReference','Reference weight (kg)'],['weightGoal','Goal weight (kg)'],['goalWeeks','Target duration (weeks)'],['proteinMin','Protein minimum (g)'],['proteinMax','Protein maximum (g)']].map(([key,label])=>`<label>${label}<input class="exercise-note" type="number" min="1" step="any" value="${profile()[key]}" onchange="updateProfileField('${key}',this.value)"></label>`).join('')}</div><label>Grams per gainer scoop <input class="exercise-note" type="number" min="1" max="300" step="1" value="${profile().gramsPerScoop??''}" placeholder="Weigh one scoop first" onchange="updateProfileField('gramsPerScoop',this.value)"></label><p class="training-meta">The scoop weight is unknown. Gainer calories stay out of totals until you enter its measured weight. A 97 kg goal in 8 weeks is aggressive; some gain may be fat and water.</p></details>
+    <details class="training-day quiet-panel" ${openPanels.has('quick-food')?'open':''} ontoggle="panelState('quick-food',this.open)"><summary>Add food or a favorite</summary><label>Meal<select class="food-select" id="quickTarget" onchange="quickMealTarget=this.value">${meals.map(m=>`<option value="${escapeAttr(m.id)}" ${quickMealTarget===m.id?'selected':''}>${escapeText(m.name)}</option>`).join('')}</select></label>
     <div class="quick-foods">${recentFoodIds(6).map(id=>{const food=foodById(id);return food?`<button class="small-command" data-food="${escapeAttr(id)}" onclick="quickAddFood(this.dataset.food)">${escapeText(food.name)} · ${food.defaultQty} ${escapeText(food.unit)}</button>`:''}).join('')}</div>
     <div class="quick-entry"><label>Food<select class="food-select" id="quickFood" onchange="updateQuickPortion()">${foodOptions(selectedFood.id)}</select></label><label>Portion (<span id="quickUnit">${escapeText(selectedFood.unit)}</span>)<input class="food-qty" id="quickQty" type="number" min="0.1" step="any" value="${quickQuantity??selectedFood.defaultQty}" oninput="quickQuantity=Number(this.value)"></label><button class="small-command" onclick="quickAddFood()">Add food</button></div>
-    ${mealPresetOptions()?`<div class="quick-preset"><label>Favorite meal<select class="food-select" id="quickPreset">${mealPresetOptions()}</select></label><button class="small-command" onclick="quickUsePreset()">Add favorite</button></div>`:''}</div>
-    <div class="training-day"><h3>What did you eat?</h3>${aiMealPanel('quick',date)}</div>
-    ${logged.length?`<div class="history-card"><h3>Today’s meals</h3>${logged.map(meal=>{const entry=mealEntry(day[meal.id]);return `<details class="meal-entry"><summary><strong>${escapeText(meal.name)}</strong> · ${mealCalories(entry,meal)} kcal</summary>${renderHistoryMealEditor(date,meal,entry)}<button class="small-command" data-meal="${escapeAttr(meal.id)}" onclick="saveMealPreset(this.dataset.meal)">Save as favorite</button></details>`}).join('')}</div>`:'<p class="training-meta">Your saved meals will appear here.</p>'}`;
+    ${mealPresetOptions()?`<div class="quick-preset"><label>Favorite meal<select class="food-select" id="quickPreset">${mealPresetOptions()}</select></label><button class="small-command" onclick="quickUsePreset()">Add favorite</button></div>`:''}</details>
+    <details class="training-day quiet-panel" ${openPanels.has('estimate')?'open':''} ontoggle="panelState('estimate',this.open)"><summary>Estimate a meal</summary>${aiMealPanel('quick',date)}</details>
+    `;
+}
+function includeOptionalMeal(){const day=todayMeals(),entry=mealEntry(day.m7);entry.included=!entry.included;day.m7=entry;saveMeals(day);render()}
+function loadMealPlan(mealId,date=today()){
+  const day=mealsForDate(date),entry=mealEntry(day[mealId]),meal=mealDefinitions(day).find(item=>item.id===mealId);
+  if(!meal)return;
+  entry.items=cloneData(meal.plannedItems);entry.status='pending';entry.consumed=false;entry.kcal=0;day[mealId]=entry;saveMealsForDate(date,day);render();
+}
+function chooseDinner(value,date=today()){
+  if(!DINNER_OPTIONS[value])return;
+  const day=mealsForDate(date),entry=mealEntry(day.m5);
+  if(entry.status==='done'&&!confirm('Change the selected dinner and clear its portions?')){render();return}
+  entry.dinnerOption=value;entry.items=[];entry.kcal=0;entry.status='pending';entry.consumed=false;day.m5=entry;saveMealsForDate(date,day);render();
 }
 function quickAddFood(id=''){
   const target=document.getElementById('quickTarget').value;
@@ -1142,19 +1314,22 @@ function quickUsePreset(){
   const preset=mealPresets()[document.getElementById('quickPreset').value];if(!preset)return;
   const target=document.getElementById('quickTarget').value,day=todayMeals(),entry=mealEntry(day[target]);
   if((entry.items.length||entry.kcal)&&!confirm('Replace the existing foods in this meal?'))return;
-  day[target]={...entry,items:cloneData(preset.items||[]),kcal:preset.kcal||0,note:preset.note||'',status:'modified'};
+  day[target]={...entry,items:cloneData(preset.items||[]),kcal:preset.kcal||0,note:preset.note||'',status:'pending',consumed:false};
   saveMeals(day);render();
 }
 
 function renderMealCard(meal,day,date){
   const entry=mealEntry(day[meal.id]);
-  const on=entry.status==='done';
+  const on=entry.status==='done'||(entry.status==='modified'&&entry.consumed!==false);
   const skipped=entry.status==='skipped';
   const modified=entry.status==='modified';
   const actual=mealCalories(entry,meal);
   const favorites=foodFavorites();
   const presetOptions=mealPresetOptions();
-  const itemRows=entry.items.map(item=>`<div class="food-row">
+  const shownItems=entry.items.length?entry.items:(meal.plannedItems||[]);
+  const mealMacros=totalMacros(shownItems);
+  const macroText=(meal.id==='m2'||meal.id==='m6')&&!entry.items.length&&!profile().gramsPerScoop?'Macros unavailable · weigh one scoop':shownItems.length?`P ${mealMacros[0]??'incomplete'}g · C ${mealMacros[1]??'incomplete'}g · F ${mealMacros[2]??'incomplete'}g`:'Add portions to calculate macros';
+  const itemRows=shownItems.map(item=>!entry.items.length?`<div class="food-row"><div class="food-name">${escapeText(item.name)}</div><span>${item.qty} ${escapeText(item.unit)}</span><div class="food-kcal">${itemCalories(item)} kcal</div></div>`:`<div class="food-row">
     <div class="food-name">${escapeText(BASE_FOODS.find(food=>food.id===item.foodId)?.name||item.name)}<div style="font-size:9px;color:var(--muted)">${item.kcal} kcal / ${item.base} ${escapeText(BASE_FOODS.find(food=>food.id===item.foodId)?.unit||item.unit)}</div></div>
     <input aria-label="Food quantity" class="food-qty" type="number" min="0" step="any" value="${item.qty}" onchange="updateFoodQty('${meal.id}','${item.id}',this.value,'${date}')">
     <div class="food-kcal">${itemCalories(item)} kcal</div>
@@ -1162,24 +1337,27 @@ function renderMealCard(meal,day,date){
     <button class="food-icon" title="Delete" onclick="removeFoodItem('${meal.id}','${item.id}','${date}')">×</button>
   </div>`).join('');
   const manualKcal=entry.items.length?'':`<input class="custom-macro" type="number" min="0" step="10" value="${entry.kcal||''}" placeholder="Manual calories if the food is not listed" onchange="setMealKcal('${meal.id}',this.value,'${date}')">`;
-  return `<div class="meal-card${on?' checked':''}${skipped?' skipped':''}${modified?' modified':''}">
-    <div class="meal-check${on?' on':''}${skipped?' skip':''}${modified?' mod':''}">${on?'✓':skipped?'×':modified?'~':''}</div>
-    <div class="meal-body">
-      <div class="meal-time">${meal.time}</div>
-      <div class="meal-name">${meal.emoji} ${escapeText(meal.name)}</div>
-      <div class="meal-desc"><b>Suggested plan:</b> ${escapeText(meal.desc)}</div>
-      <div class="meal-macros"><span class="meal-chip mc-kcal">${meal.kcal?`Goal ${meal.kcal} kcal`:'Extra meal'}</span></div>
-      <div class="meal-actual">${actual} kcal · ${entry.status==='skipped'||entry.status==='pending'?'Not consumed':entry.items.length?(entry.items.some(item=>item.source==='ai')?'AI estimate · reviewed':'Calculated from entered foods'):entry.status==='modified'?'Manually entered':'Estimated from meal plan'}</div>
+  const plannedCalories=itemsCalories({items:meal.plannedItems||[]});
+  const panelKey=`meal:${date}:${meal.id}`;
+  return `<div class="meal-card compact-meal${on?' checked':''}${skipped?' skipped':''}">
+    <input class="completion-check" type="checkbox" aria-label="Mark ${escapeAttr(meal.name)} consumed" ${on?'checked':''} onchange="setMealStatus('${meal.id}',this.checked?'done':'pending','${date}')">
+    <details class="meal-body" ${openPanels.has(panelKey)?'open':''} ontoggle="panelState('${panelKey}',this.open)">
+      <summary class="meal-summary">${meal.image?`<img class="meal-thumb" loading="lazy" src="${escapeAttr(meal.image)}" alt="">`:''}<span class="meal-heading"><span class="meal-time">${meal.time} · ${on?'Consumed':skipped?'Skipped':'Planned'}</span><strong>${escapeText(meal.name)}</strong><span class="meal-time">${on?actual:entry.items.length?itemsCalories(entry):plannedCalories||'—'} kcal</span></span></summary>
+      <div class="meal-expanded">
+      <div class="meal-desc"><b>Ingredients:</b> ${escapeText(meal.desc)}</div>
+      ${meal.id==='m5'?`<label>Dinner option<select class="food-select" onchange="chooseDinner(this.value,'${date}')">${Object.entries(DINNER_OPTIONS).map(([id,opt])=>`<option value="${id}" ${entry.dinnerOption===id?'selected':''}>${escapeText(opt.name)}</option>`).join('')}</select></label>`:''}
+      <div class="meal-macros"><span class="meal-chip mc-kcal">Planned ${plannedCalories||'—'} kcal</span><span class="meal-chip">${macroText}</span></div>
+      <div class="meal-actual">${on?`${actual} kcal consumed`:skipped?'Skipped':entry.items.length?`${itemsCalories(entry)} kcal planned from adjusted portions`:`${plannedCalories?`${plannedCalories} kcal planned`:'Portion not confirmed'} · Not consumed`}</div>
+      ${meal.id==='m2'||meal.id==='m6'?'<p class="training-meta">Gainer: 387 kcal per 100g. Weigh one scoop and enter its grams in Nutrition targets.</p>':''}
       ${aiMealPanel(meal.id,date)}
       <div class="meal-actions">
-        <button class="meal-action done${on?' on':''}" onclick="setMealStatus('${meal.id}','${on?'pending':'done'}','${date}')">Eaten</button>
-        <button class="meal-action mod${modified?' on':''}" onclick="setMealStatus('${meal.id}','${modified?'pending':'modified'}','${date}')">Modified</button>
         <button class="meal-action skip${skipped?' on':''}" onclick="setMealStatus('${meal.id}','${skipped?'pending':'skipped'}','${date}')">Skipped</button>
       </div>
       <input class="meal-note" value="${escapeAttr(entry.note)}" placeholder="Meal notes" onchange="setMealNote('${meal.id}',this.value,'${date}')">
-      <details class="meal-composer" ${entry.items.length?'open':''}>
+      <details class="meal-composer" open>
         <summary><span>Build this meal</span><span>${itemsCalories(entry)} kcal</span></summary>
         <div class="food-list">${itemRows||'<div class="training-meta">No foods added yet.</div>'}</div>
+        ${!entry.items.length&&meal.plannedItems?.length?`<button class="small-command" onclick="loadMealPlan('${meal.id}','${date}')">Edit planned portions</button>`:''}
         <div class="food-add-row">
           <div><input type="search" class="food-select" aria-label="Search foods" placeholder="Search foods…" oninput="filterFoods(this.value,'${date}','${meal.id}')"><select aria-label="Choose food" class="food-select" id="food-select-${date}-${meal.id}">${foodOptions()}</select><label>Portion <input class="food-qty" type="number" min="0.1" step="any" id="portion-${date}-${meal.id}" placeholder="Default portion"></label></div>
           <button class="small-command" onclick="addFoodToMeal('${meal.id}','${date}')">Add</button>
@@ -1197,7 +1375,8 @@ function renderMealCard(meal,day,date){
         </div>
         ${manualKcal}
       </details>
-    </div>
+      </div>
+    </details>
   </div>`;
 }
 
@@ -1209,6 +1388,7 @@ function toggleMeal(id,date=today()){
   const d=mealsForDate(date);
   const entry=mealEntry(d[id]);
   entry.status=entry.status==='done'?'pending':'done';
+  entry.consumed=entry.status==='done';
   d[id]=entry;
   saveMealsForDate(date,d);
   render();
@@ -1218,6 +1398,7 @@ function setMealStatus(id,status,date=today()){
   const d=mealsForDate(date);
   const entry=mealEntry(d[id]);
   entry.status=status;
+  entry.consumed=status==='done';
   d[id]=entry;
   saveMealsForDate(date,d);
   render();
@@ -1227,6 +1408,8 @@ function setMealNote(id,note,date=today()){
   const d=mealsForDate(date);
   const entry=mealEntry(d[id]);
   entry.note=note.trim();
+  if(entry.status!=='done')entry.consumed=false;
+  if(entry.status!=='done')entry.consumed=false;
   if((entry.note||entry.kcal||entry.items.length)&&entry.status==='pending')entry.status='modified';
   if(!entry.note&&!entry.kcal&&!entry.items.length&&entry.status==='modified')entry.status='pending';
   d[id]=entry;
@@ -1238,6 +1421,8 @@ function setMealKcal(id,value,date=today()){
   const d=mealsForDate(date);
   const entry=mealEntry(d[id]);
   entry.kcal=Math.max(0,Number(value)||0);
+  if(entry.status!=='done')entry.consumed=false;
+  if(entry.status!=='done')entry.consumed=false;
   if((entry.note||entry.kcal||entry.items.length)&&entry.status==='pending')entry.status='modified';
   if(!entry.note&&!entry.kcal&&!entry.items.length&&entry.status==='modified')entry.status='pending';
   d[id]=entry;
@@ -1249,11 +1434,11 @@ function setMealKcal(id,value,date=today()){
 function renderWeight(){
   const w=weights();
   const todayStr=today();
+  const weightMetrics=weightSummary(w),goal=weightGoal();
   const weightRows=Object.entries(w)
     .filter(([date,val])=>val&&inPeriod(date,weightPeriod))
     .sort((a,b)=>a[0]>b[0]?1:-1);
   const tableRows=weightRows.map(([date,val],i)=>{
-    const week=WEEKS.find(wk=>wk.date===date)?.week||'Log';
     const prev=i>0?weightRows[i-1][1]:null;
     const delta=val&&prev?val-prev:null;
     const isCurrent=date===todayStr;
@@ -1264,7 +1449,7 @@ function renderWeight(){
       deltaHTML=`<span class="${delta>=0?'delta-pos':'delta-neg'}">${sign}${delta.toFixed(1)}</span>`;
     }
     return `<tr class="${cls}">
-      <td>${week}</td>
+      <td>Log</td>
       <td>${date.slice(8,10)}/${date.slice(5,7)}</td>
       <td>${val?`<b>${val} kg</b>`:'—'}</td>
       <td>${deltaHTML||'—'}</td>
@@ -1278,14 +1463,15 @@ function renderWeight(){
   const chartData=weightRows.map(([date,val])=>({date,val}));
   const chartHTML=buildWeightChart(chartData,w);
   // milestone statuses
-  const lastW=Object.entries(w).sort((a,b)=>a[0]>b[0]?1:-1).filter(([d,v])=>v).pop()?.[1]||WEIGHT_START;
-  const mHTML=MILESTONES.map(m=>{
+  const lastW=weightMetrics.current||weightReference();
+  const milestones=weightMilestones(w);
+  const mHTML=milestones.map(m=>{
     const done=lastW>=m.target;
-    const pct=Math.min(100,Math.round((lastW-WEIGHT_START)/(m.target-WEIGHT_START)*100));
+    const pct=Math.min(100,Math.round((lastW-weightReference())/Math.max(.1,m.target-weightReference())*100));
     return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #111">
       <span style="font-size:16px">${done?'✅':'⏳'}</span>
       <div style="flex:1">
-        <div style="font-size:12px;font-weight:700">${m.month} — ${m.target}kg</div>
+        <div style="font-size:12px;font-weight:700">${m.label} — ${m.target}kg</div>
         <div style="height:4px;background:#1e1e1e;border-radius:2px;margin-top:5px;overflow:hidden">
           <div style="height:100%;width:${pct}%;background:${done?'var(--accent)':'var(--orange)'};border-radius:2px;transition:width .4s"></div>
         </div>
@@ -1303,20 +1489,28 @@ function renderWeight(){
       <button class="weight-save-btn" onclick="doSaveWeight()">Save</button>
     </div>
     <div style="font-size:11px;color:var(--muted);margin-top:8px">Weigh yourself on Monday morning before breakfast, after using the bathroom.</div>
-    <div style="font-size:11px;color:var(--muted);margin-top:4px">2-month goal: 90kg → 97kg, about +0.8kg/week.</div>
+    <div style="font-size:11px;color:var(--muted);margin-top:4px">Target: ${weightReference()} → ${goal}kg in about ${profile().goalWeeks} weeks. This is an aggressive pace; some gain may be fat and water.</div>
+  </div>
+  <div class="history-summary">
+    <div class="history-stat"><strong>${weightMetrics.current?`${weightMetrics.current} kg`:'—'}</strong><span>Current weight</span></div>
+    <div class="history-stat"><strong>${weightMetrics.current?`${Math.max(0,goal-weightMetrics.current).toFixed(1)} kg`:'—'}</strong><span>Remaining to goal</span></div>
+    <div class="history-stat"><strong>${weightMetrics.progress===null?'—':`${weightMetrics.progress}%`}</strong><span>Progress to goal</span></div>
+    <div class="history-stat"><strong>${weightMetrics.sevenDay===null?'—':`${weightMetrics.sevenDay.toFixed(2)} kg`}</strong><span>7-day average</span></div>
+    <div class="history-stat"><strong>${weightMetrics.weeklyChange===null?'—':`${weightMetrics.weeklyChange>0?'+':''}${weightMetrics.weeklyChange.toFixed(2)} kg`}</strong><span>Weekly change</span></div>
+    <div class="history-stat"><strong>${weightMetrics.estimatedDate||'—'}</strong><span>Estimated goal date</span></div>
   </div>
   <div class="chart-card">
-    <h4>Weight progress towards ${WEIGHT_GOAL}kg</h4>
+    <h4>Weight progress towards ${profile().weightGoal}kg</h4>
     ${periodButtons(weightPeriod,'setWeightPeriod')}
     ${chartHTML}
   </div>
   <div class="chart-card">
-    <h4>2-month milestones</h4>
+    <h4>Goal checkpoints · ${profile().goalWeeks} weeks</h4>
     ${mHTML}
   </div>
   <div class="chart-card table-wrap">
     <table class="weight-table">
-      <thead><tr><th>Week</th><th>Date</th><th>Weight</th><th>Δ</th><th></th></tr></thead>
+      <thead><tr><th>Entry</th><th>Date</th><th>Weight</th><th>Δ</th><th></th></tr></thead>
       <tbody>${tableRows}</tbody>
     </table>
   </div>`;
@@ -1326,7 +1520,7 @@ async function doSaveWeight(){
   const val=parseFloat(document.getElementById('weightIn').value);
   if(!val||val<50||val>200){showToast('Enter a valid weight','error');return}
   const date=document.getElementById('weightDate')?.value||today();
-  if(!validRunDate(date)){showToast('Choose a valid measurement date.','error');return}
+  if(!validCalendarDate(date)||date>today()){showToast('Choose a valid measurement date.','error');return}
   saveWeight(date,val);
   render();
   const saved=await saveAllChanges();
@@ -1363,27 +1557,21 @@ function buildWeightChart(pts,w){
   w=Object.fromEntries(pts.map(({date,val})=>[date,val]));
   const allDates=Object.keys(w).sort();
   const values=Object.values(w).filter(Boolean);
-  const minW=Math.floor(Math.min(88,WEIGHT_START,...values))-1;
-  const maxW=Math.ceil(Math.max(98,WEIGHT_GOAL,...values))+1;
+  const lastDate=allDates.at(-1),startWeight=w[lastDate]||weightReference(),goal=weightGoal();
+  const goalEnd=new Date(`${lastDate}T12:00:00`);goalEnd.setDate(goalEnd.getDate()+7*profile().goalWeeks);const goalEndStr=goalEnd.toISOString().slice(0,10);
+  const chartDates=[...new Set([...allDates,goalEndStr])].sort();
+  const minW=Math.floor(Math.min(88,weightReference(),startWeight,...values))-1;
+  const maxW=Math.ceil(Math.max(98,goal,startWeight,...values))+1;
   const svgW=360;
   const svgH=280;
   const pad={l:36,r:28,t:32,b:48};
   const cw=svgW-pad.l-pad.r;
   const ch=svgH-pad.t-pad.b;
-  function px(i){return dateChartX(allDates[i],allDates,pad.l,cw)}
+  function px(i){return dateChartX(allDates[i],chartDates,pad.l,cw)}
+  function pxDate(date){return dateChartX(date,chartDates,pad.l,cw)}
   function py(v){return pad.t+ch-(v-minW)/(maxW-minW)*ch}
-  // target line
-  const tStart=py(WEIGHT_START);
-  const tEnd=py(WEIGHT_GOAL);
-  const targetLine=`<line x1="${pad.l}" y1="${tEnd}" x2="${pad.l+cw}" y2="${tEnd}" stroke="var(--orange)" stroke-width="1" stroke-dasharray="6,6" opacity=".65"/>`;
-  // milestone lines
-  const mLines=MILESTONES.filter(m=>m.date>=allDates[0]&&m.date<=allDates.at(-1)).map(m=>{
-    const mi=allDates.findIndex(d=>d>=m.date);
-    if(mi<0)return'';
-    const x=px(mi),y=py(m.target);
-    return `<circle cx="${x}" cy="${y}" r="4" fill="#f97316" opacity=".85"/>
-    <text x="${x+7}" y="${y-7}" font-size="10" fill="#f97316" opacity=".9">${m.target}kg</text>`;
-  }).join('');
+  const targetLine=`<polyline points="${pxDate(lastDate)},${py(startWeight)} ${pxDate(goalEndStr)},${py(goal)}" fill="none" stroke="var(--orange)" stroke-width="2" stroke-dasharray="6 5"/>`;
+  const mLines=weightMilestones(weights).map(m=>`<circle cx="${pxDate(m.date)}" cy="${py(m.target)}" r="3.5" fill="var(--orange)"/><text x="${pxDate(m.date)+5}" y="${py(m.target)-6}" font-size="9" fill="var(--orange)">${m.target}</text>`).join('');
   // actual data line
   let linePath='',dotHTML='';
   const dataPoints=allDates.map((d,i)=>({i,v:w[d]||null})).filter(p=>p.v);
@@ -1391,24 +1579,26 @@ function buildWeightChart(pts,w){
     linePath=`<polyline points="${dataPoints.map(p=>`${px(p.i)},${py(p.v)}`).join(' ')}" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`;
   }
   dotHTML=dataPoints.map((p,i)=>`${chartPoint(px(p.i),py(p.v),`${allDates[p.i]}: ${p.v} kg`)}${i===dataPoints.length-1?`<text x="${px(p.i)}" y="${py(p.v)-12}" text-anchor="end" font-size="12" fill="var(--accent)">${p.v}</text>`:''}`).join('');
+  const averagePoints=allDates.map(date=>({date,value:rollingWeightAverage(w,date)})).filter(p=>p.value>0);
+  const averageLine=averagePoints.length>1?`<polyline points="${averagePoints.map(p=>`${pxDate(p.date)},${py(p.value)}`).join(' ')}" fill="none" stroke="var(--blue)" stroke-width="2"/>`:'';
   // y axis
   const yStep=Math.max(1,Math.ceil((maxW-minW)/5));
   const yValues=[];
   for(let v=minW;v<=maxW;v+=yStep)yValues.push(v);
-  if(!yValues.includes(WEIGHT_GOAL))yValues.push(WEIGHT_GOAL);
+  if(!yValues.includes(goal))yValues.push(goal);
   const yLabels=yValues.sort((a,b)=>a-b).map(v=>`<text x="${pad.l-8}" y="${py(v)+4}" text-anchor="end" font-size="10" fill="var(--muted)">${v}</text><line x1="${pad.l}" y1="${py(v)}" x2="${pad.l+cw}" y2="${py(v)}" stroke="var(--border)" stroke-width="1"/>`).join('');
   const xLabels=allDates.filter((_,i)=>i===0||i===allDates.length-1).map(d=>{const i=allDates.indexOf(d);return`<text x="${px(i)}" y="${svgH-16}" text-anchor="${i===0?'start':'end'}" font-size="12" fill="var(--muted)">${d.slice(8)}/${d.slice(5,7)}</text>`}).join('');
   return`<div class="chart-wrap">
   <svg role="img" aria-label="Weight history in kilograms" viewBox="0 0 ${svgW} ${svgH}" xmlns="http://www.w3.org/2000/svg">
-    ${yLabels}${xLabels}${targetLine}${mLines}${linePath}${dotHTML}
+    ${yLabels}${xLabels}${targetLine}${mLines}${averageLine}${linePath}${dotHTML}
     <line x1="${pad.l}" y1="${pad.t}" x2="${pad.l}" y2="${pad.t+ch}" stroke="var(--border)" stroke-width="1"/>
     <line x1="${pad.l}" y1="${pad.t+ch}" x2="${pad.l+cw}" y2="${pad.t+ch}" stroke="var(--border)" stroke-width="1"/>
-    <text x="${pad.l+cw}" y="${Math.max(12,tEnd-8)}" text-anchor="end" font-size="10" fill="#f97316" font-weight="800">${WEIGHT_GOAL}kg goal</text>
+    <text x="${pad.l+cw}" y="${Math.max(12,py(goal)-8)}" text-anchor="end" font-size="10" fill="var(--orange)" font-weight="800">${goal}kg goal</text>
   </svg>
   <div style="font-size:11px;color:var(--muted);margin-top:8px;display:flex;gap:16px;flex-wrap:wrap">
     <span style="color:var(--accent)">● Actual weight</span>
-    <span style="color:var(--orange)">- - Goal</span>
-    <span style="color:var(--orange)">● Milestones</span>
+    <span style="color:var(--blue)">— 7-day average</span>
+    <span style="color:var(--orange)">- - Goal trajectory</span>
   </div>
   </div>`;
 }
@@ -1420,27 +1610,15 @@ function renderTraining(){
   const all=training();
   const state=all[date]||{done:{},notes:{},comment:''};
   const plan=sessionPlan(date,state);
+  const recoveryDay=plan.items.length===0;
+  if(recoveryDay){
+    document.getElementById('main').innerHTML=`<div class="training-day recovery-card"><h3>🌿 ${day===4?'Recovery Day':'Sunday — Rest'}</h3><p>${day===4?'Complete rest today: no weights, running or intervals.':'Rest, or choose gentle mobility if it feels good.'}</p><p>Recovery is part of the plan. Prioritize sleep, a calm evening and enough food to support your training.</p><label>Workout date <input class="exercise-note" type="date" value="${date}" onchange="selectTrainingDate(this.value)"></label><div class="day-actions"><button class="small-command" onclick="moveTrainingDay(-1)">← Previous</button><button class="small-command" onclick="selectTrainingDate(today())">Back to today</button><button class="small-command" onclick="moveTrainingDay(1)">Next →</button></div></div>${weeklyPlanCard(day)}`;
+    return;
+  }
   state.notes=state.notes||{};
   const doneCount=plan.items.filter((_,i)=>state.done&&state.done[i]).length;
-  const weekHTML=[1,2,3,4,5,6,0].map(dayNum=>{
-    const p=TRAINING_PLAN[dayNum];
-    const isToday=dayNum===day;
-    const doneForToday=isToday?doneCount:null;
-    const progress=isToday?`${doneForToday}/${p.items.length}`:`${p.items.length} blocks`;
-    const details=p.items.map(item=>`<div class="week-exercise">
-      <div>${item}</div>
-    </div>`).join('');
-    return `<details class="week-day${isToday?' today':''}" ${isToday?'open':''}>
-      <summary>
-      <div class="week-day-top">
-        <div class="week-day-name">${p.name}</div>
-        <div class="week-day-progress">${progress} · expand</div>
-      </div>
-      <div class="week-day-type">${p.type}</div>
-      </summary>
-      <div class="week-exercises"><button class="small-command" onclick="openWeekDay(${dayNum})">Open ${p.name} workout</button>${details}</div>
-    </details>`;
-  }).join('');
+  const weekHTML=weeklyPlanCard(day);
+  const legacyFriday=day===5&&plan.type.toLowerCase().includes('circuit');
   const exerciseHTML=plan.items.map((item,i)=>{
     const on=!!(state.done&&state.done[i]);
     const [name,...target]=item.split(':');
@@ -1451,37 +1629,62 @@ function renderTraining(){
         <input type="checkbox" aria-label="Complete ${escapeAttr(item)}" ${on?'checked':''} onchange="toggleExercise(${i})">
         <div class="exercise-text"><strong>${escapeText(name)}</strong><span class="exercise-target">${escapeText(target.join(':'))}</span>${recorded?`<span class="exercise-target">Logged: ${escapeText(recorded.sets??'—')} × ${escapeText(recorded.reps??'—')} · ${escapeText(recorded.kg??'—')} kg</span>`:''}</div>
       </div>
-      ${day===5?fridayRoundTracker(state,i):exerciseSets(item,state,i)}
-      ${[1,3,4,5].includes(day)&&!/(plank|stretch|warm-up)/i.test(item)?strengthFields(item,state):''}
-      <details class="exercise-details" ${openExercises.has(key)?'open':''} ontoggle="this.open?openExercises.add('${key}'):openExercises.delete('${key}')"><summary>Notes & video</summary>
+      <details class="exercise-details" ${openExercises.has(key)?'open':''} ontoggle="this.open?openExercises.add('${key}'):openExercises.delete('${key}')"><summary>Sets, weight & notes</summary>
+      ${legacyFriday?fridayRoundTracker(state,i):exerciseSets(item,state,i)}
+      <button class="small-command" onclick="editTrainingTarget(${day},${i})">Edit target</button>
+      ${[1,3,5,6].includes(day)&&!/(plank|stretch|warm-up|bird dog|dead bug)/i.test(item)?strengthFields(item,state):''}
       <input aria-label="Exercise notes" class="exercise-note" value="${escapeAttr(state.notes[i]||'')}" placeholder="Weight, reps, difficulty, how it felt..." onclick="event.stopPropagation()" onchange="setExerciseComment(${i},this.value)">
       ${exerciseVideo(item)}</details>
     </div>`;
   }).join('');
   document.getElementById('main').innerHTML=`
   <div class="training-day">
-    <h3>🏋️ ${escapeText(plan.name)}</h3>
-    <label>Workout date <input class="exercise-note" type="date" value="${date}" onchange="selectTrainingDate(this.value)"></label>
-    <div class="day-actions"><button class="small-command" onclick="moveTrainingDay(-1)">← Previous</button><button class="small-command" onclick="selectTrainingDate(today())">Back to today</button><button class="small-command" onclick="moveTrainingDay(1)">Next →</button></div>
+    <div class="session-toolbar"><button class="small-command" title="Previous day" aria-label="Previous day" onclick="moveTrainingDay(-1)">←</button><input aria-label="Workout date" class="exercise-note" type="date" value="${date}" onchange="selectTrainingDate(this.value)"><button class="small-command" title="Next day" aria-label="Next day" onclick="moveTrainingDay(1)">→</button>${date!==today()?'<button class="small-command" onclick="selectTrainingDate(today())">Today</button>':''}</div>
+    <h3 class="session-title">${escapeText(plan.name)}</h3>
+    <div class="session-progress"><span>${doneCount} of ${plan.items.length} complete</span><progress aria-label="Workout completion" value="${doneCount}" max="${plan.items.length}"></progress></div>
     ${date>today()?'<p class="training-meta">Future workout preview. Logging becomes available on the day.</p>':''}
     <fieldset ${date>today()?'disabled':''}>
-    <div class="training-meta">${escapeText(plan.type)} · ${doneCount}/${plan.items.length} exercises · ${date}</div>
-    ${day===6?intervalTimerHTML():''}
+    <p class="session-caption">${escapeText(plan.type)}</p>
     ${exerciseHTML}
     ${day===2?runForm(date):''}
     </fieldset>
   </div>
+  <details class="quiet-panel" ${openPanels.has('session-review')?'open':''} ontoggle="panelState('session-review',this.open)"><summary>Session check-in & notes${state.comment||state.recovery?.fatigue?' · Recorded':''}</summary>
+  ${renderSessionFeelings(state,date)}
   <div class="training-day">
-    <h3>📝 Workout notes</h3>
-    <div class="training-meta">Record actual weights, how you felt, pain, energy, missed reps, or next targets.</div>
+    <h3>Workout notes</h3>
     <textarea ${date>today()?'disabled':''} class="session-comment" placeholder="Example: Bench 110kg for 2 sets; last set was hard. Right shoulder felt sensitive. Stay at 110kg next time." onchange="setTrainingComment(this.value)">${escapeText(state.comment||'')}</textarea>
   </div>
-  <div class="training-day">
-    <h3>📆 Weekly plan</h3>
-    <div class="training-meta">Your weekly workout schedule.</div>
-    <div class="week-grid">${weekHTML}</div>
-  </div>`;
+  </details>
+  ${weekHTML}`;
 }
+
+function weeklyPlanCard(todayDay){
+  const cards=[1,2,3,4,5,6,0].map(dayNum=>{
+    const p=TRAINING_PLAN[dayNum],isToday=dayNum===todayDay,rest=p.items.length===0;
+    const details=rest?`<div class="week-exercise">${dayNum===4?'Complete rest. No workout or run.':'Rest or optional gentle mobility.'}</div>`:p.items.map((item,i)=>`<div class="week-exercise"><span>${escapeText(item)}</span><button class="small-command" onclick="editTrainingTarget(${dayNum},${i})" aria-label="Edit ${escapeAttr(item)}">Edit</button></div>`).join('');
+    const completed=training()[today()]?.done||{};
+    const progress=rest?'Recovery':isToday?`${Object.values(completed).filter(Boolean).length}/${p.items.length} complete`:`${p.items.length} exercises`;
+    return `<details class="week-day${isToday?' today':''}" ${isToday?'open':''}><summary><div class="week-day-top"><div class="week-day-name">${escapeText(p.name)}</div><div class="week-day-progress">${progress} · expand</div></div><div class="week-day-type">${escapeText(p.type)}</div></summary><div class="week-exercises">${!rest?`<button class="small-command" onclick="openWeekDay(${dayNum})">Open ${escapeText(p.name)} workout</button>`:''}${details}</div></details>`;
+  }).join('');
+  return `<details class="training-day quiet-panel" ${openPanels.has('weekly-plan')?'open':''} ontoggle="panelState('weekly-plan',this.open)"><summary>Weekly plan <span class="session-caption">4 strength · 1 run · 2 rest</span></summary><p class="training-meta">Progress gradually: add reps within the range first, then increase the load slightly when every set is controlled. Keep 2–3 reps in reserve.</p><div class="week-grid">${cards}</div></details>`;
+}
+
+function editTrainingTarget(day,index){
+  const plan=TRAINING_PLAN[day],id=plan?.itemIds?.[index];if(!id)return;
+  const old=profile().workoutOverrides?.[id]||plan.items[index];
+  const value=prompt('Edit exercise, sets, reps or target',old);
+  if(value===null||!value.trim())return;
+  const next={...profile(),workoutOverrides:{...profile().workoutOverrides,[id]:value.trim()}};
+  ss(`${STORAGE_PREFIX}_profile`,next);stageCloudChange({scope:'profile',key:'settings',value:next});render();
+}
+function renderSessionFeelings(state,date){
+  const fatigue=state.recovery?.fatigue||'',back=state.recovery?.back||'';
+  const advice=fatigue==='High'?'<p class="training-meta">High fatigue: consider removing one set per exercise or lowering the load slightly today.</p>':'';
+  const backAdvice=back==='Significant'?'<p class="training-meta">Avoid movements that cause pain. Consider asking a qualified health professional for advice, especially if the discomfort persists or worsens. This is not a diagnosis.</p>':back==='Moderate'?'<p class="training-meta">Keep the session comfortable and avoid painful movements.</p>':'';
+  return `<div class="training-day"><h3>How do you feel today?</h3><div class="field-grid"><label>Fatigue<select class="exercise-note" onchange="saveRecovery('fatigue',this.value,'${date}')"><option value="">Not recorded</option>${['Low','Moderate','High'].map(v=>`<option ${fatigue===v?'selected':''}>${v}</option>`).join('')}</select></label><label>Lower back discomfort<select class="exercise-note" onchange="saveRecovery('back',this.value,'${date}')"><option value="">Not recorded</option>${['None','Mild','Moderate','Significant'].map(v=>`<option ${back===v?'selected':''}>${v}</option>`).join('')}</select></label></div>${advice}${backAdvice}</div>`;
+}
+function saveRecovery(field,value,date){const all=training(),state=all[date]||{done:{},notes:{}};state.recovery={...state.recovery,[field]:value};all[date]=state;saveTraining(all,date);renderTraining()}
 
 function exerciseVideo(item){
   const id=exerciseVideoId(item);
@@ -1570,7 +1773,8 @@ function toggleExercise(idx){
   const state=all[date]||{done:{},notes:{},comment:''};
   state.done=state.done||{};
   state.done[idx]=!state.done[idx];
-  if(new Date(`${date}T12:00:00`).getDay()===5&&idx<4){
+  const currentPlan=sessionPlan(date,state),legacyFriday=new Date(`${date}T12:00:00`).getDay()===5&&currentPlan.type.toLowerCase().includes('circuit');
+  if(legacyFriday&&idx<4){
     state.fridayRounds={...state.fridayRounds,[idx]:Object.fromEntries(Array.from({length:fridayRoundCount(idx)},(_,i)=>[i,state.done[idx]]))};
   }else{
     const item=sessionPlan(date,state).items[idx];
@@ -1603,8 +1807,9 @@ function setTrainingComment(comment){
 
 
 function validRunDate(date){
-  return /^\d{4}-\d{2}-\d{2}$/.test(date)&&!Number.isNaN(new Date(`${date}T12:00:00`).getTime())&&new Date(`${date}T12:00:00`).toISOString().slice(0,10)===date&&date<=today();
+  return /^\d{4}-\d{2}-\d{2}$/.test(date)&&!Number.isNaN(new Date(`${date}T12:00:00`).getTime())&&new Date(`${date}T12:00:00`).toISOString().slice(0,10)===date&&date<=today()&&new Date(`${date}T12:00:00`).getDay()===2;
 }
+function mostRecentTuesday(date){let d=new Date(`${date}T12:00:00`);while(d.getDay()!==2)d.setDate(d.getDate()-1);return d.toISOString().slice(0,10)}
 function selectTrainingDate(date){
   if(!validCalendarDate(date)){showToast('Choose a valid date.','error');return}
   trainingDate=date;
@@ -1616,10 +1821,11 @@ function parseRunTime(value){
 }
 function formatRunTime(seconds){return `${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,'0')}`}
 function runForm(date,withDate=false){
-  const seconds=training()[date]?.runSeconds;
+  const runDate=withDate?mostRecentTuesday(date):date;
+  const seconds=training()[runDate]?.runSeconds;
   return `<form onsubmit="event.preventDefault();saveRunTime(${withDate?"document.getElementById('runDate').value":`'${date}'`},document.getElementById('runTime').value)">
-    ${withDate?`<label for="runDate">Run date</label><input class="exercise-note" id="runDate" type="date" max="${today()}" value="${date}" required onchange="loadRunTime(this.value)">`:''}
-    <label for="runDistance">Distance (km)</label><input class="exercise-note" id="runDistance" type="number" min="0.01" max="200" step="0.01" value="${training()[date]?.runDistanceKm||5}" required><label for="runTime">Finish time (minutes:seconds)</label>
+    ${withDate?`<label for="runDate">Tuesday run date</label><input class="exercise-note" id="runDate" type="date" max="${today()}" value="${runDate}" required onchange="loadRunTime(this.value)">`:''}
+    <label for="runDistance">Distance (km)</label><input class="exercise-note" id="runDistance" type="number" min="4.95" max="5.05" step="0.01" value="${training()[runDate]?.runDistanceKm||5}" required><label for="runTime">Finish time (minutes:seconds)</label>
     <input class="exercise-note" id="runTime" type="text" inputmode="text" placeholder="25:30" pattern="[0-9]{1,3}:[0-5][0-9]" value="${seconds?formatRunTime(seconds):''}" required>
     <div class="field-grid"><label>Route (optional)<input class="exercise-note" id="runRoute" value="${escapeAttr(training()[date]?.runDetails?.route||'')}" maxlength="200"></label><label>Effort (optional)<select class="exercise-note" id="runEffort"><option value="">Not recorded</option>${['Easy','Moderate','Hard','All-out'].map(v=>`<option ${training()[date]?.runDetails?.effort===v?'selected':''}>${v}</option>`).join('')}</select></label><label>Surface (optional)<select class="exercise-note" id="runSurface"><option value="">Not recorded</option>${['Outdoor','Treadmill'].map(v=>`<option ${training()[date]?.runDetails?.surface===v?'selected':''}>${v}</option>`).join('')}</select></label></div>
     <button class="small-command" type="submit">Save run time</button>
@@ -1634,11 +1840,11 @@ function loadRunTime(date){
 }
 function saveRunTime(date,value){
   const seconds=parseRunTime(value);
-  if(!validRunDate(date)||seconds===null){showToast('Enter a valid date and a time such as 25:30.','error');return false}
+  if(!validRunDate(date)||seconds===null){showToast('Choose Tuesday and enter a time such as 25:30.','error');return false}
   const all=training();
   const state=all[date]||{done:{},notes:{},comment:''};
   const distance=Number(document.getElementById('runDistance')?.value||state.runDistanceKm||5);
-  if(!Number.isFinite(distance)||distance<=0||distance>200){showToast('Enter a valid distance.','error');return false}
+  if(!Number.isFinite(distance)||distance<4.95||distance>5.05){showToast('The scheduled run is 5 km.','error');return false}
   if((state.runDistanceKm||5)!==distance||state.runSeconds!==seconds){if(state.runDetails)delete state.runDetails.recordedPace;}
   state.runDistanceKm=distance;
   state.runSeconds=seconds;
@@ -1692,7 +1898,7 @@ function renderRuns(){
 
 // ── HISTORY ──────────────────────────────────────────
 function buildCaloriesChart(points){
-  return trendChart(points.map(p=>({date:p.date,value:p.kcal})), 'Daily calories', TOTAL_KCAL);
+  return trendChart(points.map(p=>({date:p.date,value:p.kcal})), 'Daily calories', caloriesGoal());
 }
 function trendChart(points,label,goal=null){
   const rows=points.slice().sort((a,b)=>a.date.localeCompare(b.date));
@@ -1722,11 +1928,11 @@ function sevenDayCalorieStats(allMeals){
     const day=allMeals[date]||{};
     let dayKcal=0;
     let hasCalorieLog=false;
-    mealDefinitions(day).forEach(meal=>{
+    mealDefinitionsForDate(day,date).forEach(meal=>{
       const entry=mealEntry(day[meal.id]);
       if(entry.status!=='pending'||entry.items.length||entry.kcal>0){
         hasCalorieLog=true;
-        dayKcal+=mealCalories(entry,meal);
+        dayKcal+=mealCaloriesForDate(entry,meal,date);
       }
     });
     if(hasCalorieLog){
@@ -1735,14 +1941,14 @@ function sevenDayCalorieStats(allMeals){
     }
   }
   const average=tracked?Math.round(total/tracked):0;
-  return {average,tracked,total,delta:average-TOTAL_KCAL};
+  return {average,tracked,total,delta:average-caloriesGoal()};
 }
 
 function renderHistory(){
   const allMeals=readScope('meals',collectLocalMeals);
   const allTraining=training();
   const weekly=sevenDayCalorieStats(allMeals);
-  const weeklyPct=weekly.tracked?Math.min(100,Math.round(weekly.average/TOTAL_KCAL*100)):0;
+  const weeklyPct=weekly.tracked?Math.min(100,Math.round(weekly.average/caloriesGoal()*100)):0;
   const weeklyDeltaText=!weekly.tracked
     ? 'No calorie entries yet'
     : Math.abs(weekly.delta)<=200
@@ -1755,11 +1961,11 @@ function renderHistory(){
   const daysHTML=dates.map(date=>{
     const dayMeals=(historyFilter==='all'||historyFilter==='meals')?(allMeals[date]||{}):{};
     let dayKcal=0,dayDone=0,daySkipped=0,dayModified=0;
-    const mealLines=mealDefinitions(dayMeals).map(meal=>{
+    const mealLines=mealDefinitionsForDate(dayMeals,date).map(meal=>{
       const entry=mealEntry(dayMeals[meal.id]);
       const hasMealLog=entry.status!=='pending'||entry.note||entry.kcal>0||entry.items.length;
       if(!hasMealLog)return'';
-      const kcalValue=mealCalories(entry,meal);
+      const kcalValue=mealCaloriesForDate(entry,meal,date);
       totalKcal+=kcalValue;
       dayKcal+=kcalValue;
       if(entry.status==='done'){
@@ -1998,21 +2204,6 @@ function filterFoods(query,date,meal){
   const foods=allFoods().filter(food=>food.name.toLowerCase().includes(query.trim().toLowerCase()));
   select.innerHTML=foods.length?foods.map(food=>`<option value="${escapeAttr(food.id)}">${escapeText(food.name)} · ${food.kcal} kcal/${food.base} ${escapeText(food.unit)}</option>`).join(''):'<option value="">No matching foods</option>';
 }
-const INTERVAL_STAGES=[{name:'Warm-up',seconds:480,speed:'8–9 km/h'},...Array.from({length:6},(_,i)=>[{name:`Fast interval ${i+1}/6`,seconds:120,speed:'12 km/h'},...(i<5?[{name:`Recovery ${i+1}/5`,seconds:90,speed:'8–9 km/h'}]:[])]).flat(),{name:'Cool-down',seconds:300,speed:'Easy pace'}];
-const INTERVAL_TOTAL=INTERVAL_STAGES.reduce((sum,s)=>sum+s.seconds,0);
-let intervalState=ls(`${STORAGE_PREFIX}_interval_timer`)||{elapsed:0,started:null,sound:false};
-let intervalAudio=null,lastTimerStage=-1;
-function intervalElapsed(now=Date.now()){return Math.min(INTERVAL_TOTAL,intervalState.elapsed+(intervalState.started===null?0:(now-intervalState.started)/1000))}
-function intervalPosition(elapsed){let offset=0;for(let i=0;i<INTERVAL_STAGES.length;i++){const stage=INTERVAL_STAGES[i];if(elapsed<offset+stage.seconds)return {index:i,...stage,remaining:Math.ceil(offset+stage.seconds-elapsed)};offset+=stage.seconds}return {index:INTERVAL_STAGES.length,name:'Session complete',speed:'32:30 completed',remaining:0}}
-function persistInterval(){ss(`${STORAGE_PREFIX}_interval_timer`,intervalState)}
-function intervalTimerHTML(){const phase=intervalPosition(intervalElapsed());return `<div class="history-card"><h3>Saturday interval timer</h3><p class="training-meta">32:30 total · 6 fast intervals · 5 recoveries. Keep this page open for cues.</p><div id="intervalPhase" role="status">${phase.name} · ${phase.speed}</div><div class="timer-clock" id="intervalClock">${formatRunTime(phase.remaining)}</div><div class="day-actions"><button class="small-command" id="intervalToggle" onclick="toggleInterval()">${intervalState.started===null?'Start / Resume':'Pause'}</button><button class="small-command" onclick="resetInterval()">Reset</button><label><input type="checkbox" ${intervalState.sound?'checked':''} onchange="setIntervalSound(this.checked)"> Sound cues</label></div></div>`}
-function setIntervalSound(value){intervalState.sound=value;persistInterval();if(value){const Audio=window.AudioContext||window.webkitAudioContext;if(Audio&&!intervalAudio)intervalAudio=new Audio();intervalAudio?.resume().catch(()=>{});intervalCue()}}
-function intervalCue(){if(!intervalState.sound||!intervalAudio)return;try{const oscillator=intervalAudio.createOscillator(),gain=intervalAudio.createGain();gain.gain.value=.12;oscillator.connect(gain);gain.connect(intervalAudio.destination);oscillator.start();oscillator.stop(intervalAudio.currentTime+.2)}catch{}}
-function toggleInterval(){if(intervalState.started!==null){intervalState.elapsed=intervalElapsed();intervalState.started=null}else{if(intervalState.elapsed>=INTERVAL_TOTAL)intervalState.elapsed=0;intervalState.started=Date.now();if(intervalState.sound)setIntervalSound(true)}persistInterval();updateInterval()}
-function resetInterval(){if(!confirm('Reset the interval timer?'))return;intervalState={elapsed:0,started:null,sound:intervalState.sound};lastTimerStage=-1;persistInterval();updateInterval()}
-function updateInterval(){const elapsed=intervalElapsed(),phase=intervalPosition(elapsed);if(phase.index!==lastTimerStage){if(lastTimerStage>=0&&intervalState.started!==null)intervalCue();lastTimerStage=phase.index}if(elapsed>=INTERVAL_TOTAL&&intervalState.started!==null){intervalState.elapsed=INTERVAL_TOTAL;intervalState.started=null;persistInterval()}const clock=document.getElementById('intervalClock'),label=document.getElementById('intervalPhase'),button=document.getElementById('intervalToggle');if(clock)clock.textContent=formatRunTime(phase.remaining);if(label)label.textContent=`${phase.name} · ${phase.speed}`;if(button)button.textContent=intervalState.started===null?'Start / Resume':'Pause'}
-setInterval(updateInterval,250);
-
 const aiMeals={};
 
 async function prepareAiPhoto(file){
@@ -2089,7 +2280,7 @@ function saveAiMeal(date,id){
   if(id==='quick'){entry.extra=true;entry.name=draft.result.items.map(item=>item.name).join(', ').slice(0,100);entry.time=new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});}
   if((entry.items.length||entry.kcal||entry.status==='done')&&!confirm('Replace this meal’s existing foods and calories with the reviewed estimate?'))return;
   entry.items=draft.result.items.map((item,i)=>({id:`ai-${Date.now()}-${i}`,name:item.name,unit:'g',base:100,kcal:item.kcalPer100g,qty:item.grams,source:'ai'}));
-  entry.status='modified';entry.kcal=0;
+  entry.status='modified';entry.consumed=false;entry.kcal=0;
   entry.note=[entry.note,`AI estimate: ${draft.description||'Meal photo'}${draft.image?' (photo supplied)':''}`,draft.result.assumptions].filter(Boolean).join('\n');
   day[targetId]=entry;saveMealsForDate(date,day);delete aiMeals[key];render();showToast('Reviewed estimate added to your meal.');
 }
