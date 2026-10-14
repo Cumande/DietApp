@@ -477,7 +477,44 @@ const NEW_PLAN_ITEM_IDS={
   0:[]
 };
 for(const [day,ids] of Object.entries(NEW_PLAN_ITEM_IDS))TRAINING_PLAN[day].itemIds=ids;
+// Preserve identities for sessions saved before target loads were restored.
+const ORIGINAL_PLAN_LABEL_IDS=Object.fromEntries(Object.values(TRAINING_PLAN).flatMap(plan=>plan.items.map((item,i)=>[item,plan.itemIds[i]])));
+const RESTORED_TARGET_LOADS={
+  'upper-a-bench':'load to define (previous wide-grip targets: 90kg for 6 reps; 80kg for 8 reps)',
+  'upper-a-pulldown':'80kg only for wide-grip lat pulldown; pull-up load to define',
+  'upper-a-lateral':'14kg per hand',
+  'lower-a-press':'200kg on the same machine',
+  'lower-a-curl':'60kg on the same machine',
+  'lower-a-calf':'50kg only for standing calf raises',
+  'upper-b-pull':'80kg only for wide-grip lat pulldown; assisted pull-up load to define',
+  'upper-b-lateral':'14kg per hand',
+  'lower-b-press':'200kg only for leg press on the same machine; hack squat load to define',
+  'lower-b-calf':'50kg only for standing calf raises'
+};
+const UNDEFINED_TARGET_LOADS=new Set(['upper-a-row','upper-a-incline','lower-a-extension','upper-b-incline','upper-b-row','upper-b-biceps','upper-b-triceps','lower-b-curl','lower-b-hip']);
+for(const plan of Object.values(TRAINING_PLAN))plan.items=plan.items.map((item,i)=>{
+  const id=plan.itemIds[i],load=RESTORED_TARGET_LOADS[id]||(UNDEFINED_TARGET_LOADS.has(id)?'load to define':'');
+  return load?`${item} · ${load}`:item;
+});
 const EXERCISE_ALIASES={'curl barre ez':'ez bar curl','poulie abdos':'cable crunch','rowing barre large':'wide barbell row','développé épaules haltères':'dumbbell shoulder press','mollets debout':'standing calf raises','mollets debouts':'standing calf raises','soulevé de terre roumain':'romanian deadlift','élévations latérales':'lateral raises','dumbell shrugs':'dumbbell shrugs'};
+const PREVIOUS_TARGET_LABEL_IDS=Object.fromEntries(Object.values(TRAINING_PLAN).flatMap(plan=>plan.items.map((item,i)=>[item,plan.itemIds[i]])));
+const RESTORED_PROGRAM_TARGETS={
+  'upper-a-bench':'Bench Press (wide grip): warm-up 50kg; 3x4 at 110kg; 2x4 at 100kg; 3x6 at 90kg; 3x8 at 80kg; 3x12 at 70kg; rest 2-3 min; use a spotter',
+  'upper-a-lateral':'Lateral Raises: 4x12 at 14kg per hand; strict form',
+  'lower-a-press':'Leg Press: 6x10 at 200kg; same machine, adjust setup',
+  'lower-a-curl':'Leg Curl: 5x12 at 60kg; same machine',
+  'lower-a-calf':'Standing Calf Raises: 6x12 at 50kg',
+  'upper-b-lateral':'Shoulder Lateral Raises: 4x12 at 14kg per hand; strict form',
+  'lower-b-calf':'Standing Calf Raises: 6x12 at 50kg',
+  'lower-b-plank':'Plank: 1x80 sec'
+};
+for(const plan of Object.values(TRAINING_PLAN))plan.items=plan.items.map((item,i)=>RESTORED_PROGRAM_TARGETS[plan.itemIds[i]]||item);
+function plannedSetTargets(item){
+  return [...item.matchAll(/(\d+)x(\d+)(?:-(\d+))?(?:\s+at\s+(\d+(?:\.\d+)?)kg)?(\s+sec)?/g)].flatMap(match=>
+    Array.from({length:Math.min(30,Number(match[1]))},()=>match[5]?{seconds:Number(match[2])}:{reps:match[3]?`${match[2]}-${match[3]}`:Number(match[2]),kg:match[4]?Number(match[4]):undefined})
+  ).slice(0,30);
+}
+function exerciseSetCount(item,state){return Number(matchingStrength(state,item)?.value.sets||plannedSetTargets(item).length)}
 const YOUTUBE_VIDEOS = {
   bench:'Zw6qCAFsV0w',
   incline:'Zw6qCAFsV0w',
@@ -1200,6 +1237,10 @@ function inPeriod(date,days){return !days||date>=shiftedDate(today(),-days)}
 function periodButtons(value,handler){return `<div class="period-tabs" aria-label="Period">${[[30,'1 month'],[90,'3 months'],[0,'All']].map(([days,label])=>`<button aria-pressed="${value===days}" onclick="${handler}(${days})">${label}</button>`).join('')}</div>`}
 function setWeightPeriod(value){weightPeriod=value;renderWeight()}
 function exerciseId(item){
+  const override=Object.entries(profile().workoutOverrides||{}).find(([,label])=>label===item);
+  if(override)return override[0];
+  if(ORIGINAL_PLAN_LABEL_IDS[item])return ORIGINAL_PLAN_LABEL_IDS[item];
+  if(PREVIOUS_TARGET_LABEL_IDS[item])return PREVIOUS_TARGET_LABEL_IDS[item];
   for(const plan of [...Object.values(TRAINING_PLAN),...Object.values(LEGACY_TRAINING_PLAN)]){const index=plan.items.indexOf(item);if(index>=0)return plan.itemIds[index]}
   const raw=item.split(':')[0].trim().toLowerCase();
   const name=EXERCISE_ALIASES[raw]||raw;
@@ -1210,12 +1251,23 @@ function exerciseId(item){
   return `${name}:${block[2]==='4'?(block[1]==='2'?'backoff':'top'):`reps-${block[2]}`}`;
 }
 function matchingStrength(state,item){
+  if(state.strength?.[item])return {name:item,value:state.strength[item]};
   const snapshotIndex=state.planSnapshot?.items.indexOf(item)??-1;
   const id=snapshotIndex>=0?(state.planSnapshot.itemIds?.[snapshotIndex]||exerciseId(item)):exerciseId(item);
   const savedName=state.strengthIds?.[id];
   if(savedName&&state.strength?.[savedName])return {name:savedName,value:state.strength[savedName]};
   const match=Object.entries(state.strength||{}).find(([key])=>exerciseId(key)===id);
   return match?{name:match[0],value:match[1]}:null;
+}
+function previousStrength(item,date=trainingDate){
+  const name=value=>{const raw=value.split(':')[0].trim().toLowerCase();return EXERCISE_ALIASES[raw]||raw};
+  for(const [savedDate,state] of Object.entries(training()).filter(([d])=>d<date).sort(([a],[b])=>b.localeCompare(a))){
+    const exact=matchingStrength(state,item);
+    if(exact)return {date:savedDate,...exact};
+    const matches=Object.entries(state.strength||{}).filter(([label])=>name(label)===name(item));
+    if(matches.length===1)return {date:savedDate,name:matches[0][0],value:matches[0][1]};
+  }
+  return null;
 }
 function sessionPlan(date,state={}){
   if(state.planSnapshot)return state.planSnapshot;
@@ -1624,11 +1676,13 @@ function renderTraining(){
     const [name,...target]=item.split(':');
     const key=`${date}:${i}`;
     const recorded=matchingStrength(state,item)?.value;
+    const previous=previousStrength(item,date);
     return `<div class="exercise-entry${on?' is-done':''}">
       <div class="exercise-row">
         <input type="checkbox" aria-label="Complete ${escapeAttr(item)}" ${on?'checked':''} onchange="toggleExercise(${i})">
         <div class="exercise-text"><strong>${escapeText(name)}</strong><span class="exercise-target">${escapeText(target.join(':'))}</span>${recorded?`<span class="exercise-target">Logged: ${escapeText(recorded.sets??'—')} × ${escapeText(recorded.reps??'—')} · ${escapeText(recorded.kg??'—')} kg</span>`:''}</div>
       </div>
+      ${!recorded&&previous?`<p class="exercise-target">Previous (${escapeText(previous.date)}): ${escapeText(previous.value.sets??'—')} × ${escapeText(previous.value.reps??'—')} · ${escapeText(previous.value.kg??'—')} kg</p>`:''}
       <details class="exercise-details" ${openExercises.has(key)?'open':''} ontoggle="this.open?openExercises.add('${key}'):openExercises.delete('${key}')"><summary>Sets, weight & notes</summary>
       ${legacyFriday?fridayRoundTracker(state,i):exerciseSets(item,state,i)}
       <button class="small-command" onclick="editTrainingTarget(${day},${i})">Edit target</button>
@@ -1778,7 +1832,7 @@ function toggleExercise(idx){
     state.fridayRounds={...state.fridayRounds,[idx]:Object.fromEntries(Array.from({length:fridayRoundCount(idx)},(_,i)=>[i,state.done[idx]]))};
   }else{
     const item=sessionPlan(date,state).items[idx];
-    const count=Number(matchingStrength(state,item)?.value.sets||item.match(/:\s*(\d+)x/)?.[1]);
+    const count=exerciseSetCount(item,state);
     if(Number.isInteger(count)&&count>0&&count<=30)state.setsDone={...state.setsDone,[exerciseId(item)]:Object.fromEntries(Array.from({length:count},(_,i)=>[i,state.done[idx]]))};
   }
   all[date]=state;
@@ -2022,7 +2076,7 @@ function renderHistory(){
               return complete?`<div class="history-line">${escapeText(item)} · ${complete}/${count} ${i===3?'sets':'rounds'} complete</div>`:'';
             }).join('')
           : '';
-        trainingLines=`<div class="history-line" style="font-weight:800;color:var(--text)">🏋️ ${escapeText(plan.name)} · ${checked.length}/${plan.items.length} exercises</div>${checkedLines}${comment}${Object.entries(session.strength||{}).map(([name,v])=>`<div class="history-line">${escapeText(name)} · ${escapeText(v.sets??'—')} sets × ${escapeText(v.reps??'—')} reps · ${escapeText(v.kg??'—')} kg</div>`).join('')}${fridayProgress}${session.runSeconds?`<div class="history-line">🏃 ${escapeText(session.runDistanceKm||5)} km Run · ${formatRunTime(session.runSeconds)} · ${runPace(session)}/km</div>`:''}`;
+        trainingLines=`<div class="history-line" style="font-weight:800;color:var(--text)">🏋️ ${escapeText(plan.name)} · ${checked.length}/${plan.items.length} exercises</div>${checkedLines}${comment}${Object.entries(session.strength||{}).map(([name,v])=>`<div class="history-line">${escapeText(name)} · ${escapeText(v.sets??'—')} sets × ${escapeText(v.reps??'—')} reps · ${escapeText(v.kg??'—')} kg</div>${perSetHistory(v)}`).join('')}${fridayProgress}${session.runSeconds?`<div class="history-line">🏃 ${escapeText(session.runDistanceKm||5)} km Run · ${formatRunTime(session.runSeconds)} · ${runPace(session)}/km</div>`:''}`;
       }
     }
     const weight=historyFilter==='all'?loggedWeights[date]:undefined;
@@ -2142,15 +2196,41 @@ function setFridayRound(exerciseIndex,index,done){
 }
 function strengthFields(item,state){
   const value=matchingStrength(state,item)?.value||{};
-  const previous=Object.entries(training()).filter(([date,s])=>date<trainingDate&&matchingStrength(s,item)).sort(([a],[b])=>b.localeCompare(a))[0];
-  if(previous)previous[1]={strength:{[item]:matchingStrength(previous[1],item).value}};
+  const prior=previousStrength(item);
+  const previous=prior?[prior.date,{strength:{[item]:prior.value}}]:null;
   return `<div class="field-grid">${[['sets','Sets'],['reps','Reps per set'],['kg','Weight (kg)']].map(([key,label])=>`<label>${label}<input class="exercise-note" type="number" min="0" step="${key==='kg'?'0.25':'1'}" value="${escapeAttr(value[key]??'')}" data-exercise="${escapeAttr(item)}" onchange="saveStrength(this.dataset.exercise,'${key}',this.value)"></label>`).join('')}</div><p class="training-meta">${previous?`Previous (${escapeText(previous[0])}): ${escapeText(previous[1].strength[item].sets??'—')} sets × ${escapeText(previous[1].strength[item].reps??'—')} reps at ${escapeText(previous[1].strength[item].kg??'—')} kg`:'No earlier strength entry for this exercise.'}</p>`;
 }
 function exerciseSets(item,state,index){
-  const count=Number(matchingStrength(state,item)?.value.sets||item.match(/:\s*(\d+)x/)?.[1]);
+  const count=exerciseSetCount(item,state);
   if(!Number.isInteger(count)||count<1||count>30)return '';
   const id=exerciseId(item),completed=state.setsDone?.[id]||{};
-  return `<div class="rounds" aria-label="Exercise sets">${Array.from({length:count},(_,set)=>`<label><input type="checkbox" ${completed[set]?'checked':''} onchange="setExerciseSet(${index},${set},${count},this.checked)">Set ${set+1}</label>`).join('')}</div>`;
+  const strength=matchingStrength(state,item)?.value||{};
+  const timed=/(plank|sec|seconds)/i.test(item);
+  return `<div aria-label="Exercise sets">${Array.from({length:count},(_,set)=>{
+    const values=strength.perSet?.[set]||{};
+    const target=plannedSetTargets(item)[set]||{};
+    return `<div class="field-grid" style="align-items:center;margin-bottom:8px"><label><input type="checkbox" ${completed[set]?'checked':''} onchange="setExerciseSet(${index},${set},${count},this.checked)">Set ${set+1}${Object.keys(target).length?`<small>Target: ${escapeText(target.seconds!=null?`${target.seconds}s`:`${target.reps} reps${target.kg!=null?` · ${target.kg}kg`:''}`)}</small>`:''}</label>${(timed?['seconds']:['kg','reps']).map(field=>`<label>${field==='kg'?'Weight (kg)':field==='seconds'?'Seconds':'Reps'}<input class="exercise-note" aria-label="Set ${set+1} ${field}" type="number" min="0" step="${field==='kg'?'0.25':'1'}" value="${escapeAttr(values[field]??'')}" placeholder="${escapeAttr(strength[field]??target[field]??'—')}" onchange="saveSetStrength(${index},${set},'${field}',this.value)"></label>`).join('')}</div>`;
+  }).join('')}</div>`;
+}
+function saveSetStrength(index,set,field,value){
+  if(trainingDate>today()||!['kg','reps','seconds'].includes(field))return;
+  const number=Number(value);
+  if(value!==''&&(!Number.isFinite(number)||number<0||(field!=='kg'&&!Number.isInteger(number)))){showToast('Enter a valid non-negative number.','error');return}
+  const all=training(),state=all[trainingDate]||{done:{},notes:{}};
+  const item=sessionPlan(trainingDate,state).items[index];if(!item)return;
+  const match=matchingStrength(state,item),name=match?.name||item;
+  const count=exerciseSetCount(item,state);
+  if(!Number.isInteger(set)||set<0||set>=count||count>30)return;
+  const strength={...match?.value},perSet={...strength.perSet},entry={...perSet[set]};
+  if(value==='')delete entry[field];else entry[field]=number;
+  if(Object.keys(entry).length)perSet[set]=entry;else delete perSet[set];
+  strength.perSet=perSet;
+  state.strength={...state.strength,[name]:strength};
+  state.strengthIds={...state.strengthIds,[exerciseId(item)]:name};
+  all[trainingDate]=state;saveTraining(all);
+}
+function perSetHistory(value){
+  return Object.entries(value.perSet||{}).sort(([a],[b])=>Number(a)-Number(b)).map(([set,entry])=>`<div class="history-line">Set ${Number(set)+1}: ${escapeText(entry.seconds!=null?`${entry.seconds} sec`:`${entry.reps??'—'} reps · ${entry.kg??'—'} kg`)}</div>`).join('');
 }
 function setExerciseSet(index,set,count,done){
   if(trainingDate>today())return;
