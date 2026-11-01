@@ -227,6 +227,14 @@ body:not(.light) .weight-save-btn{background:#176842;color:white}body:not(.light
 </style>
 <style>
 .quiet-panel{border-bottom:1px solid var(--border);padding:16px 0;margin:0}
+.set-table{width:100%;border-collapse:collapse;table-layout:fixed;margin:12px 0;font-size:13px;font-variant-numeric:tabular-nums}
+.set-table th{font-size:11px;font-weight:500;color:var(--muted);text-align:left;padding:8px 4px;border-bottom:1px solid var(--border)}
+.set-table td{padding:7px 4px;border-bottom:1px solid var(--border);vertical-align:middle;overflow-wrap:anywhere}
+.set-table th:first-child{width:36px}.set-table th:last-child{width:42px}.set-table input[type=number]{width:100%;min-width:0;margin:0;padding:10px 6px;text-align:center;font-size:16px;border-radius:6px}
+.set-table input[type=checkbox]{width:24px;height:24px;accent-color:var(--accent);cursor:pointer}.set-table td:last-child{height:48px;text-align:center}.set-table tr.set-complete{background:var(--done-bg)}
+.set-target{color:var(--muted);font-size:11px;line-height:1.6}.set-target span{display:block}.exercise-tools{margin:14px 0}.exercise-tools>summary{min-height:44px;padding:12px 0;cursor:pointer;color:var(--muted);font-size:12px}
+.exercise-details{margin-left:0}.exercise-details>summary{min-height:44px;padding:12px 0}.exercise-entry .exercise-target{line-height:1.7;overflow-wrap:anywhere}
+.header-top{gap:12px}.header-top>div{flex-wrap:wrap;justify-content:flex-end}.header-top h1{min-width:0}
 .quiet-panel>summary{cursor:pointer;font-size:14px;font-weight:600;min-height:32px;line-height:1.7}
 .quiet-panel[open]>summary{margin-bottom:14px}
 .compact-meal{display:grid;grid-template-columns:24px minmax(0,1fr);gap:14px;align-items:start;padding:16px;margin:10px 0;background:var(--card)}
@@ -245,11 +253,30 @@ body:not(.light) .weight-save-btn{background:#176842;color:white}body:not(.light
 .quiet-panel .training-day{padding:12px 0;border:0}.session-comment{min-height:90px}.week-day summary{min-height:44px}
 @media(max-width:600px){.compact-meal{padding:12px;gap:10px}.meal-thumb{width:44px;height:52px}.meal-summary{gap:10px}.meal-heading strong{font-size:13px}.meal-expanded{margin-left:-34px}.macro-card .mv{font-size:16px}.session-toolbar{flex-wrap:wrap}.training-day h3.session-title{font-size:22px}}
 </style>
+<style>
+body.light{--bg:#f8f9f9;--card:#fff;--surface:#edf1f0;--surface2:#f4f6f5;--header:#ffffff;--text:#202825;--muted:#626d67;--accent:#247a55;--orange:#a95b30;--blue:#306a9b;--border:#dfe5e1;--done-bg:#eef6f0;--skip-bg:#fff5ee}
+body:not(.light){--bg:#151817;--card:#1d2220;--surface:#282f2b;--surface2:#202623;--header:#1a1f1c;--text:#edf2ef;--accent:#7acda2;--muted:#acb9b1;--border:#353f38;--done-bg:#202f26;--skip-bg:#342b23}
+.header{backdrop-filter:none;background:var(--header);padding:20px 24px 0}.header h1{font-size:17px;font-weight:650;line-height:1.4}.header-top{gap:20px;margin-bottom:18px}.header-top>div{flex-wrap:wrap}.brand{display:flex;align-items:center;gap:12px;min-width:0}.brand-mark{display:grid;place-items:center;background:var(--text);color:var(--card);height:36px;width:36px;flex-shrink:0;border-radius:8px;font-size:23px;font-weight:700}.header-top .goal-badge{font-size:11px;padding:7px 10px}.header-top .icon-badge{background:transparent}
+.tabs{border-bottom:0;gap:24px;justify-content:flex-start}.tab{flex:0 1 120px;background:transparent;border:0;border-bottom:3px solid transparent;border-radius:0;color:var(--muted);font-weight:600;padding:13px 8px;min-height:48px}body .tab.active{background:transparent;color:var(--accent);border-color:var(--accent)}.tab:hover{color:var(--text);background:var(--surface2)}
+.main{max-width:1040px;padding-top:32px;padding-bottom:100px}.page-intro{margin-bottom:30px;display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap}.page-intro h2{font-size:30px;line-height:1.25;font-weight:650;margin:0;order:-1}.page-intro p{font-size:13px;color:var(--muted);line-height:1.7}
+.today-overview{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:36px;border-bottom:1px solid var(--border);margin-bottom:24px}.today-overview>.history-card{margin:0;border:0;padding:0 0 24px}.today-overview>.history-card+section{padding-left:28px;border-left:1px solid var(--border)}
+.today-overview h3{font-size:12px;color:var(--muted);font-weight:600}.today-overview .timer-clock{font-size:42px;font-weight:600;margin:12px 0 8px;line-height:1.25;font-variant-numeric:tabular-nums}.today-overview .timer-clock span{color:var(--muted);font-weight:400}.today-overview .training-name{display:block;font-size:23px;font-weight:600;margin:14px 0 10px;line-height:1.4}.today-overview .small-command{margin-top:16px;background:var(--text);color:var(--card);border-color:var(--text);padding:10px 18px}.today-overview .quiet-panel{border:0;padding:8px 0}.today-overview progress{height:7px!important}
+.compact-meal{border:1px solid var(--border);border-radius:8px;box-shadow:0 2px 3px #182b2003;padding:16px 18px;margin:12px 0;border-left:3px solid transparent;transition:border-color .15s,background .15s}.compact-meal:hover{border-color:var(--muted)}.compact-meal.checked{border-left-color:var(--accent);background:var(--done-bg)}.meal-heading strong{font-size:16px;font-weight:600}.meal-thumb{width:80px;height:80px;object-fit:cover;border-radius:6px}.meal-time{line-height:1.6;font-size:12px}.meal-heading .meal-time:last-child{color:var(--text);font-weight:600}.meal-body{min-width:0}.meal-summary{gap:18px}.meal-summary:after{font-weight:400;font-size:20px}.completion-check{margin-top:28px}.meal-expanded{border-top:1px solid var(--border);margin-top:16px}.meal-card.skipped{background:var(--skip-bg)}
+.exercise-entry{padding:24px 0}.exercise-row{align-items:start}.exercise-number{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;min-width:22px;padding-top:3px}.exercise-text strong{font-size:18px;line-height:1.4}.exercise-details{margin-left:0}.exercise-targets{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:8px;padding:0;list-style:none;color:var(--muted);font-size:12px;line-height:1.8}.exercise-targets li{border-bottom:1px solid var(--border);padding-bottom:2px}.exercise-details>summary{color:var(--blue);font-size:13px}.exercise-tools>summary{font-size:13px}.exercise-tools[open]{border-top:1px solid var(--border)}
+.set-table th{padding:12px 8px;background:var(--surface2);font-size:11px}.set-table td{padding:8px}.set-table input[type=number]{min-height:44px;background:var(--card);border:1px solid var(--border);font-weight:600;box-shadow:none}.set-table td:last-child label{display:grid;place-items:center;min-height:44px;cursor:pointer}.set-table tbody tr:focus-within{background:var(--surface)}.session-toolbar{margin-bottom:24px}.session-progress progress{max-width:none;height:6px}.session-caption{max-width:650px;font-size:13px}.exercise-number{font-weight:600;color:var(--accent)}.exercise-entry.is-done{border-left:2px solid var(--accent);padding-left:12px}.exercise-targets li{border:0}.exercise-targets li+li{padding-left:12px;border-left:1px solid var(--border)}
+.weight-input-card h3,.chart-card h4{font-weight:600}.history-stat{padding:12px 16px}.history-stat strong{font-size:22px}.history-stat span{line-height:1.6}.history-day{padding:16px 0}.history-day>summary{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px}.history-day[open]>summary{margin-bottom:16px}.history-day>summary strong{font-size:15px}.history-line{padding:5px 0;overflow-wrap:anywhere}
+button:focus-visible,summary:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--blue);outline-offset:3px}input,textarea,select{font-size:16px!important}button,.small-command,.meal-action{border-radius:6px}.weight-save-btn{color:#fff;background:#17714b}.sync-notice{border-radius:0;font-size:13px;line-height:1.6}
+.small-command,.meal-action,.food-icon,.weight-action{background:var(--card);border-color:var(--border);font-weight:500;box-shadow:none}.small-command:hover,.meal-action:hover,.weight-action:hover{background:var(--surface)}.history-card h3,.training-day h3,.weight-input-card h3{font-weight:600}.quiet-panel>summary{font-weight:500}.chart-card{padding:28px 0}.chart-wrap svg{max-width:720px}.history-summary{padding:16px 0;gap:16px}.history-stat{border-left:0;border-top:2px solid var(--border);padding:16px 0}.history-stat:first-child{border-color:var(--accent)}.history-stat span{font-size:11px;text-transform:none}.history-stat strong{font-weight:600;font-variant-numeric:tabular-nums}.weight-table th{font-weight:500}.weight-table td{padding:14px 6px}.weight-table tbody tr:hover{background:var(--surface2)}.period-tabs button{background:transparent;font-size:12px}progress{appearance:none;overflow:hidden;border:0;border-radius:4px;background:var(--border)}progress::-webkit-progress-bar{background:var(--border)}progress::-webkit-progress-value{background:var(--accent);border-radius:4px}progress::-moz-progress-bar{background:var(--accent)}
+.meal-quick{grid-column:2;min-width:0}.meal-shortcuts{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}.meal-shortcuts [aria-pressed=true]{background:var(--skip-bg)}.exercise-picker{display:flex;align-items:center;justify-content:space-between;gap:16px;width:100%;text-align:left;padding:16px 0;border:0;border-bottom:1px solid var(--border);border-radius:0;background:transparent;color:var(--text);font:inherit}.exercise-picker span{color:var(--muted);font-size:12px}.guided-nav{display:flex;justify-content:space-between;gap:12px;padding:16px 0}.guided-nav button{min-height:44px}
+@media(max-width:600px){.main{padding:20px 16px 110px}.header-top{display:block}.header-top>div{margin-top:12px;justify-content:flex-start}.header h1{font-size:17px}.tabs{gap:2px;background:var(--card)}.tab{min-height:48px}.page-intro{margin-bottom:20px}.page-intro h2{font-size:24px}.today-overview{grid-template-columns:minmax(0,1fr);gap:16px;margin-bottom:20px}.today-overview>.history-card+section{padding-left:0;border-left:0;border-top:1px solid var(--border);padding-top:16px}.today-overview .training-name{font-size:19px;margin:10px 0}.today-overview .timer-clock{font-size:32px}.compact-meal{padding:12px;gap:10px}.meal-thumb{width:48px;height:54px}.meal-heading strong{font-size:14px}.exercise-number{display:none}.exercise-text strong{font-size:16px}.exercise-entry{padding:20px 0}.set-table th,.set-table td{padding-left:3px;padding-right:3px}.set-table{font-size:12px}.history-stat{padding:8px}.history-stat strong{font-size:20px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+@media(max-width:600px){.header{padding:16px 16px 0}.header h1{font-size:15px}.brand-mark{width:32px;height:32px;font-size:21px}.header-top{margin-bottom:12px}.header-top>div{gap:6px!important}.header-top .goal-badge{padding:6px 8px}.tabs{padding-top:0;gap:0}.tab{font-size:12px;min-width:0;border-bottom:0;border-top:3px solid transparent;min-height:54px}.page-intro{gap:4px;margin-bottom:24px}.page-intro h2{font-size:26px}.page-intro p{font-size:12px}.meal-thumb{width:58px;height:66px}.meal-summary{gap:12px}.completion-check{margin-top:21px}.meal-heading strong{font-size:14px}.compact-meal{padding:12px 10px}.meal-expanded{margin-left:-34px}.set-table input[type=number]{padding:10px 3px}.set-table th,.set-table td{padding-left:3px;padding-right:3px}.history-summary{gap:12px}.today-overview .timer-clock{font-size:36px}.today-overview .training-name{font-size:20px}.exercise-details{margin-left:0}}
+</style>
 </head>
 <body>
 <div class="header">
   <div class="header-top">
-    <h1>Cee's Diet & Gym plan</h1>
+    <div class="brand"><span class="brand-mark" aria-hidden="true">C</span><h1>Cee's Diet & Gym plan</h1></div>
     <div style="display:flex;gap:8px;align-items:center">
       <button class="icon-badge" aria-label="Switch color theme" id="themeToggle" onclick="toggleTheme()">🌙</button>
       <button class="goal-badge sync-badge" id="cloudStatus" type="button" onclick="syncNow()" title="Sync now">Connecting...</button>
@@ -257,11 +284,11 @@ body:not(.light) .weight-save-btn{background:#176842;color:white}body:not(.light
     </div>
   </div>
   <div class="tabs">
-    <button class="tab active" id="tab0" onclick="switchTab(0)">📋 Today</button>
-    <button class="tab" id="tab1" onclick="switchTab(1)">🏋️ Training</button>
-    <button class="tab" id="tab2" onclick="switchTab(2)">⚖️ Weight</button>
-    <button class="tab" id="tab3" onclick="switchTab(3)">📊 History</button>
-    <button class="tab" id="tab4" onclick="switchTab(4)">🏃 Runs</button>
+    <button class="tab active" id="tab0" onclick="switchTab(0)">Today</button>
+    <button class="tab" id="tab1" onclick="switchTab(1)">Training</button>
+    <button class="tab" id="tab2" onclick="switchTab(2)">Weight</button>
+    <button class="tab" id="tab3" onclick="switchTab(3)">History</button>
+    <button class="tab" id="tab4" onclick="switchTab(4)">Runs</button>
   </div>
 </div>
 <div class="sync-notice" id="syncNotice" role="status" hidden></div>
@@ -275,15 +302,26 @@ body:not(.light) .weight-save-btn{background:#176842;color:white}body:not(.light
 // DATA
 // ═══════════════════════════════════════════════════════
 const MEALS = [
-  {id:'m1',time:'07:15',emoji:'🍳',name:'Scrambled Eggs, Greek Yogurt & Oats',desc:'4 scrambled eggs · 80g oats · 200g Greek yogurt · 5g cooking oil · Coffee',image:'https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=900&q=80',kcal:0,plannedFoods:[['egg',4],['oats',80],['greek-yogurt',200],['cooking-oil',5]]},
-  {id:'m2',time:'09:30',emoji:'🥤',name:'Gainer 1',desc:'Mass gainer · water',image:'https://images.unsplash.com/photo-1579751626657-72bc17010498?auto=format&fit=crop&w=900&q=80',kcal:0,plannedFoods:[['gainer-powder','scoop']]},
-  {id:'m3',time:'12:30',emoji:'🍚',name:'Chicken & Rice',desc:'300g cooked rice · 200g cooked chicken · 15g olive oil or sauce',image:'https://images.unsplash.com/photo-1512058564366-18510be2db19?auto=format&fit=crop&w=900&q=80',kcal:0,plannedFoods:[['cooked-rice',300],['chicken',200],['olive-oil-g',15]]},
-  {id:'m4',time:'16:30',emoji:'🥤',name:'Homemade High-Calorie Smoothie',desc:'300ml whole milk · 60g oats · 1 banana · 20g peanut butter',image:'https://images.unsplash.com/photo-1505252585461-04db1eb84625?auto=format&fit=crop&w=900&q=80',kcal:0,plannedFoods:[['whole-milk',300],['oats',60],['banana',1],['peanut-butter',20]]},
-  {id:'m5',time:'18:00',emoji:'🍽️',name:'Dinner',desc:'Choose one dinner and adjust its portions',image:'https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=80',kcal:0,plannedFoods:[]},
+  {id:'m1',time:'07:30',emoji:'🍳',name:'Scrambled Eggs, Greek Yogurt & Oats',desc:'4 scrambled eggs · 80g oats · 200g Greek yogurt · 5g cooking oil · Coffee',image:'https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=900&q=80',kcal:0,plannedFoods:[['egg',4],['oats',80],['greek-yogurt',200],['cooking-oil',5]]},
+  {id:'m2',time:'10:40',emoji:'🥤',name:'Gainer 1',desc:'Mass gainer · water',image:'https://images.unsplash.com/photo-1579751626657-72bc17010498?auto=format&fit=crop&w=900&q=80',kcal:0,plannedFoods:[['gainer-powder','scoop']]},
+  {id:'m3',time:'13:15',emoji:'🍚',name:'Chicken & Rice',desc:'300g cooked rice · 200g cooked chicken · 15g olive oil or sauce',image:'https://images.unsplash.com/photo-1512058564366-18510be2db19?auto=format&fit=crop&w=900&q=80',kcal:0,plannedFoods:[['cooked-rice',300],['chicken',200],['olive-oil-g',15]]},
+  {id:'m4',time:'17:00',emoji:'🥤',name:'Homemade High-Calorie Smoothie',desc:'300ml whole milk · 60g oats · 1 banana · 20g peanut butter',image:'https://images.unsplash.com/photo-1505252585461-04db1eb84625?auto=format&fit=crop&w=900&q=80',kcal:0,plannedFoods:[['whole-milk',300],['oats',60],['banana',1],['peanut-butter',20]]},
+  {id:'m5',time:'20:00',emoji:'🍽️',name:'Dinner',desc:'Choose one dinner and adjust its portions',image:'https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=80',kcal:0,plannedFoods:[]},
   {id:'m6',time:'22:00',emoji:'🥤',name:'Gainer 2',desc:'Mass gainer · water',image:'https://images.unsplash.com/photo-1579751626657-72bc17010498?auto=format&fit=crop&w=900&q=80',kcal:0,plannedFoods:[['gainer-powder','scoop']]},
   {id:'m7',time:'20:30',emoji:'🥪',name:'Peanut Butter Sandwich (optional)',desc:'80g wholemeal bread · 30g peanut butter · 1 banana',image:'https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&w=900&q=80',kcal:0,optional:true,plannedFoods:[['wholemeal-bread-g',80],['peanut-butter',30],['banana',1]]}
 ];
 const PLAN_EFFECTIVE_DATE='2026-10-09';
+// Keep the previous menu available when rendering dated history.
+const PRE_NOVEMBER_MEALS=MEALS.map(meal=>({...meal}));
+const NOVEMBER_MEAL_UPDATE_DATE='2026-11-01';
+const NOVEMBER_MEAL_UPDATES={
+  m1:{name:'Scrambled Eggs, Oats, Yogurt & Banana',desc:'10 scrambled eggs · 80g oats (adjustable to 100g) · 200g Greek yogurt · 1 banana · 5g cooking oil',plannedFoods:[['egg',10],['oats',80],['greek-yogurt',200],['banana',1],['cooking-oil',5]]},
+  m2:{name:'Morning Gainer',desc:'2 scoops of mass gainer · water · work break'},
+  m3:{desc:'300g cooked rice · 200g cooked chicken · 200g vegetables (editable) · 15g olive oil; adjust if using sauce',plannedFoods:[['cooked-rice',300],['chicken',200],['vegetables',200],['olive-oil-g',15]]},
+  m4:{name:'Pre-workout Gainer & Banana',desc:'2 scoops of mass gainer · water · 1 banana',image:MEALS[1].image,plannedFoods:[['gainer-powder','scoop'],['banana',1]]},
+  m6:{name:'Greek Yogurt, Oats & Peanut Butter',desc:'Editable starting portions: 200g Greek yogurt · 60g oats (or replace with bread) · 30g peanut butter',image:MEALS[0].image,plannedFoods:[['greek-yogurt',200],['oats',60],['peanut-butter',30]]}
+};
+for(const meal of MEALS)Object.assign(meal,NOVEMBER_MEAL_UPDATES[meal.id]||{});
 const LEGACY_MEAL_KCAL={m1:1300,m2:390,m3:1150,m4:900,m5:1150,m6:390};
 const LEGACY_MEALS=[
   {id:'m1',time:'07:30',emoji:'🥣',name:'Breakfast',desc:'Greek yogurt/quark 300g · Oats 100g · Peanut butter 40g · 1 banana · Whole milk 300ml · 4 whole eggs',kcal:1300},
@@ -294,6 +332,8 @@ const LEGACY_MEALS=[
   {id:'m6',time:'21:00',emoji:'💪',name:'Gainer 2 — Hard Mass Harder',desc:'2 scoops (100g powder)',kcal:390}
 ];
 const DINNER_OPTIONS={
+  pastaChicken:{name:'Pasta & Chicken',foods:[['cooked-pasta',250],['chicken',200],['olive-oil-g',15]]},
+  riceEggs:{name:'Rice & Eggs',foods:[['cooked-rice',300],['egg',4],['cooking-oil',5]]},
   chickenRice:{name:'Chicken & Rice',foods:[['cooked-rice',300],['chicken',200],['olive-oil-g',15]]},
   pastaEggs:{name:'Pasta & Eggs',foods:[['cooked-pasta',250],['egg',4],['cooking-oil',5]]},
   friesChicken:{name:'Fries & Chicken thigh',foods:[['fries',220],['chicken-thigh',150]]}
@@ -1010,12 +1050,12 @@ function mealCaloriesForDate(entry,plan,date){
   if(date<PLAN_EFFECTIVE_DATE&&entry.status==='done'&&!entry.items?.length&&!(Number(entry.kcal)>0))return LEGACY_MEAL_KCAL[plan?.id]??mealCalories(entry,plan);
   return mealCalories(entry,plan);
 }
-function mealDefinitions(dayMeals){
-  const definitions=MEALS.map(meal=>{
+function mealDefinitions(dayMeals,menu=MEALS){
+  const definitions=menu.map(meal=>{
     const entry=mealEntry(dayMeals?.[meal.id]);
     const option=meal.id==='m5'?(DINNER_OPTIONS[entry.dinnerOption]||DINNER_OPTIONS.chickenRice):null;
     const name=option?.name||meal.name;
-    return {...meal,...(option?{name,desc:option.name==='Chicken & Rice'?'Cooked rice, chicken, olive oil or sauce':option.name==='Pasta & Eggs'?'Cooked pasta, 4 scrambled eggs, cooking oil':'Fries, one chicken thigh',plannedFoods:option.foods}:{}),plannedItems:plannedMealItems(meal,entry),image:meal.image};
+    return {...meal,...(option?{name,desc:option.foods.map(([id,qty])=>{const food=BASE_FOODS.find(f=>f.id===id);return `${qty} ${food?.unit||''} ${food?.name||id}`}).join(' · '),plannedFoods:option.foods}:{}),plannedItems:plannedMealItems(meal,entry),image:meal.image};
   });
   const extras=Object.entries(dayMeals||{}).filter(([,value])=>value&&typeof value==='object'&&value.extra).map(([id,value])=>({
     id,
@@ -1029,7 +1069,7 @@ function mealDefinitions(dayMeals){
   return [...definitions,...extras].sort((a,b)=>a.time.localeCompare(b.time));
 }
 function mealDefinitionsForDate(dayMeals,date){
-  if(date>=PLAN_EFFECTIVE_DATE)return mealDefinitions(dayMeals);
+  if(date>=PLAN_EFFECTIVE_DATE)return mealDefinitions(dayMeals,date<NOVEMBER_MEAL_UPDATE_DATE?PRE_NOVEMBER_MEALS:MEALS);
   const extras=mealDefinitions(dayMeals).filter(meal=>meal.extra);
   return [...LEGACY_MEALS,...extras].sort((a,b)=>a.time.localeCompare(b.time));
 }
@@ -1220,6 +1260,18 @@ function saveTraining(t,date=trainingDate){
 // ═══════════════════════════════════════════════════════
 let activeTab=0;
 let trainingDate=today();
+const guidedExercises={};
+const quickMealDrafts={};
+function guideExercise(index){
+  const plan=sessionPlan(trainingDate,training()[trainingDate]||{});
+  if(index<0||index>=plan.items.length)return;
+  guidedExercises[trainingDate]=index;
+  renderTraining();
+}
+function selectedExercise(plan,state){
+  const saved=guidedExercises[trainingDate];
+  return Number.isInteger(saved)&&saved<plan.items.length?saved:Math.max(0,plan.items.findIndex((_,i)=>!state.done?.[i]));
+}
 let historyEditKey='';
 let historyFilter='all';
 let historyPeriod=0;
@@ -1322,21 +1374,23 @@ function renderToday(){
   const planned=allMeals.filter(meal=>!meal.optional).reduce((sum,meal)=>sum+itemsCalories({items:meal.plannedItems}),0);
   const consumed=meals.filter(meal=>{const entry=mealEntry(day[meal.id]);return entry.status==='done'||(entry.status==='modified'&&entry.consumed!==false)});
   const macros=totalMacros(consumed.flatMap(meal=>{const entry=mealEntry(day[meal.id]);return entry.items.length?entry.items:meal.plannedItems}));
-  const todayDay=new Date(`${date}T12:00:00`).getDay(),workout=TRAINING_PLAN[todayDay];
+  const todayDay=new Date(`${date}T12:00:00`).getDay(),workout=sessionPlan(date,training()[date]||{});
   const trainingState=training()[date]||{done:{}};
   const workoutDone=workout.items.filter((_,i)=>trainingState.done?.[i]).length;
   const nextMeal=meals.find(meal=>meal.time>=new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})&&mealEntry(day[meal.id]).status!=='done');
   const selectedFood=foodById(quickFoodId)||allFoods()[0];
   const mealsHTML=`<section class="history-card"><h3>Your meals</h3>${meals.map(meal=>renderMealCard(meal,day,date)).join('')}<button class="small-command" onclick="includeOptionalMeal()">${mealEntry(day.m7).included?'Remove optional sandwich':'Add optional sandwich'}</button></section>`;
   document.getElementById('main').innerHTML=`
-    <div class="history-card"><h3>Nutrition Today</h3><div class="timer-clock">${total} <span style="font-size:18px">/ ${goal} kcal</span></div>
+    <header class="page-intro"><p>${escapeText(new Date(`${date}T12:00:00`).toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'}))}</p><h2>Today</h2></header>
+    <div class="today-overview"><section class="history-card"><h3>Nutrition Today</h3><div class="timer-clock">${total} <span style="font-size:18px">/ ${goal} kcal</span></div>
       <p class="training-meta">Consumed · ${total<goal?`${goal-total} kcal remaining`:total===goal?'Goal reached':`${total-goal} kcal above goal`} · Planned ${planned} kcal</p>
       <progress aria-label="Calories consumed toward daily goal" value="${Math.min(total,goal)}" max="${goal}" style="width:100%;height:12px;accent-color:var(--accent)"></progress>
       <details class="quiet-panel" ${openPanels.has('macros')?'open':''} ontoggle="panelState('macros',this.open)"><summary>Nutrient breakdown</summary><div class="macro-row">${[['Protein',macros[0],`${profile().proteinMin}–${profile().proteinMax} g`],['Carbs',macros[1],'consumed'],['Fat',macros[2],'consumed']].map(([label,value,target])=>`<div class="macro-card"><div class="ml">${label}</div><div class="mv">${value===null?'Incomplete':`${value} g`}</div><div class="ml">${target}</div></div>`).join('')}</div></details>
       ${macros.includes(null)&&consumed.length?'<p class="training-meta">Some saved foods do not have complete macro data, so these totals are partial.</p>':''}
-      <p class="training-meta">${consumed.length}/${meals.filter(m=>!m.optional).length} planned meals consumed · Next: ${nextMeal?`${nextMeal.time} ${escapeText(nextMeal.name)}`:'No more planned meals today'}</p>
-    </div>${mealsHTML}
-    <div class="history-card"><h3>Training Today</h3><strong>${escapeText(workout.name)}</strong><p class="training-meta">${escapeText(workout.type)}</p>${workout.items.length?`<p class="training-meta">${workoutDone}/${workout.items.length} exercises complete</p><button class="small-command" onclick="switchTab(1)">Open training</button>`:`<p class="training-meta">Recovery day. Rest, sleep, and eat enough.</p>`}${todayDay===2?'<button class="small-command" onclick="switchTab(4)">Log Tuesday 5K</button>':''}</div>
+      <p class="training-meta">${consumed.length}/${meals.length} planned meals consumed · Next: ${nextMeal?`${nextMeal.time} ${escapeText(nextMeal.name)}`:'No more planned meals today'}</p>
+    </section>
+    <section class="history-card"><h3>Training Today</h3><strong class="training-name">${escapeText(workout.name)}</strong><p class="training-meta">${escapeText(workout.type)}</p>${workout.items.length?`<p class="training-meta">${workoutDone}/${workout.items.length} exercises complete</p><button class="small-command" onclick="selectTrainingDate(today());switchTab(1)">Open training</button>`:`<p class="training-meta">Recovery day. Rest, sleep, and eat enough.</p>`}${todayDay===2?'<button class="small-command" onclick="switchTab(4)">Log Tuesday 5K</button>':''}</section></div>
+    ${mealsHTML}
     <details class="history-card"><summary><strong>Nutrition targets</strong></summary><div class="field-grid">${[['calorieGoal','Daily calories (kcal)'],['weightReference','Reference weight (kg)'],['weightGoal','Goal weight (kg)'],['goalWeeks','Target duration (weeks)'],['proteinMin','Protein minimum (g)'],['proteinMax','Protein maximum (g)']].map(([key,label])=>`<label>${label}<input class="exercise-note" type="number" min="1" step="any" value="${profile()[key]}" onchange="updateProfileField('${key}',this.value)"></label>`).join('')}</div><label>Grams per gainer scoop <input class="exercise-note" type="number" min="1" max="300" step="1" value="${profile().gramsPerScoop??''}" placeholder="Weigh one scoop first" onchange="updateProfileField('gramsPerScoop',this.value)"></label><p class="training-meta">The scoop weight is unknown. Gainer calories stay out of totals until you enter its measured weight. A 97 kg goal in 8 weeks is aggressive; some gain may be fat and water.</p></details>
     <details class="training-day quiet-panel" ${openPanels.has('quick-food')?'open':''} ontoggle="panelState('quick-food',this.open)"><summary>Add food or a favorite</summary><label>Meal<select class="food-select" id="quickTarget" onchange="quickMealTarget=this.value">${meals.map(m=>`<option value="${escapeAttr(m.id)}" ${quickMealTarget===m.id?'selected':''}>${escapeText(m.name)}</option>`).join('')}</select></label>
     <div class="quick-foods">${recentFoodIds(6).map(id=>{const food=foodById(id);return food?`<button class="small-command" data-food="${escapeAttr(id)}" onclick="quickAddFood(this.dataset.food)">${escapeText(food.name)} · ${food.defaultQty} ${escapeText(food.unit)}</button>`:''}).join('')}</div>
@@ -1380,7 +1434,8 @@ function renderMealCard(meal,day,date){
   const presetOptions=mealPresetOptions();
   const shownItems=entry.items.length?entry.items:(meal.plannedItems||[]);
   const mealMacros=totalMacros(shownItems);
-  const macroText=(meal.id==='m2'||meal.id==='m6')&&!entry.items.length&&!profile().gramsPerScoop?'Macros unavailable · weigh one scoop':shownItems.length?`P ${mealMacros[0]??'incomplete'}g · C ${mealMacros[1]??'incomplete'}g · F ${mealMacros[2]??'incomplete'}g`:'Add portions to calculate macros';
+  const hasGainer=meal.plannedFoods?.some(([id])=>id==='gainer-powder');
+  const macroText=hasGainer&&!entry.items.length&&!profile().gramsPerScoop?'Incomplete: gainer portion not confirmed':shownItems.length?`P ${mealMacros[0]??'incomplete'}g · C ${mealMacros[1]??'incomplete'}g · F ${mealMacros[2]??'incomplete'}g`:'Add portions to calculate macros';
   const itemRows=shownItems.map(item=>!entry.items.length?`<div class="food-row"><div class="food-name">${escapeText(item.name)}</div><span>${item.qty} ${escapeText(item.unit)}</span><div class="food-kcal">${itemCalories(item)} kcal</div></div>`:`<div class="food-row">
     <div class="food-name">${escapeText(BASE_FOODS.find(food=>food.id===item.foodId)?.name||item.name)}<div style="font-size:9px;color:var(--muted)">${item.kcal} kcal / ${item.base} ${escapeText(BASE_FOODS.find(food=>food.id===item.foodId)?.unit||item.unit)}</div></div>
     <input aria-label="Food quantity" class="food-qty" type="number" min="0" step="any" value="${item.qty}" onchange="updateFoodQty('${meal.id}','${item.id}',this.value,'${date}')">
@@ -1400,7 +1455,7 @@ function renderMealCard(meal,day,date){
       ${meal.id==='m5'?`<label>Dinner option<select class="food-select" onchange="chooseDinner(this.value,'${date}')">${Object.entries(DINNER_OPTIONS).map(([id,opt])=>`<option value="${id}" ${entry.dinnerOption===id?'selected':''}>${escapeText(opt.name)}</option>`).join('')}</select></label>`:''}
       <div class="meal-macros"><span class="meal-chip mc-kcal">Planned ${plannedCalories||'—'} kcal</span><span class="meal-chip">${macroText}</span></div>
       <div class="meal-actual">${on?`${actual} kcal consumed`:skipped?'Skipped':entry.items.length?`${itemsCalories(entry)} kcal planned from adjusted portions`:`${plannedCalories?`${plannedCalories} kcal planned`:'Portion not confirmed'} · Not consumed`}</div>
-      ${meal.id==='m2'||meal.id==='m6'?'<p class="training-meta">Gainer: 387 kcal per 100g. Weigh one scoop and enter its grams in Nutrition targets.</p>':''}
+      ${hasGainer?'<p class="training-meta">Gainer: 387 kcal per 100g. Weigh one scoop and enter its grams in Nutrition targets.</p>':''}
       ${aiMealPanel(meal.id,date)}
       <div class="meal-actions">
         <button class="meal-action skip${skipped?' on':''}" onclick="setMealStatus('${meal.id}','${skipped?'pending':'skipped'}','${date}')">Skipped</button>
@@ -1429,6 +1484,7 @@ function renderMealCard(meal,day,date){
       </details>
       </div>
     </details>
+    <div class="meal-quick">${quickMealActions(meal,entry,date)}</div>
   </div>`;
 }
 
@@ -1454,6 +1510,29 @@ function setMealStatus(id,status,date=today()){
   d[id]=entry;
   saveMealsForDate(date,d);
   render();
+}
+function eatPlannedMeal(id,date=today()){
+  const day=mealsForDate(date),meal=mealDefinitions(day).find(m=>m.id===id);
+  if(!meal?.plannedItems?.length){showToast('Set the planned portions first.','error');return}
+  const entry=mealEntry(day[id]);
+  day[id]={...entry,items:cloneData(meal.plannedItems),note:'',kcal:0,status:'done',consumed:true};
+  delete quickMealDrafts[`${date}:${id}`];
+  saveMealsForDate(date,day);render();
+}
+function editQuickMeal(id,date=today()){
+  const entry=mealEntry(mealsForDate(date)[id]);
+  quickMealDrafts[`${date}:${id}`]={name:entry.note||'',kcal:entry.kcal?String(entry.kcal):''};render();
+}
+function saveQuickMeal(id,date=today()){
+  const draft=quickMealDrafts[`${date}:${id}`],calories=Number(draft?.kcal);
+  if(!draft?.name.trim()||draft.kcal.trim()===''||!Number.isFinite(calories)||calories<0||calories>20000){showToast('Enter a meal name and valid calories.','error');return}
+  const day=mealsForDate(date),entry=mealEntry(day[id]);
+  day[id]={...entry,note:draft.name.trim(),items:[],kcal:calories,status:'modified',consumed:true};
+  saveMealsForDate(date,day);delete quickMealDrafts[`${date}:${id}`];render();
+}
+function quickMealActions(meal,entry,date){
+  const id=meal.id,key=`${date}:${id}`,draft=quickMealDrafts[key];
+  return `<div class="meal-shortcuts"><button class="small-command" onclick="eatPlannedMeal('${id}','${date}')">As planned</button><button class="small-command" onclick="editQuickMeal('${id}','${date}')">Other meal</button><button class="small-command" aria-pressed="${entry.status==='skipped'}" onclick="setMealStatus('${id}','${entry.status==='skipped'?'pending':'skipped'}','${date}')">Skipped</button></div>${draft?`<form class="quick-entry" onsubmit="event.preventDefault();saveQuickMeal('${id}','${date}')"><label>Meal name<input class="exercise-note" required value="${escapeAttr(draft.name)}" oninput="quickMealDrafts['${key}'].name=this.value"></label><label>Calories<input class="exercise-note" type="number" min="0" max="20000" step="any" required value="${escapeAttr(draft.kcal)}" oninput="quickMealDrafts['${key}'].kcal=this.value"></label><button type="submit" class="small-command">Save meal</button><button type="button" class="small-command" onclick="delete quickMealDrafts['${key}'];render()">Cancel</button></form>`:''}`;
 }
 
 function setMealNote(id,note,date=today()){
@@ -1671,24 +1750,30 @@ function renderTraining(){
   const doneCount=plan.items.filter((_,i)=>state.done&&state.done[i]).length;
   const weekHTML=weeklyPlanCard(day);
   const legacyFriday=day===5&&plan.type.toLowerCase().includes('circuit');
+  const selected=selectedExercise(plan,state);
+  guidedExercises[date]=selected;
   const exerciseHTML=plan.items.map((item,i)=>{
     const on=!!(state.done&&state.done[i]);
     const [name,...target]=item.split(':');
+    if(i!==selected)return `<button class="exercise-picker" onclick="guideExercise(${i})"><strong>${i+1}. ${escapeText(name)}</strong><span>${on?'Complete':'Open'}</span></button>`;
     const key=`${date}:${i}`;
     const recorded=matchingStrength(state,item)?.value;
     const previous=previousStrength(item,date);
     return `<div class="exercise-entry${on?' is-done':''}">
       <div class="exercise-row">
         <input type="checkbox" aria-label="Complete ${escapeAttr(item)}" ${on?'checked':''} onchange="toggleExercise(${i})">
-        <div class="exercise-text"><strong>${escapeText(name)}</strong><span class="exercise-target">${escapeText(target.join(':'))}</span>${recorded?`<span class="exercise-target">Logged: ${escapeText(recorded.sets??'—')} × ${escapeText(recorded.reps??'—')} · ${escapeText(recorded.kg??'—')} kg</span>`:''}</div>
+        <span class="exercise-number" aria-hidden="true">${String(i+1).padStart(2,'0')}</span>
+        <div class="exercise-text"><strong>${escapeText(name)}</strong><ul class="exercise-targets">${target.join(':').split(';').filter(part=>part.trim()).map(part=>`<li>${escapeText(part.trim())}</li>`).join('')}</ul>${recorded?`<span class="exercise-target">${Object.keys(recorded.perSet||{}).length?`${Object.keys(recorded.perSet).length} sets with recorded values`:`Logged: ${escapeText(recorded.sets??'—')} × ${escapeText(recorded.reps??'—')} · ${escapeText(recorded.kg??'—')} kg`}</span>`:''}</div>
       </div>
       ${!recorded&&previous?`<p class="exercise-target">Previous (${escapeText(previous.date)}): ${escapeText(previous.value.sets??'—')} × ${escapeText(previous.value.reps??'—')} · ${escapeText(previous.value.kg??'—')} kg</p>`:''}
-      <details class="exercise-details" ${openExercises.has(key)?'open':''} ontoggle="this.open?openExercises.add('${key}'):openExercises.delete('${key}')"><summary>Sets, weight & notes</summary>
+      <details class="exercise-details" open><summary>${Object.values(state.setsDone?.[exerciseId(item)]||{}).filter(Boolean).length} / ${exerciseSetCount(item,state)||'—'} sets · Log workout</summary>
       ${legacyFriday?fridayRoundTracker(state,i):exerciseSets(item,state,i)}
+      <details class="exercise-tools"><summary>Notes, video & settings</summary>
       <button class="small-command" onclick="editTrainingTarget(${day},${i})">Edit target</button>
       ${[1,3,5,6].includes(day)&&!/(plank|stretch|warm-up|bird dog|dead bug)/i.test(item)?strengthFields(item,state):''}
       <input aria-label="Exercise notes" class="exercise-note" value="${escapeAttr(state.notes[i]||'')}" placeholder="Weight, reps, difficulty, how it felt..." onclick="event.stopPropagation()" onchange="setExerciseComment(${i},this.value)">
-      ${exerciseVideo(item)}</details>
+      ${exerciseVideo(item)}</details></details>
+      <div class="guided-nav"><button class="small-command" ${i===0?'disabled':''} onclick="guideExercise(${i-1})">Previous exercise</button>${i<plan.items.length-1?`<button class="small-command" onclick="guideExercise(${i+1})">Next exercise</button>`:`<button class="small-command" onclick="openPanels.add('session-review');renderTraining()">Session review</button>`}</div>
     </div>`;
   }).join('');
   document.getElementById('main').innerHTML=`
@@ -2206,11 +2291,11 @@ function exerciseSets(item,state,index){
   const id=exerciseId(item),completed=state.setsDone?.[id]||{};
   const strength=matchingStrength(state,item)?.value||{};
   const timed=/(plank|sec|seconds)/i.test(item);
-  return `<div aria-label="Exercise sets">${Array.from({length:count},(_,set)=>{
-    const values=strength.perSet?.[set]||{};
+  return `<table class="set-table" aria-label="Exercise sets"><thead><tr><th>Set</th><th>Target</th>${timed?'<th>Seconds</th>':'<th>Kg</th><th>Reps</th>'}<th>Done</th></tr></thead><tbody>${Array.from({length:count},(_,set)=>{
+    const values=effectiveSetValues(item,strength,set);
     const target=plannedSetTargets(item)[set]||{};
-    return `<div class="field-grid" style="align-items:center;margin-bottom:8px"><label><input type="checkbox" ${completed[set]?'checked':''} onchange="setExerciseSet(${index},${set},${count},this.checked)">Set ${set+1}${Object.keys(target).length?`<small>Target: ${escapeText(target.seconds!=null?`${target.seconds}s`:`${target.reps} reps${target.kg!=null?` · ${target.kg}kg`:''}`)}</small>`:''}</label>${(timed?['seconds']:['kg','reps']).map(field=>`<label>${field==='kg'?'Weight (kg)':field==='seconds'?'Seconds':'Reps'}<input class="exercise-note" aria-label="Set ${set+1} ${field}" type="number" min="0" step="${field==='kg'?'0.25':'1'}" value="${escapeAttr(values[field]??'')}" placeholder="${escapeAttr(strength[field]??target[field]??'—')}" onchange="saveSetStrength(${index},${set},'${field}',this.value)"></label>`).join('')}</div>`;
-  }).join('')}</div>`;
+    return `<tr class="${completed[set]?'set-complete':''}"><td>${set+1}</td><td class="set-target">${target.seconds!=null?`${target.seconds}s`:`<span>${escapeText(target.reps??'—')} reps</span><span>${target.kg!=null?`${target.kg} kg`:'—'}</span>`}</td>${(timed?['seconds']:['kg','reps']).map(field=>`<td><input class="exercise-note" aria-label="Set ${set+1} ${field}" inputmode="${field==='kg'?'decimal':'numeric'}" type="number" min="0" step="${field==='kg'?'0.25':'1'}" value="${escapeAttr(values[field]??'')}" placeholder="${escapeAttr(strength[field]??target[field]??'—')}" onchange="saveSetStrength(${index},${set},'${field}',this.value)"></td>`).join('')}<td><input aria-label="Complete set ${set+1}" type="checkbox" ${completed[set]?'checked':''} onchange="setExerciseSet(${index},${set},${count},this.checked)"></td></tr>`;
+  }).join('')}</tbody></table>`;
 }
 function saveSetStrength(index,set,field,value){
   if(trainingDate>today()||!['kg','reps','seconds'].includes(field))return;
@@ -2222,7 +2307,7 @@ function saveSetStrength(index,set,field,value){
   const count=exerciseSetCount(item,state);
   if(!Number.isInteger(set)||set<0||set>=count||count>30)return;
   const strength={...match?.value},perSet={...strength.perSet},entry={...perSet[set]};
-  if(value==='')delete entry[field];else entry[field]=number;
+  if(value==='')entry[field]=null;else entry[field]=number;
   if(Object.keys(entry).length)perSet[set]=entry;else delete perSet[set];
   strength.perSet=perSet;
   state.strength={...state.strength,[name]:strength};
@@ -2232,10 +2317,24 @@ function saveSetStrength(index,set,field,value){
 function perSetHistory(value){
   return Object.entries(value.perSet||{}).sort(([a],[b])=>Number(a)-Number(b)).map(([set,entry])=>`<div class="history-line">Set ${Number(set)+1}: ${escapeText(entry.seconds!=null?`${entry.seconds} sec`:`${entry.reps??'—'} reps · ${entry.kg??'—'} kg`)}</div>`).join('');
 }
+function effectiveSetValues(item,strength,set){
+  const target=plannedSetTargets(item)[set]||{},saved=strength.perSet?.[set]||{},result={};
+  for(const field of ['kg','reps','seconds']){
+    const value=Object.hasOwn(saved,field)?saved[field]:strength[field]??target[field];
+    if(value===null)result[field]=null;
+    else if(typeof value==='number'&&Number.isFinite(value))result[field]=value;
+  }
+  return result;
+}
 function setExerciseSet(index,set,count,done){
   if(trainingDate>today())return;
   const all=training(),state=all[trainingDate]||{done:{},notes:{}};
   const item=sessionPlan(trainingDate,state).items[index],id=exerciseId(item);
+  if(done){
+    const match=matchingStrength(state,item),name=match?.name||item,strength=match?.value||{};
+    state.strength={...state.strength,[name]:{...strength,perSet:{...strength.perSet,[set]:effectiveSetValues(item,strength,set)}}};
+    state.strengthIds={...state.strengthIds,[id]:name};
+  }
   state.setsDone={...state.setsDone,[id]:{...state.setsDone?.[id],[set]:done}};
   state.done={...state.done,[index]:Array.from({length:count},(_,i)=>state.setsDone[id][i]).every(Boolean)};
   all[trainingDate]=state;saveTraining(all);render();
